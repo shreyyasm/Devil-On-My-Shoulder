@@ -23,7 +23,7 @@ public class DungeonGenerator : MonoBehaviour {
     public int roomsCount;
     private List<string> parts = new List<string>();
     public List<Room> rooms = new List<Room>();
-    public List<Door> doors = new List<Door>();
+    public List<DoorComponent> doors = new List<DoorComponent>();
 
     public float voxelPixelSize = 10f;
 
@@ -130,7 +130,7 @@ public class DungeonGenerator : MonoBehaviour {
 
         generationComplete = false;
         rooms = new List<Room>();
-        doors = new List<Door>();
+        doors = new List<DoorComponent>();
 
         int spawn = random.range(0, data.sets[dungeonSet].spawns.Count - 1);
         GameObject room = (GameObject)Instantiate(data.sets[dungeonSet].spawns[spawn].gameObject);
@@ -160,7 +160,7 @@ public class DungeonGenerator : MonoBehaviour {
         for (int i = 0; i < rooms.Count; i++) {
             for (int j = 0; j < rooms[i].doors.Count; j++) {
                 if (rooms[i].doors[j].door == null) {
-                    Door d = ((GameObject)Instantiate(data.sets[dungeonSet].doors[0].gameObject)).GetComponent<Door>();
+                    DoorComponent d = ((GameObject)Instantiate(data.sets[dungeonSet].doors[0].gameObject)).GetComponent<DoorComponent>();
                     doors.Add(d);
                     rooms[i].doors[j].door = d;
                     if(d != null && rooms != null)

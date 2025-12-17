@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Door : MonoBehaviour {
+public class DoorComponent : MonoBehaviour {
 
 	void Start () {
 	

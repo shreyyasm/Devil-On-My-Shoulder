@@ -10,7 +10,7 @@ namespace EL.Dungeon {
 
         public List<Room> spawns = new List<Room>();
         public List<Room> bosses = new List<Room>();
-        public List<Door> doors = new List<Door>();
+        public List<DoorComponent> doors = new List<DoorComponent>();
         public List<Room> roomTemplates = new List<Room>();
         
     }

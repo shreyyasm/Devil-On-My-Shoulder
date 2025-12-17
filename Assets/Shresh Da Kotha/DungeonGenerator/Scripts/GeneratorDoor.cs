@@ -8,7 +8,7 @@ namespace EL.Dungeon {
         public GameObject voxelOwner;
         public GeneratorDoor sharedDoor;
 
-        public Door door;
+        public DoorComponent door;
         public GameObject wallDoor;
     }
 }
