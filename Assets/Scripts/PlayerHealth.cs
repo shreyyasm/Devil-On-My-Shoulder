@@ -76,11 +76,11 @@ public class PlayerHealth : MonoBehaviour
        
         currentHealth -= healthDecreaseRate * Time.deltaTime;
 
-        if (powerUpSelect.batteryDrain)
-            healthDecreaseRate = 6;
+        //if (powerUpSelect.batteryDrain)
+        //    healthDecreaseRate = 6;
 
-        else
-            healthDecreaseRate = 10;
+        //else
+        //    healthDecreaseRate = 10;
 
 
     }

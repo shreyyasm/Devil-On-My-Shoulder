@@ -33,7 +33,7 @@ namespace InfimaGames.LowPolyShooterPack.Interface
         /// <summary>
         /// Weapon Attachment Manager.
         /// </summary>
-        private WeaponAttachmentManagerBehaviour attachmentManagerBehaviour;
+        //private WeaponAttachmentManagerBehaviour attachmentManagerBehaviour;
 
         #endregion
 
@@ -42,28 +42,28 @@ namespace InfimaGames.LowPolyShooterPack.Interface
         protected override void Tick()
         {
             //Get Attachment Manager.
-            attachmentManagerBehaviour = equippedWeapon.GetAttachmentManager();
+            //attachmentManagerBehaviour = equippedWeapon.GetAttachmentManager();
             //Update the weapon's body sprite!
             imageWeaponBody.sprite = equippedWeapon.GetSpriteBody();
 
             //Sprite.
             Sprite sprite = default;
 
-            //Scope Default.
-            ScopeBehaviour scopeDefaultBehaviour = attachmentManagerBehaviour.GetEquippedScopeDefault();
-            //Get Sprite.
-            if (scopeDefaultBehaviour != null)
-                sprite = scopeDefaultBehaviour.GetSprite();
-            //Assign Sprite!
-            AssignSprite(imageWeaponScopeDefault, sprite, scopeDefaultBehaviour == null);
+           // //Scope Default.
+           //// ScopeBehaviour scopeDefaultBehaviour = attachmentManagerBehaviour.GetEquippedScopeDefault();
+           // //Get Sprite.
+           // //if (scopeDefaultBehaviour != null)
+           //     sprite = scopeDefaultBehaviour.GetSprite();
+           // //Assign Sprite!
+           // AssignSprite(imageWeaponScopeDefault, sprite, scopeDefaultBehaviour == null);
 
-            //Magazine.
-            MagazineBehaviour magazineBehaviour = attachmentManagerBehaviour.GetEquippedMagazine();
-            //Get Sprite.
-            if (magazineBehaviour != null)
-                sprite = magazineBehaviour.GetSprite();
-            //Assign Sprite!
-            AssignSprite(imageWeaponMagazine, sprite, magazineBehaviour == null);
+           // //Magazine.
+           //// MagazineBehaviour magazineBehaviour = attachmentManagerBehaviour.GetEquippedMagazine();
+           // //Get Sprite.
+           // if (magazineBehaviour != null)
+           //     sprite = magazineBehaviour.GetSprite();
+           // //Assign Sprite!
+           // AssignSprite(imageWeaponMagazine, sprite, magazineBehaviour == null);
         }
 
         /// <summary>

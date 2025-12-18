@@ -90,18 +90,18 @@ namespace InfimaGames.LowPolyShooterPack
                 SoundType.Holster => weaponBehaviour.GetAudioClipHolster(),
                 //Unholster.
                 SoundType.Unholster => weaponBehaviour.GetAudioClipUnholster(),
-                
-                //Reload.
+
+                ////Reload.
                 SoundType.Reload => weaponBehaviour.GetAudioClipReload(),
-                //Reload Empty.
-                SoundType.ReloadEmpty => weaponBehaviour.GetAudioClipReloadEmpty(),
-                
-                //Fire.
-                SoundType.Fire => weaponBehaviour.GetAudioClipFire(),
-                //Fire Empty.
-                SoundType.FireEmpty => weaponBehaviour.GetAudioClipFireEmpty(),
-                
-                //Default.
+                ////Reload Empty.
+                //SoundType.ReloadEmpty => weaponBehaviour.GetAudioClipReloadEmpty(),
+
+                ////Fire.
+                //SoundType.Fire => weaponBehaviour.GetAudioClipFire(),
+                ////Fire Empty.
+                //SoundType.FireEmpty => weaponBehaviour.GetAudioClipFireEmpty(),
+
+                ////Default.
                 _ => default
             };
 

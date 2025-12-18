@@ -12,7 +12,6 @@ namespace InfimaGames.LowPolyShooterPack
 	/// Main Character Component. This component handles the most important functions of the character, and interfaces
 	/// with basically every part of the asset, it is the hub where it all converges.
 	/// </summary>
-	[RequireComponent(typeof(CharacterKinematics))]
 	public sealed class Character : CharacterBehaviour
 	{
 		#region FIELDS SERIALIZED
@@ -81,27 +80,22 @@ namespace InfimaGames.LowPolyShooterPack
 		private int layerActions;
 
 		/// <summary>
-		/// Character Kinematics. Handles all the IK stuff.
-		/// </summary>
-		private CharacterKinematics characterKinematics;
-		
-		/// <summary>
 		/// The currently equipped weapon.
 		/// </summary>
 		public WeaponBehaviour equippedWeapon;
 		/// <summary>
 		/// The equipped weapon's attachment manager.
 		/// </summary>
-		private WeaponAttachmentManagerBehaviour weaponAttachmentManager;
+		//private WeaponAttachmentManagerBehaviour weaponAttachmentManager;
 		
 		/// <summary>
 		/// The scope equipped on the character's weapon.
 		/// </summary>
-		private ScopeBehaviour equippedWeaponScope;
+		//private ScopeBehaviour equippedWeaponScope;
 		/// <summary>
 		/// The magazine equipped on the character's weapon.
 		/// </summary>
-		private MagazineBehaviour equippedWeaponMagazine;
+		///private MagazineBehaviour equippedWeaponMagazine;
 		
 		/// <summary>
 		/// True if the character is reloading.
@@ -179,9 +173,7 @@ namespace InfimaGames.LowPolyShooterPack
 
 			#endregion
 
-			//Cache the CharacterKinematics component.
-			characterKinematics = GetComponent<CharacterKinematics>();
-
+		
 			//Initialize Inventory.
 			inventory.Init();
 
@@ -229,16 +221,11 @@ namespace InfimaGames.LowPolyShooterPack
 			if (equippedWeapon == null)
 				return;
 
-			//Weapons without a scope should not be a thing! Ironsights are a scope too!
-			if (equippedWeaponScope == null)
-				return;
+			////Weapons without a scope should not be a thing! Ironsights are a scope too!
+			//if (equippedWeaponScope == null)
+			//	return;
 			
-			//Make sure that we have a kinematics component!
-			if(characterKinematics != null)
-			{
-				//Compute.
-				//characterKinematics.Compute();
-			}
+		
 		}
 		
 		#endregion
@@ -375,14 +362,14 @@ namespace InfimaGames.LowPolyShooterPack
 			characterAnimator.runtimeAnimatorController = equippedWeapon.GetAnimatorController();
 
 			//Get the attachment manager so we can use it to get all the attachments!
-			weaponAttachmentManager = equippedWeapon.GetAttachmentManager();
-			if (weaponAttachmentManager == null) 
-				return;
+			//weaponAttachmentManager = equippedWeapon.GetAttachmentManager();
+			//if (weaponAttachmentManager == null) 
+			//	return;
 			
-			//Get equipped scope. We need this one for its settings!
-			equippedWeaponScope = weaponAttachmentManager.GetEquippedScope();
-			//Get equipped magazine. We need this one for its settings!
-			equippedWeaponMagazine = weaponAttachmentManager.GetEquippedMagazine();
+			////Get equipped scope. We need this one for its settings!
+			//equippedWeaponScope = weaponAttachmentManager.GetEquippedScope();
+			////Get equipped magazine. We need this one for its settings!
+			//equippedWeaponMagazine = weaponAttachmentManager.GetEquippedMagazine();
 		}
 
 		private void FireEmpty()
@@ -860,7 +847,7 @@ namespace InfimaGames.LowPolyShooterPack
 		public override void SetActiveMagazine(int active)
 		{
 			//Set magazine gameObject active.
-			equippedWeaponMagazine.gameObject.SetActive(active != 0);
+			//equippedWeaponMagazine.gameObject.SetActive(active != 0);
 		}
 		
 		public override void AnimationEndedReload()

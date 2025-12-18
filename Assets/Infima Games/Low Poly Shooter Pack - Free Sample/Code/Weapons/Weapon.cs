@@ -36,6 +36,17 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField]
         private float maximumDistance = 500.0f;
 
+        [SerializeField]
+        private int ammunitionTotal = 10;
+
+        [Tooltip("Socket at the tip of the Muzzle. Commonly used as a firing point.")]
+        [SerializeField]
+        private Transform socket;
+
+        [Tooltip("Audio clip played when firing through this muzzle.")]
+        [SerializeField]
+        private AudioClip audioClipFire;
+
         [Header("Animation")]
 
         [Tooltip("Transform that represents the weapon's ejection port, meaning the part of the weapon that casings shoot from.")]
@@ -109,11 +120,11 @@ namespace InfimaGames.LowPolyShooterPack
         /// <summary>
         /// Equipped Magazine Reference.
         /// </summary>
-        private MagazineBehaviour magazineBehaviour;
+       // private MagazineBehaviour magazineBehaviour;
         /// <summary>
         /// Equipped Muzzle Reference.
         /// </summary>
-        private MuzzleBehaviour muzzleBehaviour;
+       // private MuzzleBehaviour muzzleBehaviour;
 
         #endregion
 
@@ -130,6 +141,8 @@ namespace InfimaGames.LowPolyShooterPack
         /// The player character's camera.
         /// </summary>
         private Transform playerCamera;
+
+        public AudioSource audioSource;
 
         #endregion
 
@@ -157,14 +170,14 @@ namespace InfimaGames.LowPolyShooterPack
             #region Cache Attachment References
             
             //Get Magazine.
-            magazineBehaviour = attachmentManager.GetEquippedMagazine();
+            //magazineBehaviour = attachmentManager.GetEquippedMagazine();
             //Get Muzzle.
-            muzzleBehaviour = attachmentManager.GetEquippedMuzzle();
+            //muzzleBehaviour = attachmentManager.GetEquippedMuzzle();
 
             #endregion
 
             //Max Out Ammo.
-            ammunitionCurrent = magazineBehaviour.GetAmmunitionTotal();
+            ammunitionCurrent = ammunitionTotal;
         }
 
         #endregion
@@ -183,20 +196,20 @@ namespace InfimaGames.LowPolyShooterPack
 
         public override AudioClip GetAudioClipFireEmpty() => audioClipFireEmpty;
         
-        public override AudioClip GetAudioClipFire() => muzzleBehaviour.GetAudioClipFire();
+        public override AudioClip GetAudioClipFire() => audioClipFire;
         
         public override int GetAmmunitionCurrent() => ammunitionCurrent;
 
-        public override int GetAmmunitionTotal() => magazineBehaviour.GetAmmunitionTotal();
+        public override int GetAmmunitionTotal() => ammunitionTotal;
 
         public override bool IsAutomatic() => automatic;
         public override float GetRateOfFire() => roundsPerMinutes;
         
-        public override bool IsFull() => ammunitionCurrent == magazineBehaviour.GetAmmunitionTotal();
+        public override bool IsFull() => ammunitionCurrent == ammunitionTotal;
         public override bool HasAmmunition() => ammunitionCurrent > 0;
 
         public override RuntimeAnimatorController GetAnimatorController() => controller;
-        public override WeaponAttachmentManagerBehaviour GetAttachmentManager() => attachmentManager;
+        //public override WeaponAttachmentManagerBehaviour GetAttachmentManager() => attachmentManager;
 
         #endregion
 
@@ -215,22 +228,23 @@ namespace InfimaGames.LowPolyShooterPack
         public Animator flash;
         public override void Fire(float spreadMultiplier = 1.0f)
         {
-            //We need a muzzle in order to fire this weapon!
-            if (muzzleBehaviour == null)
-                return;
-            
+            ////We need a muzzle in order to fire this weapon!
+            //if (muzzleBehaviour == null)
+            //    return;
+
+            audioSource.PlayOneShot(audioClipFire);
             //Make sure that we have a camera cached, otherwise we don't really have the ability to perform traces.
             if (playerCamera == null)
                 return;
 
             //Get Muzzle Socket. This is the point we fire from.
-            Transform muzzleSocket = muzzleBehaviour.GetSocket();
+            Transform muzzleSocket = socket;
             //muzzleFlash.PlayOnce();
             //Play the firing animation.
             const string stateName = "Fire";
             animator.Play(stateName, 0, 0.0f);
             //Reduce ammunition! We just shot, so we need to get rid of one!
-            ammunitionCurrent = Mathf.Clamp(ammunitionCurrent - 1, 0, magazineBehaviour.GetAmmunitionTotal());
+            ammunitionCurrent = Mathf.Clamp(ammunitionCurrent - 1, 0, ammunitionTotal);
 
 
            
@@ -281,7 +295,7 @@ namespace InfimaGames.LowPolyShooterPack
         {
             //Update the value by a certain amount.
             ammunitionCurrent = amount != 0 ? Mathf.Clamp(ammunitionCurrent + amount, 
-                0, GetAmmunitionTotal()) : magazineBehaviour.GetAmmunitionTotal();
+                0, GetAmmunitionTotal()) : ammunitionTotal;
         }
 
         public override void EjectCasing()
