@@ -35,8 +35,8 @@ public class Settings : MonoBehaviour
 
 
             }
-            if(player != null)
-                player.sensitivity = 50f;
+            //if(player != null)
+            //    player.sensitivity = 50f;
 
         }
 
@@ -50,8 +50,8 @@ public class Settings : MonoBehaviour
 
 
 
-            if (player != null)
-                player.sensitivity = PlayerPrefs.GetFloat("Senstivity");
+            //if (player != null)
+            //    player.sensitivity = PlayerPrefs.GetFloat("Senstivity");
             
         }
 
@@ -138,8 +138,8 @@ public class Settings : MonoBehaviour
 
         PlayerPrefs.SetFloat("Senstivity", senstivitySlider.value);
         
-        if(player != null)
-            player.sensitivity = PlayerPrefs.GetFloat("Senstivity");
+        //if(player != null)
+        //    player.sensitivity = PlayerPrefs.GetFloat("Senstivity");
 
     }  
    
