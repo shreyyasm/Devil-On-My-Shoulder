@@ -1,4 +1,5 @@
 ﻿using InfimaGames.LowPolyShooterPack;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -39,6 +40,9 @@ public class PlayerHealth : MonoBehaviour
         displayedHealth = currentHealth;
         powerUpSelect = FindFirstObjectByType<PowerUpSelect>();
         LeanTween.delayedCall(2f, () => { drain = false; });
+
+        currentBPM = Mathf.Clamp(currentBPM, 0f, maxBPM);
+        OnBPMChanged?.Invoke(currentBPM);
     }
 
 
@@ -85,7 +89,10 @@ public class PlayerHealth : MonoBehaviour
         //else
         //    healthDecreaseRate = 10;
 
-
+        if(Input.GetKeyDown(KeyCode.P))
+        {
+            TakeDamage(10);
+        }
     }
    
     public PlayerMovement PlayerMovement;
@@ -206,5 +213,47 @@ public class PlayerHealth : MonoBehaviour
             GamepadCursor.Instance.OnControlsChanged();
         });
     }
+
+    [Header("Critical Thresholds")]
+    public float criticalBPM = 40f;
+    public float lowBPM = 70f;
+
+    public event Action<float> OnBPMChanged;
+    public event Action OnFlatline;
+
+    [Header("BPM Health")]
+    public float maxBPM = 180f;
+    public float currentBPM = 120f;
+
+    public void TakeDamage(float bpmLoss)
+    {
+        if (currentBPM <= 0f) return;
+
+        currentBPM -= bpmLoss;
+        currentBPM = Mathf.Clamp(currentBPM, 0f, maxBPM);
+
+        OnBPMChanged?.Invoke(currentBPM);
+
+        if (currentBPM <= 0f)
+            Flatline();
+    }
+
+    public void HealPlayer(float bpmGain)
+    {
+        if (currentBPM <= 0f) return;
+
+        currentBPM += bpmGain;
+        currentBPM = Mathf.Clamp(currentBPM, 0f, maxBPM);
+
+        OnBPMChanged?.Invoke(currentBPM);
+    }
+
+    private void Flatline()
+    {
+        OnFlatline?.Invoke();
+    }
+
+    public bool IsCritical => currentBPM <= criticalBPM;
+    public bool IsLow => currentBPM <= lowBPM && currentBPM > criticalBPM;
 
 }

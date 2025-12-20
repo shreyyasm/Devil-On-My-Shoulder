@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerCharacterData : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class PlayerCharacterData : MonoBehaviour
 
     [Header("Selected Character")]
     public CharacterData selectedCharacter;
+
+    [Header("CharacterIndex")]
+    public int characterIndex;
 
     [Header("Movement Settings")]
     public float moveSpeed = 4500;
@@ -24,6 +28,7 @@ public class PlayerCharacterData : MonoBehaviour
     [Header("Damage")]
     public float damageMultipler = 100f;
 
+   
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -57,6 +62,8 @@ public class PlayerCharacterData : MonoBehaviour
     }
     public void LoadPlayerData()
     {
+        characterIndex = selectedCharacter.characterIndex;
+
         // Movement
         moveSpeed = selectedCharacter.moveSpeed;
 
@@ -68,6 +75,11 @@ public class PlayerCharacterData : MonoBehaviour
 
         //Health
         maxHealth = selectedCharacter.maxHealth;
+
+        //Damage
+        damageMultipler = selectedCharacter.damageMultiplier;
+
+       
     }
 
     public void IncreasePlayerSpeed(int moveValue,int slideValue)

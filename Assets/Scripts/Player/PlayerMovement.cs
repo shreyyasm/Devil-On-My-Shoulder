@@ -7,6 +7,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
+using UnityEngine.UI;
 using UnityEngine.VFX;
 
 public class PlayerMovement : MonoBehaviour 
@@ -97,7 +98,17 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 normalVector = Vector3.up;
     private Vector3 wallNormalVector;
 
-   
+    public Slider HealthSlider;
+    public Slider AgilitySlider;
+    public Slider DamageSlider;
+
+
+    public void LoadSliderPlayerData()
+    {
+        HealthSlider.value = playerHealth.maxHealth;
+        AgilitySlider.value = moveSpeed;
+        DamageSlider.value = 50;
+    }
     void Awake() {
         rb = GetComponent<Rigidbody>();
         if(Instance == null)
@@ -134,6 +145,7 @@ public class PlayerMovement : MonoBehaviour
 
         //Health
         playerHealth.maxHealth = PlayerCharacterData.Instance.maxHealth;
+        LoadSliderPlayerData();
     }
 
     private void FixedUpdate() {

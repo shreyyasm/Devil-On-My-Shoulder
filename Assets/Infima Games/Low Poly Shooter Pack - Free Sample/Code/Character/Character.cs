@@ -834,8 +834,8 @@ namespace InfimaGames.LowPolyShooterPack
 		public override void EjectCasing()
 		{
 			//Notify the weapon.
-			if(equippedWeapon != null)
-				equippedWeapon.EjectCasing();
+			//if(equippedWeapon != null)
+			//	equippedWeapon.EjectCasing();
 		}
 		public override void FillAmmunition(int amount)
 		{

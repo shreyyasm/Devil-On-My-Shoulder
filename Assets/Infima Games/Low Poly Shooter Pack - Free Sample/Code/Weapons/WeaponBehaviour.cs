@@ -129,7 +129,7 @@ namespace InfimaGames.LowPolyShooterPack
         /// <summary>
         /// Ejects a casing from the weapon. This is commonly called from animation events, but can be called from anywhere.
         /// </summary>
-        public abstract void EjectCasing();
+        //public abstract void EjectCasing();
 
         #endregion
     }

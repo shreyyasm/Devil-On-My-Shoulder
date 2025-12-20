@@ -1,6 +1,8 @@
 ﻿// Copyright 2021, Infima Games. All Rights Reserved.
 
 using QFSW.MOP2;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
@@ -11,9 +13,17 @@ namespace InfimaGames.LowPolyShooterPack
     /// </summary>
     public class Weapon : WeaponBehaviour
     {
-        
+        [Serializable]
+        public class PlayerCharacterHands
+        {
+            public int characterIndex;
+            public GameObject weaponHands;
+            public GameObject healthHands;
+
+        }
+       
         #region FIELDS SERIALIZED
-        
+
         [Header("Firing")]
 
         [Tooltip("Is this weapon automatic? If yes, then holding down the firing button will continuously fire.")]
@@ -97,6 +107,8 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField]
         private AudioClip audioClipFireEmpty;
 
+        public List<PlayerCharacterHands> playerCharacterHands;
+
         #endregion
 
         #region FIELDS
@@ -115,19 +127,6 @@ namespace InfimaGames.LowPolyShooterPack
         /// </summary>
         private int ammunitionCurrent;
 
-        #region Attachment Behaviours
-        
-        /// <summary>
-        /// Equipped Magazine Reference.
-        /// </summary>
-       // private MagazineBehaviour magazineBehaviour;
-        /// <summary>
-        /// Equipped Muzzle Reference.
-        /// </summary>
-       // private MuzzleBehaviour muzzleBehaviour;
-
-        #endregion
-
         /// <summary>
         /// The GameModeService used in this game!
         /// </summary>
@@ -141,8 +140,10 @@ namespace InfimaGames.LowPolyShooterPack
         /// The player character's camera.
         /// </summary>
         private Transform playerCamera;
-
         public AudioSource audioSource;
+        public ObjectPool BulletPool;
+        public Animator flash;
+
 
         #endregion
 
@@ -167,17 +168,23 @@ namespace InfimaGames.LowPolyShooterPack
         }
         protected override void Start()
         {
-            #region Cache Attachment References
-            
-            //Get Magazine.
-            //magazineBehaviour = attachmentManager.GetEquippedMagazine();
-            //Get Muzzle.
-            //muzzleBehaviour = attachmentManager.GetEquippedMuzzle();
-
-            #endregion
+            SetCharacterHands(PlayerCharacterData.Instance.characterIndex);
 
             //Max Out Ammo.
             ammunitionCurrent = ammunitionTotal;
+        }
+        public void SetCharacterHands(int index)
+        {
+            for (int i = 0; i < playerCharacterHands.Count; i++)
+            {
+                bool isSelected = playerCharacterHands[i].characterIndex == index;
+
+                if (playerCharacterHands[i].weaponHands != null)
+                    playerCharacterHands[i].weaponHands.SetActive(isSelected);
+
+                if (playerCharacterHands[i].healthHands != null)
+                    playerCharacterHands[i].healthHands.SetActive(isSelected);
+            }
         }
 
         #endregion
@@ -221,35 +228,23 @@ namespace InfimaGames.LowPolyShooterPack
             animator.Play(HasAmmunition() ? "Reload" : "Reload Empty", 0, 0.0f);
 
         }
-        public ObjectPool BulletPool;
-        public bool dualGun;
-        public GameObject dualGunpoint;
-        public AnimatedTexture muzzleFlash;
-        public Animator flash;
+
         public override void Fire(float spreadMultiplier = 1.0f)
         {
             ////We need a muzzle in order to fire this weapon!
-            //if (muzzleBehaviour == null)
-            //    return;
-
             audioSource.PlayOneShot(audioClipFire);
+
             //Make sure that we have a camera cached, otherwise we don't really have the ability to perform traces.
             if (playerCamera == null)
                 return;
 
             //Get Muzzle Socket. This is the point we fire from.
             Transform muzzleSocket = socket;
-            //muzzleFlash.PlayOnce();
-            //Play the firing animation.
             const string stateName = "Fire";
             animator.Play(stateName, 0, 0.0f);
+
             //Reduce ammunition! We just shot, so we need to get rid of one!
             ammunitionCurrent = Mathf.Clamp(ammunitionCurrent - 1, 0, ammunitionTotal);
-
-
-           
-            //Play all muzzle effects.
-            //muzzleBehaviour.Effect();
 
             //Determine the rotation that we want to shoot our projectile in.
             Quaternion rotation = Quaternion.LookRotation(playerCamera.forward * 1000.0f - muzzleSocket.position);
@@ -259,8 +254,7 @@ namespace InfimaGames.LowPolyShooterPack
                 out RaycastHit hit, maximumDistance, mask))
                 rotation = Quaternion.LookRotation(hit.point - muzzleSocket.position);
 
-            //Spawn projectile from the projectile spawn point.
-            // GameObject projectile = Instantiate(prefabProjectile, muzzleSocket.position, rotation);
+
             //Spawn projectile from the projectile spawn point.
            
             GameObject projectile = BulletPool.GetObject(muzzleSocket.position, muzzleSocket.rotation);
@@ -268,41 +262,18 @@ namespace InfimaGames.LowPolyShooterPack
 
             flash.SetTrigger("Flash");
 
-            //Add velocity to the projectile.
-           
-            if (dualGun)
-            {
-                GameObject projectile2 = BulletPool.GetObject();
-                projectile2.transform.position = dualGunpoint.transform.position;
-                projectile2.transform.rotation = rotation;
-
-
-                //Add velocity to the projectile.
-                projectile2.GetComponent<Rigidbody>().velocity = projectile2.transform.forward * projectileImpulse;
-            }
-
             if (ammunitionCurrent == 0)
             {
-                Character.PlayReloadAnimation();
-               
-
+                Character.PlayReloadAnimation();             
             }
            
         }
-   
 
         public override void FillAmmunition(int amount)
         {
             //Update the value by a certain amount.
             ammunitionCurrent = amount != 0 ? Mathf.Clamp(ammunitionCurrent + amount, 
                 0, GetAmmunitionTotal()) : ammunitionTotal;
-        }
-
-        public override void EjectCasing()
-        {
-            ////Spawn casing prefab at spawn point.
-            //if(prefabCasing != null && socketEjection != null)
-            //    Instantiate(prefabCasing, socketEjection.position, socketEjection.rotation);
         }
 
         #endregion

@@ -35,9 +35,9 @@ namespace InfimaGames.LowPolyShooterPack
         /// </summary>
         private void OnEjectCasing()
         {
-            //Notify.
-            if(weapon != null)
-                weapon.EjectCasing();
+            ////Notify.
+            //if(weapon != null)
+            //    weapon.EjectCasing();
         }
 
         #endregion

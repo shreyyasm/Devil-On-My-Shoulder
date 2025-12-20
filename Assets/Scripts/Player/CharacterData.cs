@@ -6,6 +6,9 @@ using UnityEngine;
     order = 0)]
 public class CharacterData : ScriptableObject
 {
+    [Header("CharacterIndex")]
+    public int characterIndex;
+
     [Header("Movement")]
     public float moveSpeed = 4500f;
 
