@@ -1,10 +1,11 @@
 ﻿// Copyright 2021, Infima Games. All Rights Reserved.
 
-using System;
-using UnityEngine;
-using System.Collections;
-using UnityEngine.InputSystem;
 using InfimaGames.LowPolyShooterPack.Interface;
+using System;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using static WeaponSelectionManager;
 
 namespace InfimaGames.LowPolyShooterPack
 {
@@ -595,7 +596,8 @@ namespace InfimaGames.LowPolyShooterPack
 						if (Time.time - lastShotTime > 60.0f / equippedWeapon.GetRateOfFire() && !playerMovement.mainMenu)
 							Fire();
 						cameraShake.shakeDuration += 0.1f;
-					}
+                       
+                    }
 					//Fire Empty.
 					else
 					{
@@ -611,7 +613,9 @@ namespace InfimaGames.LowPolyShooterPack
 				case {phase: InputActionPhase.Canceled}:
 					//Stop Hold.
 					holdingButtonFire = false;
-					break;
+                    equippedWeapon.ReleaseChargedShot();
+                    equippedWeapon.StopBeam();
+                    break;
 			}
 		}
 		/// <summary>

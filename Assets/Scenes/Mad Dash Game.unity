@@ -684,7 +684,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 62432046}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 508ef3e8736cbc14d925636db60ab8e4, type: 3}
   m_Name: 
@@ -2620,6 +2620,142 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 220007330}
   m_CullTransparentMesh: 1
+--- !u!1 &227986950
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 227986951}
+  - component: {fileID: 227986952}
+  m_Layer: 9
+  m_Name: Beam
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &227986951
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227986950}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3817812643856736432}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!120 &227986952
+LineRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227986950}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 3e9e791e16e105d428b23e43145b674a, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_MaskInteraction: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
+  m_ApplyActiveColorSpace: 1
 --- !u!1001 &236886314
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33018,6 +33154,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7852468571670199606}
     m_Modifications:
+    - target: {fileID: 1912554557901782746, guid: 6e35689ea31620b4481d42c38405092d,
+        type: 3}
+      propertyPath: m_CullingMask.m_Bits
+      value: 495383
+      objectReference: {fileID: 0}
     - target: {fileID: 5543255132514037917, guid: 6e35689ea31620b4481d42c38405092d,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -36472,7 +36613,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatic: 1
+  gunType: 0
   projectileImpulse: 400
   roundsPerMinutes: 750
   mask:
@@ -36482,6 +36623,15 @@ MonoBehaviour:
   ammunitionTotal: 10
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
+  shotgunPellets: 8
+  shotgunSpread: 6
+  laserDamageInterval: 0.1
+  laserDamagePerTick: 5
+  chargeTime: 1.5
+  beamRenderer: {fileID: 0}
+  fireProjectileOnChargeRelease: 1
+  minChargedImpulseMultiplier: 0.5
+  maxChargedImpulseMultiplier: 2
   socketEjection: {fileID: 4224893682423159433}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -36495,14 +36645,17 @@ MonoBehaviour:
   audioClipReloadEmpty: {fileID: 8300000, guid: 1fe5c2e1733f354428fe88c1a7cbafe4,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  pistolRecoil: {x: 1.5, y: 0.6}
+  automaticRecoil: {x: 1, y: 0.35}
+  shotgunRecoil: {x: 4, y: 1.8}
+  chargedBeamRecoil: {x: 0.5, y: 0.25}
+  recoilReturnSpeed: 10
+  recoilSnappiness: 15
   playerCharacterHands: []
   audioSource: {fileID: 0}
-  Character: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
-  dualGun: 0
-  dualGunpoint: {fileID: 0}
-  muzzleFlash: {fileID: 0}
   flash: {fileID: 6354006585357472954}
+  Character: {fileID: 0}
 --- !u!1 &3663290091673888012
 GameObject:
   m_ObjectHideFlags: 0
@@ -36815,6 +36968,7 @@ Transform:
   - {fileID: 3208374562904248513}
   - {fileID: 2055617422252508146}
   - {fileID: 743245808}
+  - {fileID: 227986951}
   m_Father: {fileID: 403263398669335983}
   m_LocalEulerAnglesHint: {x: -4.025, y: -0.191, z: 0.178}
 --- !u!1 &3836682869316053942
@@ -38253,8 +38407,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatic: 0
-  projectileImpulse: 400
+  gunType: 4
+  projectileImpulse: 300
   roundsPerMinutes: 500
   mask:
     serializedVersion: 2
@@ -38263,6 +38417,15 @@ MonoBehaviour:
   ammunitionTotal: 10
   socket: {fileID: 3259680051213853496}
   audioClipFire: {fileID: 8300000, guid: 9e9480b4d07646942b555fd43f2a0f71, type: 3}
+  shotgunPellets: 8
+  shotgunSpread: 10
+  laserDamageInterval: 0.1
+  laserDamagePerTick: 5
+  chargeTime: 1.5
+  beamRenderer: {fileID: 227986952}
+  fireProjectileOnChargeRelease: 1
+  minChargedImpulseMultiplier: 0.5
+  maxChargedImpulseMultiplier: 2
   socketEjection: {fileID: 6181837370468938799}
   prefabCasing: {fileID: 1492315059354262, guid: b1995a53a949fac4db5722fc1df9efe4,
     type: 3}
@@ -38276,6 +38439,12 @@ MonoBehaviour:
   audioClipReloadEmpty: {fileID: 8300000, guid: c565065df3907944b8b58f0d27066ba8,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  pistolRecoil: {x: 6, y: 3}
+  automaticRecoil: {x: 8, y: 4}
+  shotgunRecoil: {x: 4, y: 1.8}
+  chargedBeamRecoil: {x: 0.5, y: 0.25}
+  recoilReturnSpeed: 10
+  recoilSnappiness: 10
   playerCharacterHands:
   - characterIndex: 1
     weaponHands: {fileID: 3515587699520812910}
@@ -38290,12 +38459,9 @@ MonoBehaviour:
     weaponHands: {fileID: 128247164}
     healthHands: {fileID: 1854231724}
   audioSource: {fileID: 8713835680693871316}
-  Character: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
-  dualGun: 0
-  dualGunpoint: {fileID: 0}
-  muzzleFlash: {fileID: 0}
   flash: {fileID: 9010646539107158725}
+  Character: {fileID: 0}
 --- !u!4 &4707858078785455259
 Transform:
   m_ObjectHideFlags: 0
@@ -41497,7 +41663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatic: 1
+  gunType: 0
   projectileImpulse: 400
   roundsPerMinutes: 850
   mask:
@@ -41507,6 +41673,15 @@ MonoBehaviour:
   ammunitionTotal: 10
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
+  shotgunPellets: 8
+  shotgunSpread: 6
+  laserDamageInterval: 0.1
+  laserDamagePerTick: 5
+  chargeTime: 1.5
+  beamRenderer: {fileID: 0}
+  fireProjectileOnChargeRelease: 1
+  minChargedImpulseMultiplier: 0.5
+  maxChargedImpulseMultiplier: 2
   socketEjection: {fileID: 3531813183776686409}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -41520,14 +41695,17 @@ MonoBehaviour:
   audioClipReloadEmpty: {fileID: 8300000, guid: 1fe5c2e1733f354428fe88c1a7cbafe4,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  pistolRecoil: {x: 1.5, y: 0.6}
+  automaticRecoil: {x: 1, y: 0.35}
+  shotgunRecoil: {x: 4, y: 1.8}
+  chargedBeamRecoil: {x: 0.5, y: 0.25}
+  recoilReturnSpeed: 10
+  recoilSnappiness: 15
   playerCharacterHands: []
   audioSource: {fileID: 0}
-  Character: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: eb8edabf9c09f2f4bb5b48ab64398b33, type: 2}
-  dualGun: 0
-  dualGunpoint: {fileID: 0}
-  muzzleFlash: {fileID: 0}
   flash: {fileID: 8230967785178565516}
+  Character: {fileID: 0}
 --- !u!114 &6498193654968132232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42516,7 +42694,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatic: 1
+  gunType: 0
   projectileImpulse: 400
   roundsPerMinutes: 610
   mask:
@@ -42526,6 +42704,15 @@ MonoBehaviour:
   ammunitionTotal: 10
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
+  shotgunPellets: 8
+  shotgunSpread: 6
+  laserDamageInterval: 0.1
+  laserDamagePerTick: 5
+  chargeTime: 1.5
+  beamRenderer: {fileID: 0}
+  fireProjectileOnChargeRelease: 1
+  minChargedImpulseMultiplier: 0.5
+  maxChargedImpulseMultiplier: 2
   socketEjection: {fileID: 1265124198600614525}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -42539,14 +42726,17 @@ MonoBehaviour:
   audioClipReloadEmpty: {fileID: 8300000, guid: 1fe5c2e1733f354428fe88c1a7cbafe4,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  pistolRecoil: {x: 1.5, y: 0.6}
+  automaticRecoil: {x: 1, y: 0.35}
+  shotgunRecoil: {x: 4, y: 1.8}
+  chargedBeamRecoil: {x: 0.5, y: 0.25}
+  recoilReturnSpeed: 10
+  recoilSnappiness: 15
   playerCharacterHands: []
   audioSource: {fileID: 0}
-  Character: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: f969d5782562f9a439a48e3571a4ec1d, type: 2}
-  dualGun: 0
-  dualGunpoint: {fileID: 6861328999731879905}
-  muzzleFlash: {fileID: 0}
   flash: {fileID: 8906956623470330846}
+  Character: {fileID: 0}
 --- !u!212 &6923309110187506943
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -45624,7 +45814,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  automatic: 1
+  gunType: 0
   projectileImpulse: 400
   roundsPerMinutes: 610
   mask:
@@ -45634,6 +45824,15 @@ MonoBehaviour:
   ammunitionTotal: 10
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
+  shotgunPellets: 8
+  shotgunSpread: 6
+  laserDamageInterval: 0.1
+  laserDamagePerTick: 5
+  chargeTime: 1.5
+  beamRenderer: {fileID: 0}
+  fireProjectileOnChargeRelease: 1
+  minChargedImpulseMultiplier: 0.5
+  maxChargedImpulseMultiplier: 2
   socketEjection: {fileID: 4966839238707032187}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -45647,14 +45846,17 @@ MonoBehaviour:
   audioClipReloadEmpty: {fileID: 8300000, guid: 1fe5c2e1733f354428fe88c1a7cbafe4,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  pistolRecoil: {x: 1.5, y: 0.6}
+  automaticRecoil: {x: 1, y: 0.35}
+  shotgunRecoil: {x: 4, y: 1.8}
+  chargedBeamRecoil: {x: 0.5, y: 0.25}
+  recoilReturnSpeed: 10
+  recoilSnappiness: 15
   playerCharacterHands: []
   audioSource: {fileID: 0}
-  Character: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: f969d5782562f9a439a48e3571a4ec1d, type: 2}
-  dualGun: 0
-  dualGunpoint: {fileID: 0}
-  muzzleFlash: {fileID: 0}
   flash: {fileID: 8636108771473754923}
+  Character: {fileID: 0}
 --- !u!4 &9060000313339024899
 Transform:
   m_ObjectHideFlags: 0
