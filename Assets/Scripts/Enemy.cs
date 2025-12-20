@@ -108,7 +108,52 @@ public class Enemy : MonoBehaviour
     }
 
     public ObjectPool EnemyPool;
+    public void EnemyHit(int damageValue)
+    {
+        health -= damageValue;
 
+        BloodPool.GetObject().transform.position = transform.position;
+        AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
+        ScoreManager.Instance.RegisterShotHit();
+        if (health <= 0)
+        {
+
+            GameObject explosion = explosionPool.GetObject();
+            explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
+
+            //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+            ImpactFrameEffect.Instance.TriggerImpact(0, 1.2f);
+            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+
+            AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
+            AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
+            //Instantiate(coin, transform.position, Quaternion.identity);
+
+
+            GameObject obj = batteryLife.GetObject();
+            obj.transform.position = transform.position;
+
+            //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
+            Rigidbody rb = obj.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                // Give it an upward "pop"
+                rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
+            }
+            ScoreManager.Instance.Kills++;
+            KillStreak.Instance.KilledEnemy();
+            EnemyPool.Release(gameObject);
+            //gameObject.SetActive(false);
+
+        }
+        if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
+            spriteRenderer.color = collisionColorYellow;
+
+        else if (health <= maxHealth / 2.5)
+            spriteRenderer.color = collisionColorRed;
+        else
+            spriteRenderer.color = Color.white;
+    }
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Bullet"))

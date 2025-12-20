@@ -24,15 +24,28 @@ namespace InfimaGames.LowPolyShooterPack
             Pistol,
             Automatic,
             Shotgun,
-            LaserBeam,     // NEW (continuous damage beam)
-            ChargedBeam   // EXISTING (kept 100% intact)
+            LaserBeam,     
+            ChargedBeam   
         }
 
-
+        public enum SpecialGuns
+        {
+            Deafult,
+            Threesome,
+            Demo,
+            Kinematic,
+            Heatbloom,
+            Riftsaw,
+            RayGun,
+            Piercer
+        }
         #region FIELDS SERIALIZED
 
         [Header("Gun Type")]
         [SerializeField] private GunType gunType;
+
+        [Header("SpecialGun")]
+        [SerializeField] private SpecialGuns specialGun;
 
         [Header("Firing")]
         [SerializeField] private float projectileImpulse = 400.0f;
@@ -506,7 +519,9 @@ namespace InfimaGames.LowPolyShooterPack
 
             if (hasHit && ((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
             {
+               
                 Debug.Log("EnemyHit");
+                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(10);
                 hit.collider.SendMessage(
                     "TakeDamage",
                     laserDamagePerTick,
