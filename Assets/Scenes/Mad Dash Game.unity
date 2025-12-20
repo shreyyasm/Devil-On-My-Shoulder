@@ -8674,6 +8674,74 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 626061683}
   m_CullTransparentMesh: 1
+--- !u!1001 &631114557
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8019077444708902885, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_Name
+      value: 'Enemy '
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.32
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9830679
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.01664471
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.18245812
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.0030892703
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -1.94
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -21.029
+      objectReference: {fileID: 0}
+    - target: {fileID: 8556098647042973721, guid: e261e7a0c185ca646affbf45e4b483e3,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e261e7a0c185ca646affbf45e4b483e3, type: 3}
 --- !u!1 &645222757
 GameObject:
   m_ObjectHideFlags: 0
@@ -36627,11 +36695,20 @@ MonoBehaviour:
   shotgunSpread: 6
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
-  chargeTime: 1.5
   beamRenderer: {fileID: 0}
-  fireProjectileOnChargeRelease: 1
+  laserOverheatTime: 5
+  laserCooldownTime: 3
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
+  maxChargeValue: 100
+  timeToReachFullCharge: 3
+  autoFireDelayAtFullCharge: 1
+  vibrationFrequency: 25
+  maxVibrationAmplitude: 0.015
+  vibrationRandomness: 1
   socketEjection: {fileID: 4224893682423159433}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -38407,7 +38484,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gunType: 4
+  gunType: 0
   projectileImpulse: 300
   roundsPerMinutes: 500
   mask:
@@ -38421,11 +38498,20 @@ MonoBehaviour:
   shotgunSpread: 10
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
-  chargeTime: 1.5
   beamRenderer: {fileID: 227986952}
-  fireProjectileOnChargeRelease: 1
+  laserOverheatTime: 5
+  laserCooldownTime: 3
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 65536
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
+  maxChargeValue: 100
+  timeToReachFullCharge: 3
+  autoFireDelayAtFullCharge: 1
+  vibrationFrequency: 25
+  maxVibrationAmplitude: 0.015
+  vibrationRandomness: 1
   socketEjection: {fileID: 6181837370468938799}
   prefabCasing: {fileID: 1492315059354262, guid: b1995a53a949fac4db5722fc1df9efe4,
     type: 3}
@@ -38461,7 +38547,7 @@ MonoBehaviour:
   audioSource: {fileID: 8713835680693871316}
   BulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
   flash: {fileID: 9010646539107158725}
-  Character: {fileID: 0}
+  Character: {fileID: 5447257618067792808}
 --- !u!4 &4707858078785455259
 Transform:
   m_ObjectHideFlags: 0
@@ -39907,6 +39993,8 @@ MonoBehaviour:
   dampTimeLocomotion: 0.1
   dampTimeAiming: 0.3
   characterAnimator: {fileID: 795505227743787357}
+  lastShotTime: 0
+  layerOverlay: 0
   equippedWeapon: {fileID: 0}
   holdingButtonRun: 0
   holdingButtonFire: 0
@@ -41677,11 +41765,20 @@ MonoBehaviour:
   shotgunSpread: 6
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
-  chargeTime: 1.5
   beamRenderer: {fileID: 0}
-  fireProjectileOnChargeRelease: 1
+  laserOverheatTime: 5
+  laserCooldownTime: 3
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
+  maxChargeValue: 100
+  timeToReachFullCharge: 3
+  autoFireDelayAtFullCharge: 1
+  vibrationFrequency: 25
+  maxVibrationAmplitude: 0.015
+  vibrationRandomness: 1
   socketEjection: {fileID: 3531813183776686409}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -42708,11 +42805,20 @@ MonoBehaviour:
   shotgunSpread: 6
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
-  chargeTime: 1.5
   beamRenderer: {fileID: 0}
-  fireProjectileOnChargeRelease: 1
+  laserOverheatTime: 5
+  laserCooldownTime: 3
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
+  maxChargeValue: 100
+  timeToReachFullCharge: 3
+  autoFireDelayAtFullCharge: 1
+  vibrationFrequency: 25
+  maxVibrationAmplitude: 0.015
+  vibrationRandomness: 1
   socketEjection: {fileID: 1265124198600614525}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -45828,11 +45934,20 @@ MonoBehaviour:
   shotgunSpread: 6
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
-  chargeTime: 1.5
   beamRenderer: {fileID: 0}
-  fireProjectileOnChargeRelease: 1
+  laserOverheatTime: 5
+  laserCooldownTime: 3
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
+  maxChargeValue: 100
+  timeToReachFullCharge: 3
+  autoFireDelayAtFullCharge: 1
+  vibrationFrequency: 25
+  maxVibrationAmplitude: 0.015
+  vibrationRandomness: 1
   socketEjection: {fileID: 4966839238707032187}
   prefabCasing: {fileID: 1492315059354262, guid: c638dfae3f3edf843b2614dae230a771,
     type: 3}
@@ -46155,3 +46270,4 @@ SceneRoots:
   - {fileID: 1818026132}
   - {fileID: 526898775}
   - {fileID: 4774033773948121647}
+  - {fileID: 631114557}

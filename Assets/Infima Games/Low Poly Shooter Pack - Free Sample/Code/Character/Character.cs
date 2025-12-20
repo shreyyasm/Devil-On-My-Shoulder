@@ -43,7 +43,7 @@ namespace InfimaGames.LowPolyShooterPack
 		
 		[Tooltip("Character Animator.")]
 		[SerializeField]
-		private Animator characterAnimator;
+		public Animator characterAnimator;
 
 		#endregion
 
@@ -65,12 +65,12 @@ namespace InfimaGames.LowPolyShooterPack
 		/// <summary>
 		/// Last Time.time at which we shot.
 		/// </summary>
-		private float lastShotTime;
+		public float lastShotTime;
 		
 		/// <summary>
 		/// Overlay Layer Index. Useful for playing things like firing animations.
 		/// </summary>
-		private int layerOverlay;
+		public int layerOverlay;
 		/// <summary>
 		/// Holster Layer Index. Used to play holster animations.
 		/// </summary>
@@ -291,18 +291,20 @@ namespace InfimaGames.LowPolyShooterPack
 		
 		private void Fire()
 		{
-			//Save the shot time, so we can calculate the fire rate correctly.
-			lastShotTime = Time.time;
-			//Fire the weapon! Make sure that we also pass the scope's spread multiplier if we're aiming.
-			equippedWeapon.Fire();
-			crosshairAnim.SetTrigger("Fire");
-			//Play firing animation.
-			const string stateName = "Fire";
-			characterAnimator.CrossFade(stateName, 0.05f, layerOverlay, 0);
-			cameraShake.shakeDuration += 0.15f;
-			if (playerMovement.mainMenu) return;
-				ScoreManager.Instance.RegisterShotFired();
-		
+            equippedWeapon.Fire();
+
+            //Save the shot time, so we can calculate the fire rate correctly.
+            //lastShotTime = Time.time;
+            //Fire the weapon! Make sure that we also pass the scope's spread multiplier if we're aiming.
+
+            //crosshairAnim.SetTrigger("Fire");
+            ////Play firing animation.
+            //const string stateName = "Fire";
+            //characterAnimator.CrossFade(stateName, 0.05f, layerOverlay, 0);
+            //cameraShake.shakeDuration += 0.15f;
+            //if (playerMovement.mainMenu) return;
+            //	ScoreManager.Instance.RegisterShotFired();
+
 
         }
         
@@ -594,7 +596,10 @@ namespace InfimaGames.LowPolyShooterPack
 							
 						//Has fire rate passed.
 						if (Time.time - lastShotTime > 60.0f / equippedWeapon.GetRateOfFire() && !playerMovement.mainMenu)
+						{
 							Fire();
+                        }
+						
 						cameraShake.shakeDuration += 0.1f;
                        
                     }
@@ -614,7 +619,8 @@ namespace InfimaGames.LowPolyShooterPack
 					//Stop Hold.
 					holdingButtonFire = false;
                     equippedWeapon.ReleaseChargedShot();
-                    equippedWeapon.StopBeam();
+					if(equippedWeapon.IsLaserBeam())
+						equippedWeapon.StopBeam();
                     break;
 			}
 		}

@@ -93,6 +93,9 @@ namespace InfimaGames.LowPolyShooterPack
         /// Returns true if the weapon is full of ammunition.
         /// </summary>
         public abstract bool IsFull();
+
+        public abstract bool isChargedBeam();
+        public abstract bool IsLaserBeam();
         /// <summary>
         /// Returns the weapon's rate of fire.
         /// </summary>

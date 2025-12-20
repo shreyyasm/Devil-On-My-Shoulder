@@ -94,7 +94,7 @@ namespace InfimaGames.LowPolyShooterPack
                 ////Reload.
                 SoundType.Reload => weaponBehaviour.GetAudioClipReload(),
                 ////Reload Empty.
-                //SoundType.ReloadEmpty => weaponBehaviour.GetAudioClipReloadEmpty(),
+                SoundType.ReloadEmpty => weaponBehaviour.GetAudioClipReloadEmpty(),
 
                 ////Fire.
                 //SoundType.Fire => weaponBehaviour.GetAudioClipFire(),
