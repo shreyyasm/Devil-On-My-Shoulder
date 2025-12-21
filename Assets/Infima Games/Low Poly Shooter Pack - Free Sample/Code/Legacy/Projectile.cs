@@ -4,6 +4,7 @@ using System.Collections;
 using InfimaGames.LowPolyShooterPack;
 using Random = UnityEngine.Random;
 using QFSW.MOP2;
+using UnityEngine.UIElements;
 
 public class Projectile : MonoBehaviour {
 
@@ -25,26 +26,61 @@ public class Projectile : MonoBehaviour {
 	public Transform []	concreteImpactPrefabs;
 	public ObjectPool bloodPool;
 	public ObjectPool bulletPool;
-	
 
-	public float bulletDamage = 10f;
-	private void Start ()
+
+    public float bulletDamage = 10f;
+
+    [Header("Demo Gun Settings")]
+    public bool demoBullet;
+	public float baseDemoDamage = 10f;
+	public float multiplerDemoDamage = 10f;
+
+	
+    private void Start ()
 	{
 		//Grab the game mode service, we need it to access the player character!
 		var gameModeService = ServiceLocator.Current.Get<IGameModeService>();
 		//Ignore the main player character's collision. A little hacky, but it should work.
 		Physics.IgnoreCollision(gameModeService.GetPlayerCharacter().GetComponent<Collider>(), GetComponent<Collider>());
-		
-		//Start destroy timer
-		StartCoroutine (DestroyAfter ());
-	}
+        //Start destroy timer
+        StartCoroutine (DestroyAfter ());
 
+ 
+
+    }
+	public void SetDamage(float damage)
+	{
+		bulletDamage = damage;
+    }
+    public float Damage()
+	{
+        if (demoBullet)
+        {
+            if (Weapon.Instance.damageMultipler < Weapon.Instance.maxDamageMultiplerLimit)
+                Weapon.Instance.damageMultipler += multiplerDemoDamage;
+
+            bulletDamage += Weapon.Instance.damageMultipler;
+        }
+        Debug.Log("Enemy Hit By " + bulletDamage + "Damage");
+
+        return bulletDamage;
+    }
 	//If the bullet collides with anything
 	private void OnCollisionEnter (Collision collision)
 	{
 		//Ignore collisions with other projectiles.
 		if (collision.gameObject.GetComponent<Projectile>() != null)
 			return;
+		
+		if (demoBullet)
+		{
+            if (collision.gameObject.layer != 16)
+            {
+                Weapon.Instance.damageMultipler = 0;
+                bulletDamage = baseDemoDamage;
+				
+            }
+        }
 		
 		// //Ignore collision if bullet collides with "Player" tag
 		// if (collision.gameObject.CompareTag("Player")) 

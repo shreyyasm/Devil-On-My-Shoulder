@@ -2,7 +2,7 @@
 - Project name: Devil On My Shoulder
 - Unity version: Unity 2022.3.62f3
 - Active game object:
-  - Name:  Enemy goombaex
-  - Tag: Blood
-  - Layer: Enemy
+  - Name: Player
+  - Tag: Player
+  - Layer: Character
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

@@ -14,8 +14,6 @@ public class PowerUpSelect : MonoBehaviour
     public bool playerShielded;
     public bool batteryDrain;
 
-    [Header("Double Damage")]
-    public Projectile bullet;
 
     //[Header("Double Damage")]
 
@@ -35,7 +33,7 @@ public class PowerUpSelect : MonoBehaviour
     {
         if (index == 0)
         {
-            bullet.bulletDamage = bullet.bulletDamage * 2;
+           // bullet.bulletDamage = bullet.bulletDamage * 2;
             doubleDamage = true;
         }
         if(index == 1)
@@ -63,7 +61,7 @@ public class PowerUpSelect : MonoBehaviour
     public void DeSelectPower()
     {
 
-        bullet.bulletDamage = 60 ;
+        //bullet.bulletDamage = 60 ;
         doubleDamage = false;   
         EnemyStill = false;
         playerShielded = false;

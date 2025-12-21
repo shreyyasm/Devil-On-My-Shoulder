@@ -4862,7 +4862,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4828562848980038}
   - {fileID: 4427731023424274}
@@ -9843,7 +9843,10 @@ MonoBehaviour:
   - {fileID: 4587651611338842, guid: 5e02303289b3c494e8e185be0fbbd405, type: 3}
   bloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
   bulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
-  bulletDamage: 60
+  bulletDamage: 40
+  demoBullet: 0
+  baseDemoDamage: 40
+  multiplerDemoDamage: 10
 --- !u!65 &2046671424463892281
 BoxCollider:
   m_ObjectHideFlags: 0

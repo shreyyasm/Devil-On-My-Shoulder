@@ -108,7 +108,7 @@ public class Enemy : MonoBehaviour
     }
 
     public ObjectPool EnemyPool;
-    public void EnemyHit(int damageValue)
+    public void EnemyHit(float damageValue)
     {
         health -= damageValue;
 
@@ -159,8 +159,8 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Bullet"))
         {
             
-            health -= collision.gameObject.GetComponent<Projectile>().bulletDamage;
- 
+            health -= collision.gameObject.GetComponent<Projectile>().Damage();
+           
             BloodPool.GetObject().transform.position = transform.position;
             AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
             ScoreManager.Instance.RegisterShotHit();

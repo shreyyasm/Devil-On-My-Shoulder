@@ -30,9 +30,11 @@ public class PlayerMovement : MonoBehaviour
     public float counterMovement = 0.175f;
     private float threshold = 0.01f;
     public float maxSlopeAngle = 35f;
+    public bool playerMoving;
 
 
-    [Header("Jump Settings")]
+
+   [Header("Jump Settings")]
     public float jumpForce = 550f;
     private bool readyToJump = true;
     public float jumpCooldown = 0.25f;
@@ -102,7 +104,7 @@ public class PlayerMovement : MonoBehaviour
     public Slider AgilitySlider;
     public Slider DamageSlider;
 
-
+   
     public void LoadSliderPlayerData()
     {
         HealthSlider.value = playerHealth.maxHealth;
@@ -200,6 +202,7 @@ public class PlayerMovement : MonoBehaviour
         if (mainMenu) return;
         x = moveInput.x;
 
+        playerMoving = moveInput.magnitude > 0;
 
         jumping = jumpPressed;
         if (slidePressed && readyToSlide && (x != 0 || y != 0))

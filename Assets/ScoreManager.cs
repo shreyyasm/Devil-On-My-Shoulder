@@ -49,7 +49,7 @@ public class ScoreManager : MonoBehaviour
  
     void Awake()
     {
-        powerUpSelect.bullet.bulletDamage = 60;
+        //powerUpSelect.bullet.bulletDamage = 60;
         if (Instance == null)
         {
             Instance = this;
@@ -355,7 +355,7 @@ public class ScoreManager : MonoBehaviour
     [Header("Accuracy Settings")]
 
     private int totalShotsFired;
-    private int totalShotsHit;
+    public int totalShotsHit;
     public void RegisterShotFired()
     {
         totalShotsFired++;

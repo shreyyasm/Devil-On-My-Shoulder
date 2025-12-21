@@ -10,6 +10,7 @@ namespace InfimaGames.LowPolyShooterPack
 {
     public class Weapon : WeaponBehaviour
     {
+        public static Weapon Instance;
         [Serializable]
         public class PlayerCharacterHands
         {
@@ -122,6 +123,29 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private float recoilReturnSpeed = 10f;
         [SerializeField] private float recoilSnappiness = 15f;
 
+
+        [Header("Threesome Special Gun Settings")]
+        [SerializeField] private int threesomeBulletCount = 3;
+        [SerializeField] private float threesomeHorizontalSpacing = 0.15f;
+        [SerializeField] private float threesomeAngle = 6f;
+
+        [Header("Demo Special Gun Settings")]
+        [SerializeField] public float damageMultipler = 10;
+        [SerializeField] public float maxDamageMultiplerLimit = 200f;
+
+        [Header("Kinetic Special Gun Settings")]
+        public float decreasedDamage = 50;
+        public float increasedDamage = 300;
+
+        [Header("Heatbloom Shotgun Settings")]
+        [SerializeField] private float heatbloomBaseDamage = 20f;
+        [SerializeField] private float heatbloomMaxDamage = 80f;
+        [SerializeField] private float heatbloomDamageIncreaseRate = 15f;
+        private float heatbloomTimer;              // still useful for VFX later
+        public float currentHeatbloomDamage;
+
+
+
         public List<PlayerCharacterHands> playerCharacterHands;
 
         #endregion
@@ -157,6 +181,7 @@ namespace InfimaGames.LowPolyShooterPack
 
         protected override void Awake()
         {
+            Instance = this;
             animator = GetComponent<Animator>();
             attachmentManager = GetComponent<WeaponAttachmentManagerBehaviour>();
 
@@ -175,6 +200,9 @@ namespace InfimaGames.LowPolyShooterPack
 
             if (beamRenderer != null)
                 beamRenderer.enabled = false;
+
+            currentHeatbloomDamage = heatbloomBaseDamage;
+
         }
 
 
@@ -224,6 +252,18 @@ namespace InfimaGames.LowPolyShooterPack
                 ApplyWeaponVibration(laser01);
             }
 
+            // Heatbloom damage buildup (Shotgun only)
+            if (gunType == GunType.Shotgun && specialGun == SpecialGuns.Heatbloom)
+            {
+                heatbloomTimer += Time.deltaTime;
+
+                currentHeatbloomDamage += heatbloomDamageIncreaseRate * Time.deltaTime;
+                currentHeatbloomDamage = Mathf.Clamp(
+                    currentHeatbloomDamage,
+                    heatbloomBaseDamage,
+                    heatbloomMaxDamage
+                );
+            }
 
 
             // Laser cooldown handling
@@ -313,6 +353,11 @@ namespace InfimaGames.LowPolyShooterPack
             switch (gunType)
             {
                 case GunType.Pistol:
+                    if (specialGun == SpecialGuns.Threesome)
+                        FireThreesome();
+                    else
+                        FireSingle();
+                    break;
                 case GunType.Automatic:
                     FireSingle();
                     break;
@@ -356,9 +401,65 @@ namespace InfimaGames.LowPolyShooterPack
             GameObject projectile = BulletPool.GetObject(socket.position, rotation);
             projectile.GetComponent<Rigidbody>().velocity = projectile.transform.forward * projectileImpulse;
 
+            if (specialGun == SpecialGuns.Kinematic)
+            {
+                if (Character.playerMovement.playerMoving)
+                    projectile.GetComponent<Projectile>().SetDamage(decreasedDamage);
+                else
+                {
+                    projectile.GetComponent<Projectile>().SetDamage(increasedDamage);
+                    //projectile.gameObject.transform.localScale =  new Vector3(20, 20, projectile.gameObject.transform.localScale.z);
+                }
+                   
+            }
+
+
             flash.SetTrigger("Flash");
 
             ApplyRecoil(gunType == GunType.Pistol ? pistolRecoil : automaticRecoil);
+
+           
+            if (ammunitionCurrent == 0)
+                Character.PlayReloadAnimation();
+        }
+        private void FireThreesome()
+        {
+            if (!HasAmmunition()) return;
+
+            Character.lastShotTime = Time.time;
+
+            // Play firing animation (same as pistol)
+            const string stateName = "Fire";
+            Character.crosshairAnim.SetTrigger("Fire");
+            Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
+            Character.cameraShake.shakeDuration += 0.15f;
+            if (Character.playerMovement.mainMenu) return;
+            ScoreManager.Instance.RegisterShotFired();
+
+            audioSource.PlayOneShot(audioClipFire);
+            animator.Play("Fire", 0, 0.0f);
+
+            ammunitionCurrent--;
+
+            for (int i = 0; i < threesomeBulletCount; i++)
+            {
+                // Spread index: -1, 0, +1
+                float index = i - (threesomeBulletCount - 1) / 2f;
+
+                // Rotate left/right around Y axis (yaw)
+                Quaternion rotation =
+                    Quaternion.AngleAxis(index * threesomeAngle, Vector3.up) *
+                    Quaternion.LookRotation(playerCamera.forward);
+
+                GameObject projectile = BulletPool.GetObject(socket.position, rotation);
+
+                projectile.GetComponent<Rigidbody>().velocity =
+                    projectile.transform.forward * projectileImpulse;
+            }
+
+
+            flash.SetTrigger("Flash");
+            ApplyRecoil(pistolRecoil);
 
             if (ammunitionCurrent == 0)
                 Character.PlayReloadAnimation();
@@ -389,10 +490,24 @@ namespace InfimaGames.LowPolyShooterPack
 
                 GameObject pellet = BulletPool.GetObject(socket.position, Quaternion.LookRotation(dir));
                 pellet.GetComponent<Rigidbody>().velocity = pellet.transform.forward * projectileImpulse;
+
+                if (specialGun == SpecialGuns.Heatbloom)
+                {
+                    pellet.GetComponent<Projectile>()
+                          .SetDamage(currentHeatbloomDamage);
+                }
+
             }
 
             flash.SetTrigger("Flash");
             ApplyRecoil(shotgunRecoil);
+
+            if (specialGun == SpecialGuns.Heatbloom)
+            {
+                heatbloomTimer = 0f;
+                currentHeatbloomDamage = heatbloomBaseDamage;
+            }
+
         }
 
         #endregion
@@ -521,7 +636,7 @@ namespace InfimaGames.LowPolyShooterPack
             {
                
                 Debug.Log("EnemyHit");
-                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(10);
+                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(10f);
                 hit.collider.SendMessage(
                     "TakeDamage",
                     laserDamagePerTick,
