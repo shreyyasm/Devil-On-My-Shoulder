@@ -2,9 +2,12 @@
 
 using QFSW.MOP2;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static CartoonFX.CFXR_Effect;
+using static UnityEditor.PlayerSettings;
+using static UnityEngine.Rendering.DebugUI.Table;
 
 namespace InfimaGames.LowPolyShooterPack
 {
@@ -36,7 +39,6 @@ namespace InfimaGames.LowPolyShooterPack
             Demo,
             Kinematic,
             Heatbloom,
-            Riftsaw,
             RayGun,
             Piercer
         }
@@ -68,6 +70,8 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private float laserOverheatTime = 5f;
         [SerializeField] private float laserCooldownTime = 3f;
         [SerializeField] private LayerMask enemyLayer;
+        [SerializeField] private float laserCooldownRate = 1f;
+
         private float laserUseTimer;
         private float laserCooldownTimer;
         private bool laserOverheated;
@@ -124,27 +128,48 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private float recoilSnappiness = 15f;
 
 
-        [Header("Threesome Special Gun Settings")]
+        [Header("Threesome Settings (Pistol Special)")]
         [SerializeField] private int threesomeBulletCount = 3;
         [SerializeField] private float threesomeHorizontalSpacing = 0.15f;
         [SerializeField] private float threesomeAngle = 6f;
 
-        [Header("Demo Special Gun Settings")]
+        [Header("Demo Settings (Pistol Special)")]
         [SerializeField] public float damageMultipler = 10;
         [SerializeField] public float maxDamageMultiplerLimit = 200f;
 
-        [Header("Kinetic Special Gun Settings")]
+        [Header("Kinetic Settings (Automatic Special)")]
         public float decreasedDamage = 50;
         public float increasedDamage = 300;
 
-        [Header("Heatbloom Shotgun Settings")]
+        [Header("Heatbloom Settings (Shotgun Special)")]
         [SerializeField] private float heatbloomBaseDamage = 20f;
         [SerializeField] private float heatbloomMaxDamage = 80f;
         [SerializeField] private float heatbloomDamageIncreaseRate = 15f;
         private float heatbloomTimer;              // still useful for VFX later
-        public float currentHeatbloomDamage;
+        private float currentHeatbloomDamage;
+
+        [Header("RayGun Settings (Laser Beam Special)")]
+        [SerializeField] private float rayGunBaseDamage = 5f;
+        [SerializeField] private float rayGunMaxDamage = 25f;
+        [SerializeField] private float rayGunDamageIncreaseRate = 6f; // damage per second
+
+        [SerializeField] private float rayGunBaseBeamWidth = 0.05f;
+        [SerializeField] private float rayGunMaxBeamWidth = 0.25f;
+        [SerializeField] private float rayGunBeamWidthIncreaseRate = 0.08f;
+        private float currentRayGunBeamWidth;
+        private float currentRayGunDamage;
+
+        [Header("Piercer Settings (Charged Beam Special)")]
+        [SerializeField] private int piercerMaxBullets = 3;
+        [SerializeField] private float piercerSecondsPerBullet = 3f; // 1 bullet per X seconds
+        [SerializeField] private float piercerFireInterval = 0.15f;
+
+        private float piercerHoldTimer;
+        public int piercerLoadedBullets;
+        private bool piercerFiring;
 
 
+        public ParticleSystem muzzleFlashNew;
 
         public List<PlayerCharacterHands> playerCharacterHands;
 
@@ -203,6 +228,14 @@ namespace InfimaGames.LowPolyShooterPack
 
             currentHeatbloomDamage = heatbloomBaseDamage;
 
+            currentRayGunDamage = rayGunBaseDamage;
+
+            if (beamRenderer != null)
+            {
+                beamRenderer.startWidth = rayGunBaseBeamWidth;
+                beamRenderer.endWidth = rayGunBaseBeamWidth;
+            }
+
         }
 
 
@@ -222,6 +255,17 @@ namespace InfimaGames.LowPolyShooterPack
                     float charge01 = currentChargeValue / maxChargeValue;
                     ApplyWeaponVibration(charge01);
 
+                    if (gunType == GunType.ChargedBeam && specialGun == SpecialGuns.Piercer && isCharging)
+                    {
+                        piercerHoldTimer += Time.deltaTime;
+
+                        piercerLoadedBullets = Mathf.Clamp(
+                            Mathf.FloorToInt(piercerHoldTimer / piercerSecondsPerBullet),
+                            0,
+                            piercerMaxBullets
+                        );
+                    }
+
                     if (currentChargeValue >= maxChargeValue && !waitingForAutoFire)
                     {
                         waitingForAutoFire = true;
@@ -235,9 +279,17 @@ namespace InfimaGames.LowPolyShooterPack
                     fullChargeTimer += Time.deltaTime;
                     if (fullChargeTimer >= autoFireDelayAtFullCharge)
                     {
-                       
-                        FireChargedShotWithValue(currentChargeValue);
-                        ResetChargedBeamState();
+                        if (specialGun == SpecialGuns.Piercer)
+                        {
+                            ReleaseChargedShot();
+                        }
+                        else
+                        {
+                            FireChargedShotWithValue(currentChargeValue);
+                            ResetChargedBeamState();
+                        }
+
+
                     }
                 }
             }
@@ -250,7 +302,16 @@ namespace InfimaGames.LowPolyShooterPack
                 float laser01 = laserUseTimer / laserOverheatTime;
                 laser01 = Mathf.Clamp01(laser01);
                 ApplyWeaponVibration(laser01);
+
             }
+            // Laser heat cooldown when not firing
+            if (gunType == GunType.LaserBeam && !beamActive && !laserOverheated)
+            {
+                laserUseTimer -= laserCooldownRate * Time.deltaTime;
+                laserUseTimer = Mathf.Clamp(laserUseTimer, 0f, laserOverheatTime);
+
+            }
+
 
             // Heatbloom damage buildup (Shotgun only)
             if (gunType == GunType.Shotgun && specialGun == SpecialGuns.Heatbloom)
@@ -263,6 +324,39 @@ namespace InfimaGames.LowPolyShooterPack
                     heatbloomBaseDamage,
                     heatbloomMaxDamage
                 );
+            }
+
+            if (gunType == GunType.LaserBeam && beamActive)
+            {
+                UpdateLaserBeam();
+
+                // Weapon vibration scales with laser usage
+                float laser01 = laserUseTimer / laserOverheatTime;
+                laser01 = Mathf.Clamp01(laser01);
+                ApplyWeaponVibration(laser01);
+
+                if (specialGun == SpecialGuns.RayGun)
+                {
+                    // Damage ramp
+                    currentRayGunDamage += rayGunDamageIncreaseRate * Time.deltaTime;
+                    currentRayGunDamage = Mathf.Clamp(
+                        currentRayGunDamage,
+                        rayGunBaseDamage,
+                        rayGunMaxDamage
+                    );
+
+                    // Width ramp (independent rate)
+                    currentRayGunBeamWidth += rayGunBeamWidthIncreaseRate * Time.deltaTime;
+                    currentRayGunBeamWidth = Mathf.Clamp(
+                        currentRayGunBeamWidth,
+                        rayGunBaseBeamWidth,
+                        rayGunMaxBeamWidth
+                    );
+
+                    beamRenderer.startWidth = currentRayGunBeamWidth;
+                    beamRenderer.endWidth = currentRayGunBeamWidth;
+                }
+
             }
 
 
@@ -374,8 +468,8 @@ namespace InfimaGames.LowPolyShooterPack
                     StartLaserBeam(); // NEW
                     break;
             }
-
-          
+            muzzleFlashNew.Play();
+      
         }
 
 
@@ -516,11 +610,17 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void StartCharge()
         {
-            // 🔹 ADD THIS GUARD
             if (isCharging)
                 return;
 
             isCharging = true;
+
+            if (specialGun == SpecialGuns.Piercer)
+            {
+                piercerHoldTimer = 0f;
+                piercerLoadedBullets = 0;
+            }
+
             currentChargeValue = 0f;
             waitingForAutoFire = false;
             fullChargeTimer = 0f;
@@ -558,24 +658,62 @@ namespace InfimaGames.LowPolyShooterPack
             if (!isCharging)
                 return;
 
+            if (specialGun == SpecialGuns.Piercer)
+            {
+                isCharging = false;
+
+                if (piercerLoadedBullets > 0)
+                    StartCoroutine(FirePiercerBurst());
+                else
+                    ResetChargedBeamState();
+
+                return;
+            }
+
             FireChargedShotWithValue(currentChargeValue);
             ResetChargedBeamState();
         }
+
+
+
         private void ResetChargedBeamState()
         {
             isCharging = false;
             waitingForAutoFire = false;
             currentChargeValue = 0f;
             fullChargeTimer = 0f;
-            ResetWeaponVibration();
 
+            piercerHoldTimer = 0f;
+            piercerLoadedBullets = 0;
+
+            ResetWeaponVibration();
         }
+
+        private IEnumerator FirePiercerBurst()
+        {
+            if (piercerLoadedBullets <= 0 || piercerFiring)
+                yield break;
+
+            piercerFiring = true;
+
+            for (int i = 0; i < piercerLoadedBullets; i++)
+            {
+                FireChargedProjectile(1f);
+                yield return new WaitForSeconds(piercerFireInterval);
+            }
+
+            piercerLoadedBullets = 0;
+            piercerFiring = false;
+
+            ResetChargedBeamState(); // ✅ reset AFTER burst finishes
+        }
+
 
         // This is how you use that charged damage
         //projectile.GetComponent<Bullet>().SetDamage(chargeValue);
         private void FireChargedShotWithValue(float chargeValue)
         {
-            Debug.Log($"Charged Beam Fired with Value: {chargeValue}");
+            //Debug.Log($"Charged Beam Fired with Value: {chargeValue}");
 
             // Convert value → percent if you want impulse scaling
             float chargePercent = chargeValue / maxChargeValue;
@@ -631,19 +769,47 @@ namespace InfimaGames.LowPolyShooterPack
                 return;
 
             laserTickTimer = 0f;
+            laserUseTimer += Time.deltaTime;
 
             if (hasHit && ((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
             {
-               
+                float damageToApply = laserDamagePerTick;
+
+                // RayGun overrides laser damage
+                if (specialGun == SpecialGuns.RayGun)
+                {
+                    damageToApply = currentRayGunDamage;
+                }
+
                 Debug.Log("EnemyHit");
-                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(10f);
+
+                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(damageToApply);
+                Debug.Log("Enemy Hit By " + damageToApply + "Damage");
+
+
                 hit.collider.SendMessage(
                     "TakeDamage",
-                    laserDamagePerTick,
+                    damageToApply,
                     SendMessageOptions.DontRequireReceiver
                 );
             }
+
         }
+        private void ResetRayGunState()
+        {
+            if (specialGun != SpecialGuns.RayGun)
+                return;
+
+            currentRayGunDamage = rayGunBaseDamage;
+            currentRayGunBeamWidth = rayGunBaseBeamWidth;
+
+            if (beamRenderer != null)
+            {
+                beamRenderer.startWidth = rayGunBaseBeamWidth;
+                beamRenderer.endWidth = rayGunBaseBeamWidth;
+            }
+        }
+
         private void OverheatLaser()
         {
             laserOverheated = true;
@@ -654,6 +820,8 @@ namespace InfimaGames.LowPolyShooterPack
             if (beamRenderer)
                 beamRenderer.enabled = false;
 
+            ResetRayGunState();
+
             //Play firing animation.
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
@@ -663,15 +831,17 @@ namespace InfimaGames.LowPolyShooterPack
 
         public override void StopBeam()
         {
-            if(!beamActive) { return; }
+            ResetRayGunState();
+
+            if (!beamActive) { return; }
 
             beamActive = false;
             isCharging = false;
             ResetWeaponVibration();
 
-            // Reset laser usage if player stops firing manually
-            if (gunType == GunType.LaserBeam && !laserOverheated)
-                laserUseTimer = 0f;
+            //// Reset laser usage if player stops firing manually
+            //if (gunType == GunType.LaserBeam && !laserOverheated)
+            //    laserUseTimer = 0f;
 
             if (beamRenderer)
                 beamRenderer.enabled = false;

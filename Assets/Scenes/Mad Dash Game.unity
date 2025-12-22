@@ -9432,6 +9432,97 @@ Transform:
   - {fileID: 563676512}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &586546567
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3817812643856736432}
+    m_Modifications:
+    - target: {fileID: 1000012903210382, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_Name
+      value: New Flash
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012903210382, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.09
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.062
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.051
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9615897
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.14766113
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.22839487
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.037113126
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 17.514
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -26.686
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0.236
+      objectReference: {fileID: 0}
+    - target: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 114259415729901044, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+    - {fileID: 114823956978527516, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 397ccf67564205345a8bfdf09a5b5bed, type: 3}
+--- !u!4 &586546568 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4000010921236120, guid: 397ccf67564205345a8bfdf09a5b5bed,
+    type: 3}
+  m_PrefabInstance: {fileID: 586546567}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &586546569 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 198000011976894484, guid: 397ccf67564205345a8bfdf09a5b5bed,
+    type: 3}
+  m_PrefabInstance: {fileID: 586546567}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &588062529
 GameObject:
   m_ObjectHideFlags: 0
@@ -9778,8 +9869,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 1.604}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 34, y: -63}
+  m_SizeDelta: {x: 279.1563, y: 157.0254}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &602701051
 MonoBehaviour:
@@ -13802,7 +13893,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 60043e9be29720749bb1f2b66af91bf0,
         type: 3}
       propertyPath: m_Name
-      value: TV_share
+      value: Health Hand
       objectReference: {fileID: 0}
     - target: {fileID: 1242513764023364413, guid: 60043e9be29720749bb1f2b66af91bf0,
         type: 3}
@@ -17096,7 +17187,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1010299123}
   - component: {fileID: 1010299122}
-  - component: {fileID: 1010299121}
   - component: {fileID: 1010299120}
   m_Layer: 0
   m_Name: Screen Cam
@@ -17149,14 +17239,6 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!81 &1010299121
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1010299119}
-  m_Enabled: 1
 --- !u!20 &1010299122
 Camera:
   m_ObjectHideFlags: 0
@@ -29453,6 +29535,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 65536
+  laserCooldownRate: 1
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -29490,7 +29573,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 5
+  rayGunMaxDamage: 25
+  rayGunDamageIncreaseRate: 6
+  rayGunBaseBeamWidth: 0.05
+  rayGunMaxBeamWidth: 0.25
+  rayGunBeamWidthIncreaseRate: 0.08
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 3
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 0}
   playerCharacterHands:
   - characterIndex: 1
     weaponHands: {fileID: 984797318}
@@ -43498,6 +43591,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
+  laserCooldownRate: 1
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -43535,7 +43629,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 5
+  rayGunMaxDamage: 25
+  rayGunDamageIncreaseRate: 6
+  rayGunBaseBeamWidth: 0.05
+  rayGunMaxBeamWidth: 0.25
+  rayGunBeamWidthIncreaseRate: 0.08
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 3
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 0}
   playerCharacterHands: []
   audioSource: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
@@ -43854,6 +43958,7 @@ Transform:
   - {fileID: 2055617422252508146}
   - {fileID: 743245808}
   - {fileID: 227986951}
+  - {fileID: 586546568}
   m_Father: {fileID: 403263398669335983}
   m_LocalEulerAnglesHint: {x: 2.296, y: 15.147, z: -0.803}
 --- !u!1 &3836682869316053942
@@ -45292,8 +45397,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7170d51de97d79e4fb11d3321667acb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gunType: 2
-  specialGun: 4
+  gunType: 4
+  specialGun: 0
   projectileImpulse: 300
   roundsPerMinutes: 500
   mask:
@@ -45305,14 +45410,15 @@ MonoBehaviour:
   audioClipFire: {fileID: 8300000, guid: 9e9480b4d07646942b555fd43f2a0f71, type: 3}
   shotgunPellets: 8
   shotgunSpread: 10
-  laserDamageInterval: 0.5
+  laserDamageInterval: 1.5
   laserDamagePerTick: 5
   beamRenderer: {fileID: 227986952}
-  laserOverheatTime: 5
+  laserOverheatTime: 15
   laserCooldownTime: 3
   enemyLayer:
     serializedVersion: 2
     m_Bits: 65536
+  laserCooldownRate: 3
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -45350,7 +45456,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 10
+  rayGunMaxDamage: 150
+  rayGunDamageIncreaseRate: 15
+  rayGunBaseBeamWidth: 0.02
+  rayGunMaxBeamWidth: 0.8
+  rayGunBeamWidthIncreaseRate: 0.03
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 1
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 586546569}
   playerCharacterHands:
   - characterIndex: 1
     weaponHands: {fileID: 2158463677400522509}
@@ -48676,6 +48792,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
+  laserCooldownRate: 1
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -48713,7 +48830,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 5
+  rayGunMaxDamage: 25
+  rayGunDamageIncreaseRate: 6
+  rayGunBaseBeamWidth: 0.05
+  rayGunMaxBeamWidth: 0.25
+  rayGunBeamWidthIncreaseRate: 0.08
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 3
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 0}
   playerCharacterHands: []
   audioSource: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: eb8edabf9c09f2f4bb5b48ab64398b33, type: 2}
@@ -48871,7 +48998,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 4
   m_Sprite: {fileID: 1996793500, guid: 02e349652f1d6ec46a6cd73328102f47, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -49676,6 +49803,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
+  laserCooldownRate: 1
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -49713,7 +49841,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 5
+  rayGunMaxDamage: 25
+  rayGunDamageIncreaseRate: 6
+  rayGunBaseBeamWidth: 0.05
+  rayGunMaxBeamWidth: 0.25
+  rayGunBeamWidthIncreaseRate: 0.08
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 3
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 0}
   playerCharacterHands: []
   audioSource: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: f969d5782562f9a439a48e3571a4ec1d, type: 2}
@@ -52852,6 +52990,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
+  laserCooldownRate: 1
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -52889,7 +53028,17 @@ MonoBehaviour:
   heatbloomBaseDamage: 20
   heatbloomMaxDamage: 80
   heatbloomDamageIncreaseRate: 15
-  currentHeatbloomDamage: 0
+  rayGunBaseDamage: 5
+  rayGunMaxDamage: 25
+  rayGunDamageIncreaseRate: 6
+  rayGunBaseBeamWidth: 0.05
+  rayGunMaxBeamWidth: 0.25
+  rayGunBeamWidthIncreaseRate: 0.08
+  piercerMaxBullets: 3
+  piercerSecondsPerBullet: 3
+  piercerFireInterval: 0.15
+  piercerLoadedBullets: 0
+  muzzleFlashNew: {fileID: 0}
   playerCharacterHands: []
   audioSource: {fileID: 0}
   BulletPool: {fileID: 11400000, guid: f969d5782562f9a439a48e3571a4ec1d, type: 2}
