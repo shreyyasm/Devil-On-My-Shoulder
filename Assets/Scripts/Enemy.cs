@@ -159,7 +159,7 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Bullet"))
         {
             
-            health -= collision.gameObject.GetComponent<Projectile>().Damage();
+            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
            
             BloodPool.GetObject().transform.position = transform.position;
             AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
@@ -193,10 +193,6 @@ public class Enemy : MonoBehaviour
                 KillStreak.Instance.KilledEnemy();
                 EnemyPool.Release(gameObject);
                    //gameObject.SetActive(false);
-
-                    
-
-
 
             }
 

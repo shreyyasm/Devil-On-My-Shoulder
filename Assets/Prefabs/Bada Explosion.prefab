@@ -11,7 +11,9 @@ GameObject:
   - component: {fileID: 403952}
   - component: {fileID: 19860484}
   - component: {fileID: 19904564}
-  - component: {fileID: 5944175450392123112}
+  - component: {fileID: 5612031773052300145}
+  - component: {fileID: 5883079251245878383}
+  - component: {fileID: 8687052014881846458}
   m_Layer: 0
   m_Name: Bada Explosion
   m_TagString: Untagged
@@ -4814,13 +4816,15 @@ ParticleSystemRenderer:
   m_RenderAlignment: 2
   m_Pivot: {x: 0, y: 0, z: 0}
   m_Flip: {x: 0, y: 0, z: 0}
-  m_UseCustomVertexStreams: 0
   m_EnableGPUInstancing: 0
   m_ApplyActiveColorSpace: 0
   m_AllowRoll: 1
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
+  m_UseCustomVertexStreams: 0
   m_VertexStreams: 0001030405
+  m_UseCustomTrailVertexStreams: 0
+  m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
   m_Mesh1: {fileID: 0}
   m_Mesh2: {fileID: 0}
@@ -4830,7 +4834,7 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
---- !u!114 &5944175450392123112
+--- !u!114 &5612031773052300145
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4839,8 +4843,64 @@ MonoBehaviour:
   m_GameObject: {fileID: 180128}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0f4c3ffa35b98a4487c37308c08aac5, type: 3}
+  m_Script: {fileID: 11500000, guid: 77a3c509fecfec14ab43fe01e2f9a4c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  explosionPool: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
-  timer: 2
+  damage: 100
+  knockbackForce: 30
+  upwardForce: 6
+  gravity: 20
+  maxAirTime: 2.5
+  slideDuration: 0.6
+  slideDamping: 6
+  groundCheckDistance: 2
+  groundCheckRadius: 0.35
+  lifeTime: 0.5
+--- !u!135 &5883079251245878383
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 180128}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.3
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &8687052014881846458
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 180128}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 2

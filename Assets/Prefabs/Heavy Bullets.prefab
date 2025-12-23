@@ -9737,11 +9737,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ff3ea705a4a7244a59eef82e75c660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  specialBullets: 3
   destroyAfter: 3
-  destroyOnImpact: 1
   bloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
   bulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
   bulletDamage: 40
+  mortarExplosionPrefab: {fileID: 180128, guid: bb56edfb72e0f2848864180020d1ecda,
+    type: 3}
+  maxRicochetCount: 1
+  ricochetEnergyLoss: 0.9
   demoBullet: 0
   baseDemoDamage: 40
   multiplerDemoDamage: 10
