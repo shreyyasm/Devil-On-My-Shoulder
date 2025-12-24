@@ -1,9 +1,20 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using static Projectile;
 
-public class ExplosionDamage : MonoBehaviour
+public class ExplosionSystem : MonoBehaviour
 {
+    public enum SystemType
+    {
+       Default,
+       ExplosionOnly,
+       KnockbackOnly
+
+    }
+    [Header("Special Bullets")]
+    [SerializeField] private SystemType systemType;
+
     [Header("Explosion Damage")]
     [SerializeField] private float damage = 40f;
 
@@ -24,16 +35,47 @@ public class ExplosionDamage : MonoBehaviour
     [Header("Lifetime")]
     [SerializeField] private float lifeTime = 2f;
 
+    public GameObject explosionPrefab;
+
+
     private void Start()
     {
+        if (systemType == SystemType.Default)
+        {
+            explosionPrefab.SetActive(true);
+        }
+
+        if (systemType == SystemType.ExplosionOnly)
+        {
+            explosionPrefab.SetActive(true);
+        }
+
         Destroy(gameObject, lifeTime);
     }
-
-    private void OnCollisionEnter(Collision other)
+    private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.layer != 16)
             return;
 
+        if (systemType == SystemType.Default)
+        {
+            DoExplosionDamge(other);
+            DoKnockback(other.gameObject);
+        }
+
+        if (systemType == SystemType.ExplosionOnly)
+        {
+            DoExplosionDamge(other);
+        }
+
+        if (systemType == SystemType.KnockbackOnly)
+        {
+            DoKnockback(other.gameObject);
+        }
+
+    }
+    public void DoExplosionDamge(Collider other)
+    {
         Enemy enemy = other.gameObject.GetComponent<Enemy>();
         if (enemy != null)
         {
@@ -41,9 +83,11 @@ public class ExplosionDamage : MonoBehaviour
             Debug.Log($"Enemy Hit By Explosion - {damage} Damage");
         }
 
+    }
+    public void DoKnockback(GameObject other)
+    {
         StartCoroutine(KnockbackCoroutine(other.transform));
     }
-
     private IEnumerator KnockbackCoroutine(Transform target)
     {
         NavMeshAgent agent = target.GetComponent<NavMeshAgent>();

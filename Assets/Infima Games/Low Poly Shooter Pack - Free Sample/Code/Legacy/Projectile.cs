@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.ProBuilder;
 using UnityEngine.UIElements;
 using static InfimaGames.LowPolyShooterPack.Weapon;
 using Random = UnityEngine.Random;
@@ -14,7 +15,9 @@ public class Projectile : MonoBehaviour {
         Deafult,
         PeaPosion_Bullets,
         Motar_Bullets,
-        Ricocheter
+        Ricocheter,
+        YourMom,
+        Riftsaw
 
     } 
 
@@ -35,9 +38,10 @@ public class Projectile : MonoBehaviour {
 
     [Header("Ricocheter Bullet Settings")]
     [SerializeField] private int maxRicochetCount = 1;
-    [SerializeField] private float ricochetEnergyLoss = 0.9f;
+    [SerializeField] private float ricochetSpeedMultiplier = 1.15f; // 15% faster per bounce
+    [SerializeField] private float maxRicochetSpeed = 80f;          // safety cap
 
-    private int currentRicochetCount;
+    public int currentRicochetCount;
 
     [Header("Demo Bullet Settings")]
     public bool demoBullet;
@@ -47,8 +51,23 @@ public class Projectile : MonoBehaviour {
     public GameObject impactPrefab;
     public bool ignorePrevRotation = false;
 
+    [Header("Your Mom Bullet Settings")]
+    [SerializeField] private GameObject FirePrefab;
+
+    [Header("Riftsaw Bullet Settings")]
+    [SerializeField] private float riftsawRotateSpeed = 360f;
+    [SerializeField] private float riftsawDamageInterval = 1f;
+    [SerializeField] private float riftsawDamagePerTick = 8f;
+    [SerializeField] private float riftsawLifeTime = 4f;
+    [SerializeField] private GameObject riftsawExplosionPrefab;
+
+    private bool riftsawActive;
+    private Transform riftsawTarget;
+
+    Rigidbody rb;
     private void Start ()
 	{
+       
 		//Grab the game mode service, we need it to access the player character!
 		var gameModeService = ServiceLocator.Current.Get<IGameModeService>();
 		//Ignore the main player character's collision. A little hacky, but it should work.
@@ -56,12 +75,22 @@ public class Projectile : MonoBehaviour {
         currentRicochetCount = 0;
 
 
+       
+    }
+    private void OnEnable()
+    {
+        rb = GetComponent<Rigidbody>();
         //Start destroy timer
         StartCoroutine(DestroyAfter());
 
+        if (specialBullets == SpecialBullets.Riftsaw)
+        {
+            rb.isKinematic = false;
+            ApplyRandomZRotation();
+        }
 
     }
-	public void SetDamage(float damage)
+    public void SetDamage(float damage)
 	{
 		bulletDamage = damage;
     }
@@ -88,21 +117,17 @@ public class Projectile : MonoBehaviour {
 
         return bulletDamage;
     }
-	//If the bullet collides with anything
-	private void OnCollisionEnter (Collision collision)
+    private void Update()
+    {
+        if (specialBullets == SpecialBullets.Riftsaw && riftsawActive)
+        {
+            transform.Rotate(Vector3.up, riftsawRotateSpeed * Time.deltaTime, Space.Self);
+        }
+
+    }
+    //If the bullet collides with anything
+    private void OnCollisionEnter (Collision collision)
 	{
-        if (specialBullets == SpecialBullets.Ricocheter)
-        {
-            HandleRicochet(collision);
-            return;
-        }
-
-
-        if (specialBullets == SpecialBullets.Motar_Bullets)
-        {
-            HandleMortarImpact(collision);
-        }
-
         if (collision.gameObject.tag != "FX" && collision.gameObject.layer != 16)
         {
             ContactPoint contact = collision.contacts[0];
@@ -115,6 +140,35 @@ public class Projectile : MonoBehaviour {
             Instantiate(impactPrefab, pos, rot);
             bulletPool.Release(gameObject);
         }
+
+        if (specialBullets == SpecialBullets.Riftsaw)
+        {
+            HandleRiftsawImpact(collision);
+            return;
+        }
+
+        if (specialBullets == SpecialBullets.Ricocheter)
+        {
+            HandleRicochet(collision);
+        }
+        if (specialBullets == SpecialBullets.YourMom)
+        {
+            HandleMortarImpact(collision);
+            ContactPoint contact = collision.contacts[0];
+
+            Instantiate(
+               FirePrefab,
+                contact.point,
+                Quaternion.identity
+            );
+        }
+        
+        if (specialBullets == SpecialBullets.Motar_Bullets)
+        {
+            HandleMortarImpact(collision);
+        }
+
+      
 
         //Ignore collisions with other projectiles.
         if (collision.gameObject.GetComponent<Projectile>() != null)
@@ -157,7 +211,10 @@ public class Projectile : MonoBehaviour {
 		//Wait for set amount of time
 		yield return new WaitForSeconds (destroyAfter);
         //Destroy bullet object
+        if(specialBullets == SpecialBullets.Ricocheter)
+            currentRicochetCount = 0;
         bulletPool.Release(gameObject);
+
     }
     private void HandleMortarImpact(Collision collision)
     {
@@ -181,6 +238,7 @@ public class Projectile : MonoBehaviour {
         {
             Damage(collision.gameObject);
             bulletPool.Release(gameObject);
+            currentRicochetCount = 0;
             return;
         }
 
@@ -188,6 +246,7 @@ public class Projectile : MonoBehaviour {
         if (currentRicochetCount >= maxRicochetCount)
         {
             bulletPool.Release(gameObject);
+            currentRicochetCount = 0;
             return;
         }
 
@@ -195,16 +254,24 @@ public class Projectile : MonoBehaviour {
         if (rb == null)
             return;
 
-        // Reflect velocity
-        Vector3 incomingVelocity = rb.velocity;
-        Vector3 normal = collision.contacts[0].normal;
-        Vector3 reflectedVelocity = Vector3.Reflect(incomingVelocity, normal);
+        // --- CURRENT SPEED ---
+        float speed = rb.velocity.magnitude;
 
-        rb.velocity = reflectedVelocity * ricochetEnergyLoss;
+        // --- SPEED BOOST ---
+        speed *= ricochetSpeedMultiplier;
+        speed = Mathf.Min(speed, maxRicochetSpeed); // safety cap
+
+        // --- REFLECT DIRECTION ---
+        Vector3 incomingDir = rb.velocity.normalized;
+        Vector3 normal = collision.contacts[0].normal;
+        Vector3 reflectedDir = Vector3.Reflect(incomingDir, normal);
+
+        // --- APPLY BOOSTED SPEED ---
+        rb.velocity = reflectedDir * speed;
 
         currentRicochetCount++;
 
-        // Optional impact VFX
+        // Impact VFX
         if (impactPrefab != null)
         {
             Instantiate(
@@ -213,7 +280,103 @@ public class Projectile : MonoBehaviour {
                 Quaternion.LookRotation(normal)
             );
         }
-        Debug.Log("Bounce");
+
+        Debug.Log($"Bounce {currentRicochetCount} | Speed: {speed}");
+    }
+    private IEnumerator RiftsawDamageCoroutine()
+    {
+        while (riftsawActive && riftsawTarget != null)
+        {
+            Enemy enemy = riftsawTarget.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.EnemyHit(riftsawDamagePerTick);
+            }
+
+            yield return new WaitForSeconds(riftsawDamageInterval);
+        }
+    }
+    private IEnumerator RiftsawLifeCoroutine()
+    {
+        yield return new WaitForSeconds(riftsawLifeTime);
+
+        if (riftsawExplosionPrefab != null)
+        {
+            Instantiate(
+                riftsawExplosionPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+        }
+
+        CleanupRiftsaw();
+    }
+    private void CleanupRiftsaw()
+    {
+        riftsawActive = false;
+        riftsawTarget = null;
+
+        transform.SetParent(null);
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+        }
+
+        bulletPool.Release(gameObject);
+    }
+
+    private void HandleRiftsawImpact(Collision collision)
+    {
+        // Only stick to enemies
+        if (collision.gameObject.layer == 16)
+        {
+           
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+
+            // Stick to enemy
+            riftsawTarget = collision.transform;
+            transform.SetParent(riftsawTarget);
+
+            // Optional: offset slightly from surface
+            transform.position = collision.contacts[0].point;
+
+            riftsawActive = true;
+
+            // Start behaviors
+            if(gameObject.activeSelf)
+            {
+                StartCoroutine(RiftsawDamageCoroutine());
+                StartCoroutine(RiftsawLifeCoroutine());
+            }
+          
+        }
+        else
+        {
+            Instantiate(
+               riftsawExplosionPrefab,
+               transform.position,
+               Quaternion.identity
+           );
+          
+            return;
+        }
+
+       
+    }
+    private void ApplyRandomZRotation()
+    {
+        float randomZ = Random.Range(0f, 360f);
+        transform.rotation = Quaternion.Euler(
+            transform.eulerAngles.x,
+            transform.eulerAngles.y,
+            randomZ
+        );
     }
 
 
