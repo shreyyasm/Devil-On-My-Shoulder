@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4239690878856004
 Transform:
   m_ObjectHideFlags: 0
@@ -9725,7 +9725,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.30022, y: 0.23880741, z: 0.9773468}
   m_Center: {x: 0.016204327, y: 0.042076245, z: -0.032832623}
@@ -9741,7 +9741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ff3ea705a4a7244a59eef82e75c660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  specialBullets: 5
+  specialBullets: 11
   destroyAfter: 5
   bloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
   bulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
@@ -9766,6 +9766,22 @@ MonoBehaviour:
   riftsawLifeTime: 4
   riftsawExplosionPrefab: {fileID: 180128, guid: bb56edfb72e0f2848864180020d1ecda,
     type: 3}
+  cryoFreezeDuration: 5
+  cryoFreezeColor: {r: 0.28773582, g: 0.76257885, b: 1, a: 1}
+  giggleConfettiPrefab: {fileID: 5146980182222423493, guid: 5dcb6f3e0e38d324fba0a8aea6e8c931,
+    type: 3}
+  giggleSmilePrefab: {fileID: 5764982301233188874, guid: d742e3e272fea7345a1dbe6dfdffb9c0,
+    type: 3}
+  giggleStunDuration: 3
+  stickyBombPrefab: {fileID: 6540859468334486760, guid: 66fa9c4c45ca8a144bf6d50408b8d4be,
+    type: 3}
+  stickyBombAttachForce: 10000
+  mouthMelterRotationSpeed: 1000
+  mouthMelterRotations: 1
+  eliminatorTurnSpeed: 8
+  eliminatorSpeed: 35
+  eliminatorTargetSearchRadius: 60
+  eliminatorHomingDelay: 0.5
 --- !u!135 &1325683847841756134
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -9804,7 +9820,7 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Radius: 0.2
   m_Center: {x: 0, y: 0, z: -0.01}
@@ -9825,7 +9841,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4828562848980038
 Transform:
   m_ObjectHideFlags: 0
@@ -9908,7 +9924,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4427731023424274
 Transform:
   m_ObjectHideFlags: 0
@@ -14809,7 +14825,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &994230692213771104
 Transform:
   m_ObjectHideFlags: 0
@@ -20101,7 +20117,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4326964047939814230
 Transform:
   m_ObjectHideFlags: 0
@@ -20159,11 +20175,11 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 0.05
+  m_Time: 0.2
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.35
+    widthMultiplier: 0.1
     widthCurve:
       serializedVersion: 2
       m_Curve:

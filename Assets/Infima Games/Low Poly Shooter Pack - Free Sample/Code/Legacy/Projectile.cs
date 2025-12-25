@@ -6,7 +6,9 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.UIElements;
+using static ExplosionSystem;
 using static InfimaGames.LowPolyShooterPack.Weapon;
+using static UnityEngine.EventSystems.EventTrigger;
 using Random = UnityEngine.Random;
 
 public class Projectile : MonoBehaviour {
@@ -17,9 +19,15 @@ public class Projectile : MonoBehaviour {
         Motar_Bullets,
         Ricocheter,
         YourMom,
-        Riftsaw
+        Riftsaw,
+        CryoShattergun,
+        GiggleBlaster,
+        Dragunfire,
+        StickyVicky,
+        Danceler,
+        Eliminator
 
-    } 
+    }
 
     [Header("Special Bullets")]
     [SerializeField] private SpecialBullets specialBullets;
@@ -61,6 +69,37 @@ public class Projectile : MonoBehaviour {
     [SerializeField] private float riftsawLifeTime = 4f;
     [SerializeField] private GameObject riftsawExplosionPrefab;
 
+    [Header("Cryo Shattergun Settings")]
+    [SerializeField] private float cryoFreezeDuration = 5f;
+    [SerializeField] private Color cryoFreezeColor = new Color(0.4f, 0.8f, 1f);
+
+    [Header("Giggle Blaster Settings")]
+    [SerializeField] private GameObject giggleConfettiPrefab;
+    [SerializeField] private GameObject giggleSmilePrefab;
+    [SerializeField] private float giggleStunDuration = 3f;
+
+    [Header("StickyVicky Settings")]
+    [SerializeField] private GameObject stickyBombPrefab;
+    [SerializeField] private float stickyBombAttachForce = 1000f;
+
+    [Header("Danceler Settings")]
+    [SerializeField] private float mouthMelterRotationSpeed = 360f; // degrees per second
+    [SerializeField] private int mouthMelterRotations = 3;
+
+    [Header("Eliminator (Homing Missile) Settings")]
+    [SerializeField] private float eliminatorTurnSpeed = 8f;
+    [SerializeField] private float eliminatorSpeed = 35f;
+    [SerializeField] private float eliminatorTargetSearchRadius = 60f;
+
+    [SerializeField] private float eliminatorHomingDelay = 1f;
+
+    private float eliminatorTimer;
+    private bool eliminatorHomingActive;
+
+
+    private Transform eliminatorTarget;
+
+
     private bool riftsawActive;
     private Transform riftsawTarget;
 
@@ -80,7 +119,6 @@ public class Projectile : MonoBehaviour {
     private void OnEnable()
     {
         rb = GetComponent<Rigidbody>();
-        //Start destroy timer
         StartCoroutine(DestroyAfter());
 
         if (specialBullets == SpecialBullets.Riftsaw)
@@ -89,7 +127,20 @@ public class Projectile : MonoBehaviour {
             ApplyRandomZRotation();
         }
 
+        if (specialBullets == SpecialBullets.Eliminator)
+        {
+            eliminatorTarget = null;
+            eliminatorTimer = 0f;
+            eliminatorHomingActive = false;
+
+            if (rb != null)
+            {
+                rb.velocity = transform.forward * eliminatorSpeed;
+            }
+        }
+
     }
+
     public void SetDamage(float damage)
 	{
 		bulletDamage = damage;
@@ -115,6 +166,41 @@ public class Projectile : MonoBehaviour {
             }
         }
 
+        if (specialBullets == SpecialBullets.CryoShattergun && enemy != null)
+        {
+            if (enemy.GetComponent<CryoFreeze>() == null)
+            {
+                CryoFreeze freeze = enemy.AddComponent<CryoFreeze>();
+                freeze.Initialize(cryoFreezeDuration, cryoFreezeColor);
+            }
+        }
+        if (specialBullets == SpecialBullets.GiggleBlaster && enemy != null)
+        {
+            // Spawn confetti
+            if (giggleConfettiPrefab != null)
+            {
+                Instantiate(
+                    giggleConfettiPrefab,
+                    enemy.transform.position + Vector3.up * 2.5f,
+                    Quaternion.identity
+                );
+            }
+
+            // 🔁 RESET stun if already present
+            ConfettiStun existingStun = enemy.GetComponent<ConfettiStun>();
+            if (existingStun != null)
+            {
+                Destroy(existingStun);
+            }
+
+            // ✅ Add fresh stun
+            ConfettiStun stun = enemy.AddComponent<ConfettiStun>();
+            stun.Initialize(giggleStunDuration);
+            stun.giggleSmilePrefab = giggleSmilePrefab;
+        }
+
+
+
         return bulletDamage;
     }
     private void Update()
@@ -124,11 +210,55 @@ public class Projectile : MonoBehaviour {
             transform.Rotate(Vector3.up, riftsawRotateSpeed * Time.deltaTime, Space.Self);
         }
 
+        // 🎯 ELIMINATOR BEHAVIOR
+        if (specialBullets == SpecialBullets.Eliminator && rb != null)
+        {
+            eliminatorTimer += Time.deltaTime;
+
+            // ⏳ Still wandering
+            if (!eliminatorHomingActive)
+            {
+                if (eliminatorTimer >= eliminatorHomingDelay)
+                {
+                    eliminatorHomingActive = true;
+                    eliminatorTarget = FindNearestEnemy();
+                }
+
+                // Keep flying forward
+                rb.velocity = transform.forward * eliminatorSpeed;
+                return;
+            }
+
+            // 🚀 Homing phase
+            if (eliminatorTarget != null)
+            {
+                Vector3 direction =
+                    (eliminatorTarget.position - transform.position).normalized;
+
+                Vector3 newDir = Vector3.Lerp(
+                    rb.velocity.normalized,
+                    direction,
+                    eliminatorTurnSpeed * Time.deltaTime
+                );
+
+                rb.velocity = newDir * eliminatorSpeed;
+                transform.rotation = Quaternion.LookRotation(rb.velocity);
+            }
+        }
+
     }
+
     //If the bullet collides with anything
     private void OnCollisionEnter (Collision collision)
 	{
-        if (collision.gameObject.tag != "FX" && collision.gameObject.layer != 16)
+        if (specialBullets == SpecialBullets.Eliminator)
+        {
+            eliminatorHomingActive = false;
+            eliminatorTarget = null;
+        }
+
+
+        if (collision.gameObject.layer != 16 && specialBullets != SpecialBullets.Eliminator)
         {
             ContactPoint contact = collision.contacts[0];
             Quaternion rot = Quaternion.FromToRotation(Vector3.forward, contact.normal);
@@ -140,6 +270,22 @@ public class Projectile : MonoBehaviour {
             Instantiate(impactPrefab, pos, rot);
             bulletPool.Release(gameObject);
         }
+
+        if (specialBullets == SpecialBullets.Danceler && collision.gameObject.layer == 16)
+        {
+            HandleMouthMelter(collision.gameObject);
+            bulletPool.Release(gameObject);
+            return;
+        }
+
+
+
+        if (specialBullets == SpecialBullets.StickyVicky)
+        {
+            SpawnStickyVicky(collision);
+            return;
+        }
+
 
         if (specialBullets == SpecialBullets.Riftsaw)
         {
@@ -153,6 +299,7 @@ public class Projectile : MonoBehaviour {
         }
         if (specialBullets == SpecialBullets.YourMom)
         {
+
             HandleMortarImpact(collision);
             ContactPoint contact = collision.contacts[0];
 
@@ -162,7 +309,16 @@ public class Projectile : MonoBehaviour {
                 Quaternion.identity
             );
         }
-        
+        if (specialBullets == SpecialBullets.Dragunfire)
+        {
+            ContactPoint contact = collision.contacts[0];
+
+            Instantiate(
+               FirePrefab,
+                contact.point,
+                Quaternion.identity
+            );
+        }
         if (specialBullets == SpecialBullets.Motar_Bullets)
         {
             HandleMortarImpact(collision);
@@ -195,14 +351,14 @@ public class Projectile : MonoBehaviour {
 			bloodSplatter.transform.rotation = Quaternion.LookRotation(collision.contacts[0].normal);
 
 			StartCoroutine(DisableSplat());
-			//Destroy bullet object
-			Destroy(gameObject);
-		}
+            bulletPool.Release(gameObject);
+            //Destroy bullet object
+            //Destroy(gameObject);
+        }
 		IEnumerator DisableSplat()
         {
 			yield return new WaitForSeconds(2f);
 			bloodPool.Release(bloodSplatter);
-			bulletPool.Release(gameObject);
 		}
 
 	}
@@ -223,11 +379,13 @@ public class Projectile : MonoBehaviour {
         // Spawn explosion VFX
         if (mortarExplosionPrefab != null)
         {
+            GameObject explsoion = 
             Instantiate(
                 mortarExplosionPrefab,
                 contact.point,
                 Quaternion.identity
             );
+            explsoion.GetComponent<ExplosionSystem>().systemType = SystemType.ExplosionOnly;
         }
 
     }
@@ -369,6 +527,86 @@ public class Projectile : MonoBehaviour {
 
        
     }
+    private void SpawnStickyVicky(Collision collision)
+    {
+        if (stickyBombPrefab == null)
+            return;
+
+        ContactPoint contact = collision.contacts[0];
+        Transform enemy = collision.transform;
+
+
+
+        // Face the surface normal
+        Quaternion surfaceRotation = Quaternion.LookRotation(contact.normal);
+
+        // Apply 90° X rotation offset
+        Quaternion finalRotation = surfaceRotation * Quaternion.Euler(90f, 0f, 0f);
+
+        GameObject bomb = Instantiate(
+            stickyBombPrefab,
+            contact.point,
+            finalRotation
+        );
+
+
+        // 🔒 Parent to enemy (THIS is the key fix)
+        bomb.transform.SetParent(enemy);
+
+        // Disable bomb physics (parent-driven movement)
+        Rigidbody bombRb = bomb.GetComponent<Rigidbody>();
+        if (bombRb != null)
+        {
+            bombRb.isKinematic = true;
+            bombRb.detectCollisions = false;
+        }
+
+        // Force sticky state
+        StickyBomb sticky = bomb.GetComponent<StickyBomb>();
+        if (sticky != null)
+        {
+            sticky.ForceStick();
+        }
+    }
+    private void HandleMouthMelter(GameObject enemy)
+    {
+        if (enemy == null)
+            return;
+
+        // Prevent stacking
+        if (enemy.GetComponent<DancelerEffect>() != null)
+            return;
+
+        DancelerEffect effect = enemy.AddComponent<DancelerEffect>();
+        effect.Initialize(
+            mouthMelterRotationSpeed,
+            mouthMelterRotations
+        );
+    }
+    private Transform FindNearestEnemy()
+    {
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            eliminatorTargetSearchRadius,
+            1 << 16 // Enemy layer
+        );
+
+        float closestDist = Mathf.Infinity;
+        Transform closest = null;
+
+        foreach (Collider col in hits)
+        {
+            float dist = Vector3.Distance(transform.position, col.transform.position);
+            if (dist < closestDist)
+            {
+                closestDist = dist;
+                closest = col.transform;
+            }
+        }
+
+        return closest;
+    }
+
     private void ApplyRandomZRotation()
     {
         float randomZ = Random.Range(0f, 360f);
@@ -378,6 +616,6 @@ public class Projectile : MonoBehaviour {
             randomZ
         );
     }
-
+   
 
 }

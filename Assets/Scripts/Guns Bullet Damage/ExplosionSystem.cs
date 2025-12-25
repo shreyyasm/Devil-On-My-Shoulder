@@ -13,7 +13,7 @@ public class ExplosionSystem : MonoBehaviour
 
     }
     [Header("Special Bullets")]
-    [SerializeField] private SystemType systemType;
+    [SerializeField] public SystemType systemType;
 
     [Header("Explosion Damage")]
     [SerializeField] private float damage = 40f;

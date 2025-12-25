@@ -39,6 +39,8 @@ public class Enemy : MonoBehaviour
     public bool ShootEnemy;
     public bool EyeEnemy;
     public bool selfDestruct;
+
+    public bool RotateExternally;
     private void OnEnable()
     {
          health = maxHealth;
@@ -88,7 +90,8 @@ public class Enemy : MonoBehaviour
         if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = targetRotation;
+            if(!RotateExternally)
+                transform.rotation = targetRotation;
         }
 
 
