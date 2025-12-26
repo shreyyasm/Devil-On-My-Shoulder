@@ -55,8 +55,8 @@ public class Goli : MonoBehaviour
                 playerRigidbody.AddForce(directionAway * forceMagnitude, ForceMode.Impulse);
                 if (collision.gameObject.CompareTag("Player") && !PowerUpSelect.Instance.playerShielded)
                 {
-                    ImpactFrameEffect.Instance.TriggerImpact(0, 1.2f);
-                    LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+                    ImpactFrameEffect.Instance.GoBlack();
+                    LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
                     HurtPlayer();
                     collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
                     collision.gameObject.GetComponent<PlayerHealth>().hit = true;

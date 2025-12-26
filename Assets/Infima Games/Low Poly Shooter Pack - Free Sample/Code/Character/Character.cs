@@ -258,7 +258,7 @@ namespace InfimaGames.LowPolyShooterPack
 		private void UpdateAnimator()
 		{
 			//Movement Value. This value affects absolute movement. Aiming movement uses this, as opposed to per-axis movement.
-			characterAnimator.SetFloat(HashMovement, Mathf.Clamp01(Mathf.Abs(axisMovement.x) + Mathf.Abs(axisMovement.y)), dampTimeLocomotion, Time.deltaTime);
+			characterAnimator.SetFloat(HashMovement, Mathf.Clamp01(Mathf.Abs(playerMovement.moveInput.x) + Mathf.Abs(playerMovement.moveInput.y)), dampTimeLocomotion, Time.deltaTime);
 			
 			//Update the aiming value, but use interpolation. This makes sure that things like firing can transition properly.
 			characterAnimator.SetFloat(HashAimingAlpha, Convert.ToSingle(aiming), 0.25f / 1.0f * dampTimeAiming, Time.deltaTime);

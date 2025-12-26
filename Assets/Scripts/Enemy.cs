@@ -125,8 +125,8 @@ public class Enemy : MonoBehaviour
             explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
 
             //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
-            ImpactFrameEffect.Instance.TriggerImpact(0, 1.2f);
-            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            ImpactFrameEffect.Instance.GoBlack();
+            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
             AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
             AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
@@ -174,8 +174,8 @@ public class Enemy : MonoBehaviour
                 explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
                
                 //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
-                ImpactFrameEffect.Instance.TriggerImpact(0,1.2f);
-                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+                ImpactFrameEffect.Instance.GoBlack();
+                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
                 AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
                 AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
@@ -228,8 +228,8 @@ public class Enemy : MonoBehaviour
                     AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
 
                 }
-                ImpactFrameEffect.Instance.TriggerImpact(0, 1.2f);
-                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+                ImpactFrameEffect.Instance.GoBlack();
+                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
             }
             else
             {

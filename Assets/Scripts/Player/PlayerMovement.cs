@@ -1,4 +1,4 @@
-// Some stupid rigidbody based movement by Dani
+﻿// Some stupid rigidbody based movement by Dani
 
 using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
@@ -32,9 +32,16 @@ public class PlayerMovement : MonoBehaviour
     public float maxSlopeAngle = 35f;
     public bool playerMoving;
 
+    [Header("Momentum Settings")]
+    public float airAcceleration = 2500f;
+    public float airControlMultiplier = 0.9f;
+    public float jumpMomentumBoost = 1.05f; // slight speed gain
+    public float slopeJumpBoost = 1.15f;
+    private float lastJumpTime;
 
 
-   [Header("Jump Settings")]
+
+    [Header("Jump Settings")]
     public float jumpForce = 550f;
     private bool readyToJump = true;
     public float jumpCooldown = 0.25f;
@@ -153,7 +160,8 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate() {
         Movement();
     }
-    private Vector2 moveInput = Vector2.zero;   // x = horizontal, y = vertical
+    [HideInInspector]
+    public Vector2 moveInput = Vector2.zero;   // x = horizontal, y = vertical
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
@@ -166,7 +174,7 @@ public class PlayerMovement : MonoBehaviour
         if (context.performed)
             jumpPressed = true;
         else if (context.canceled)
-            jumpPressed = false; // optional � we use performed to trigger
+            jumpPressed = false; // optional — we use performed to trigger
     }
     // Slide: button (we use performed to trigger a slide)
     public void OnSlide(InputAction.CallbackContext context)
@@ -249,13 +257,27 @@ public class PlayerMovement : MonoBehaviour
 
         //Some multipliers
         float multiplier = 1f, multiplierV = 1f;
-        
-        // Movement in air
-        if (!grounded) {
-            multiplier = 0.5f;
-            multiplierV = 0.5f;
+
+        if (!grounded)
+        {
+            Vector3 wishDir =
+                orientation.forward * y +
+                orientation.right * x;
+
+            if (wishDir.magnitude > 0.1f)
+            {
+                rb.AddForce(
+                    wishDir.normalized * airAcceleration * Time.deltaTime,
+                    ForceMode.Acceleration
+                );
+            }
+
+            multiplier = airControlMultiplier;
+            multiplierV = airControlMultiplier;
         }
-        
+
+
+
         // Movement while sliding
         if (grounded && crouching) multiplierV = 0f;
 
@@ -275,12 +297,18 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForce(Vector2.up * jumpForce * 1.5f);
             rb.AddForce(normalVector * jumpForce * 0.5f);
 
-            //If jumping while falling, reset y velocity.
-            Vector3 vel = rb.velocity;
-            if (rb.velocity.y < 0.5f)
-                rb.velocity = new Vector3(vel.x, 0, vel.z);
-            else if (rb.velocity.y > 0)
-                rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
+            Vector3 horizontalVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+            // Apply jump force
+            rb.AddForce(Vector2.up * jumpForce * 1.5f, ForceMode.Impulse);
+            rb.AddForce(normalVector * jumpForce * 0.5f, ForceMode.Impulse);
+
+            // 🔥 Preserve + boost momentum
+            rb.velocity = horizontalVel * jumpMomentumBoost + Vector3.up * rb.velocity.y;
+
+            // Record jump time
+            lastJumpTime = Time.time;
+
 
             Invoke(nameof(ResetJump), jumpCooldown);
         }
@@ -293,7 +321,8 @@ public class PlayerMovement : MonoBehaviour
 
 
     private void CounterMovement(float x, float y, Vector2 mag) {
-        if (!grounded || jumping) return;
+        if (!grounded || jumping || Time.time - lastJumpTime < 0.15f)
+            return;
 
         //Slow down sliding
         if (crouching) {
@@ -433,6 +462,9 @@ public class PlayerMovement : MonoBehaviour
             timer += Time.deltaTime;
             yield return null;
         }
+
+        // 🔥 Preserve slide momentum
+        rb.velocity *= 1.1f;
 
         // Restore height smoothly
         targetHeight = originalHeight;

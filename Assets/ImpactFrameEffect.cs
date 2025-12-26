@@ -13,11 +13,18 @@ public class ImpactFrameEffect : MonoBehaviour
     {
         Instance = this;
     }
-    public void TriggerImpact(int value, float contrast)
+    public void TriggerImpact(float saturation, float contrast)
     {
-       effectMaterial.SetFloat("_Saturation_Layers", value);
+       effectMaterial.SetFloat("_Saturation_Layers", saturation);
         effectMaterial.SetFloat("_Contrast", contrast);
     }
-
+    public void GoBlack()
+    {
+        TriggerImpact(0, 1.5f);
+    }
+    public void GoColor()
+    {
+        TriggerImpact(1.2f, 1.05f);
+    }
    
 }

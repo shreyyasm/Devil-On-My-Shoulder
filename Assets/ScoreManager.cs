@@ -265,20 +265,20 @@ public class ScoreManager : MonoBehaviour
         });
         if(choosed)
         {
-            ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f);
-            LeanTween.delayedCall(0.1f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            ImpactFrameEffect.Instance.GoBlack();
+            LeanTween.delayedCall(0.1f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
-            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f); });
-            LeanTween.delayedCall(0.3f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoBlack(); });
+            LeanTween.delayedCall(0.3f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
-            LeanTween.delayedCall(0.4f, () => { ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f); });
-            LeanTween.delayedCall(0.5f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            LeanTween.delayedCall(0.4f, () => { ImpactFrameEffect.Instance.GoBlack(); });
+            LeanTween.delayedCall(0.5f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
-            LeanTween.delayedCall(0.6f, () => { ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f); });
-            LeanTween.delayedCall(0.7f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            LeanTween.delayedCall(0.6f, () => { ImpactFrameEffect.Instance.GoBlack(); });
+            LeanTween.delayedCall(0.7f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
-            LeanTween.delayedCall(0.8f, () => { ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f); });
-            LeanTween.delayedCall(0.9f, () => { ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f); });
+            LeanTween.delayedCall(0.8f, () => { ImpactFrameEffect.Instance.GoBlack(); });
+            LeanTween.delayedCall(0.9f, () => { ImpactFrameEffect.Instance.GoColor(); });
         }
       
         // lock & hide cursor

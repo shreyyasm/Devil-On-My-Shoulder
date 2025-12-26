@@ -35,7 +35,7 @@ public class PlayerHealth : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ImpactFrameEffect.Instance.TriggerImpact(1, 1.05f);
+        ImpactFrameEffect.Instance.GoColor();
         //volume.profile.TryGetSettings(out chromaticAberration);
         displayedHealth = currentHealth;
         powerUpSelect = FindFirstObjectByType<PowerUpSelect>();
@@ -177,7 +177,7 @@ public class PlayerHealth : MonoBehaviour
             yield return new WaitForSeconds(1f);
             timeLeft--;
         }
-        ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f);
+        ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         ScoreManager.Instance.CalculateOverallScore();
         //countdownDisplay.gameObject.SetActive(false);
@@ -197,7 +197,7 @@ public class PlayerHealth : MonoBehaviour
     }
     public void PlayerDead()
     {
-        ImpactFrameEffect.Instance.TriggerImpact(0, 1.5f);
+        ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         ScoreManager.Instance.CalculateOverallScore();
         //countdownDisplay.gameObject.SetActive(false);

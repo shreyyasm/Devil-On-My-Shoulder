@@ -372,6 +372,7 @@ namespace InfimaGames.LowPolyShooterPack
                 }
             }
         }
+        private Quaternion baseCameraRotation;
 
         private void LateUpdate()
         {
@@ -388,9 +389,19 @@ namespace InfimaGames.LowPolyShooterPack
                 recoilSnappiness * Time.deltaTime
             );
 
-            playerCamera.localRotation =
-                Quaternion.Euler(-currentRecoil.y, currentRecoil.x, 0f);
+            // 🔹 Capture camera rotation AFTER mouse look / sway
+            baseCameraRotation = playerCamera.localRotation;
+
+            // 🔹 Add recoil as an offset (NOT overwrite)
+            Quaternion recoilRotation = Quaternion.Euler(
+                -currentRecoil.y,
+                currentRecoil.x,
+                0f
+            );
+
+            playerCamera.localRotation = baseCameraRotation * recoilRotation;
         }
+
 
         #endregion
 
@@ -472,6 +483,19 @@ namespace InfimaGames.LowPolyShooterPack
       
         }
 
+        private Vector3 GetShootDirectionFromCrosshair()
+        {
+            Ray ray = new Ray(playerCamera.position, playerCamera.forward);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, maximumDistance, mask))
+            {
+                return (hit.point - socket.position).normalized;
+            }
+
+            // If nothing hit, shoot forward to max distance
+            Vector3 targetPoint = playerCamera.position + playerCamera.forward * maximumDistance;
+            return (targetPoint - socket.position).normalized;
+        }
 
         private void FireSingle()
         {
@@ -491,9 +515,10 @@ namespace InfimaGames.LowPolyShooterPack
             animator.Play("Fire", 0, 0.0f);
             ammunitionCurrent--;
 
-            Quaternion rotation = Quaternion.LookRotation(playerCamera.forward);
-            GameObject projectile = BulletPool.GetObject(socket.position, rotation);
+            Quaternion rotation = Quaternion.LookRotation(playerCamera.forward + new Vector3(0.01f,0,0)); 
+            GameObject projectile = BulletPool.GetObject(socket.position, rotation); 
             projectile.GetComponent<Rigidbody>().velocity = projectile.transform.forward * projectileImpulse;
+
 
             if (specialGun == SpecialGuns.Kinematic)
             {
