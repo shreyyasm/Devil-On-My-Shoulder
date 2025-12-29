@@ -245,6 +245,9 @@ public class PlayerMovement : MonoBehaviour
         // Smoothly adjust FOV
         float targetFOV = isSliding ? slideFOV : normalFOV;
         playerCameraMain.fieldOfView = Mathf.Lerp(playerCameraMain.fieldOfView, targetFOV, Time.deltaTime * fovSmoothSpeed);
+
+        
+
     }
     private Quaternion baseRotation;
     void LateUpdate()

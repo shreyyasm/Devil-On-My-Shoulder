@@ -7356,7 +7356,7 @@ MonoBehaviour:
   characterIndex: 1
   moveSpeed: 10000
   jumpForce: 18
-  slideForce: 30
+  slideForce: 35
   maxHealth: 100
   damageMultipler: 50
 --- !u!1 &528168894
@@ -30341,7 +30341,7 @@ Transform:
   m_Children:
   - {fileID: 4274989110718076765}
   m_Father: {fileID: 7384970638552101923}
-  m_LocalEulerAnglesHint: {x: -88.73143, y: 168.9327, z: 101.070244}
+  m_LocalEulerAnglesHint: {x: -62.708763, y: 55.00237, z: -144.71812}
 --- !u!1 &24812588734210238
 GameObject:
   m_ObjectHideFlags: 0
@@ -58212,6 +58212,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4ebd3988249e4049bf0112e887ffa84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerCameraMain: {fileID: 5548010636946841157}
+  kickFOV: 80
+  normalFOV: 90
+  fovSmoothSpeed: 10
+  isKicking: 0
 --- !u!114 &2983808724373048710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58506,7 +58511,7 @@ Transform:
   m_Children:
   - {fileID: 6401419492304907309}
   m_Father: {fileID: 4241178138344848324}
-  m_LocalEulerAnglesHint: {x: 1.3444662, y: -0.7547287, z: 81.88725}
+  m_LocalEulerAnglesHint: {x: 4.558134, y: -5.7917123, z: 80.9659}
 --- !u!4 &3036455424425537484
 Transform:
   m_ObjectHideFlags: 0
@@ -61758,7 +61763,7 @@ Transform:
   m_Children:
   - {fileID: 3034655850910050305}
   m_Father: {fileID: 5051030426730321743}
-  m_LocalEulerAnglesHint: {x: -0.89373684, y: -0.5343684, z: -14.925498}
+  m_LocalEulerAnglesHint: {x: -3.3124857, y: 3.8353179, z: -107.13722}
 --- !u!23 &4250592071424320129
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -61869,7 +61874,7 @@ Transform:
   m_Children:
   - {fileID: 3820585067062061150}
   m_Father: {fileID: 22946418484639394}
-  m_LocalEulerAnglesHint: {x: -1.0345215, y: -10.17632, z: 174.97697}
+  m_LocalEulerAnglesHint: {x: -1.0345193, y: -10.176318, z: 174.97697}
 --- !u!1 &4286663395281008626
 GameObject:
   m_ObjectHideFlags: 0
@@ -64172,7 +64177,7 @@ Transform:
   m_Children:
   - {fileID: 4241178138344848324}
   m_Father: {fileID: 7384970638552101923}
-  m_LocalEulerAnglesHint: {x: -89.57249, y: 46.01187, z: -44.787354}
+  m_LocalEulerAnglesHint: {x: -74.181915, y: 137.06844, z: -34.039955}
 --- !u!4 &5070542382598993038
 Transform:
   m_ObjectHideFlags: 0
