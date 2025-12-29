@@ -5,6 +5,7 @@ using QFSW.MOP2;
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
@@ -75,6 +76,43 @@ public class PlayerMovement : MonoBehaviour
     public Animator speedline;
 
 
+    [Header("Kick Settings")]
+    public float kickCooldown = 1.0f;
+    public float baseKickForce = 12f;
+    public float dashKickMultiplier = 1.6f;
+    public float airKickMultiplier = 1.4f;
+    public float velocityKickMultiplier = 0.05f;
+    public float kickUpwardForce = 2.5f;
+
+    public Transform legKickPoint; // empty object near foot
+    public float kickRadius = 0.6f;
+    public LayerMask enemyLayer;
+
+    private bool canKick = true;
+    private bool kickPressed;
+    public Animator kickAnimator;
+
+    [Header("Kick NavMesh Knockback")]
+    [SerializeField] private float kickGravity = 30f;
+    [SerializeField] private float kickMaxAirTime = 1.2f;
+
+    [SerializeField] private float enemySlideDuration = 0.4f;
+    [SerializeField] private float enemySlideDamping = 8f;
+
+    [SerializeField] private float enemyGroundCheckDistance = 2.5f;
+    [SerializeField] private float enemyGroundCheckRadius = 0.35f;
+    public GameObject KickVFX;
+
+
+
+    [Header("Kick Camera Tilt")]
+    [SerializeField] private float kickTiltAngle = 12f;
+    [SerializeField] private float kickReturnSpeed = 25f;
+    public Animator camAnim;
+    private float currentKickTilt;
+    private float targetKickTilt;
+
+
 
     [Header("Camera Slide FOV")]
     public float slideFOV = 80f;      // FOV during slide
@@ -125,8 +163,8 @@ public class PlayerMovement : MonoBehaviour
         targetHeight = 1.4f;
 
         Shader.Find("Hidden/ImpactFrame");
+        baseRotation = hands.transform.localRotation;
 
-       
     }
 
     void Start()
@@ -167,7 +205,12 @@ public class PlayerMovement : MonoBehaviour
         moveInput = context.ReadValue<Vector2>();
     }
 
-   
+    public void OnKick(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+            kickPressed = true;
+    }
+
     // Jump: Button (performed = pressed)
     public void OnJump(InputAction.CallbackContext context)
     {
@@ -188,6 +231,12 @@ public class PlayerMovement : MonoBehaviour
         CameraTiltSway();
         HandleFootsteps();
 
+        if (kickPressed)
+        {
+            TryKick();
+            kickPressed = false;
+        }
+
         // Smoothly adjust height
         Vector3 scale = transform.localScale;
         scale.y = Mathf.Lerp(scale.y, targetHeight, Time.deltaTime * heightSmoothSpeed);
@@ -196,6 +245,19 @@ public class PlayerMovement : MonoBehaviour
         // Smoothly adjust FOV
         float targetFOV = isSliding ? slideFOV : normalFOV;
         playerCameraMain.fieldOfView = Mathf.Lerp(playerCameraMain.fieldOfView, targetFOV, Time.deltaTime * fovSmoothSpeed);
+    }
+    private Quaternion baseRotation;
+    void LateUpdate()
+    {
+        currentKickTilt = Mathf.Lerp(
+            currentKickTilt,
+            targetKickTilt,
+            Time.deltaTime * kickReturnSpeed
+        );
+
+        Quaternion kickRotation = Quaternion.Euler(0f, 0f, -currentKickTilt);
+
+        hands.transform.localRotation = baseRotation * kickRotation;
     }
 
     /// <summary>
@@ -442,7 +504,7 @@ public class PlayerMovement : MonoBehaviour
         //anim.SetTrigger(boolNameRun);
         audioSource.PlayOneShot(slideSFX, 0.8F);
         originalHeight = transform.localScale.y;
-        targetHeight = slideHeight; // start lowering height
+        //targetHeight = slideHeight; // start lowering height
         speedline.SetTrigger("SpeedLines");
         // Capture input direction at slide start
         Vector3 inputDir = orientation.forward * y + orientation.right * x;
@@ -467,7 +529,7 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity *= 1.1f;
 
         // Restore height smoothly
-        targetHeight = originalHeight;
+        //targetHeight = originalHeight;
         isSliding = false;
         // Wait for cooldown
         yield return new WaitForSeconds(slideCooldown);
@@ -476,9 +538,240 @@ public class PlayerMovement : MonoBehaviour
         //anim.ResetTrigger(boolNameRun);
         speedline.ResetTrigger("SpeedLines");
     }
+    private IEnumerator KickCooldownRoutine()
+    {
+        yield return new WaitForSeconds(kickCooldown);
+        canKick = true;
+    }
+
+    private void TryKick()
+    {
+        if (!canKick) return;
+        kickAnimator.SetTrigger("Kick");
+        camAnim.SetTrigger("Kick");
+        StartCoroutine(KickDelay());
+       
+    }
+    IEnumerator KickDelay()
+    {
+        yield return new WaitForSeconds(0.3f);
+
+        canKick = false;
+        SFXManager.Instance.PlaySFX("Player/Kick", 0.6f);
+        StartCoroutine(KickCooldownRoutine());
+
+        // Detect enemies using leg collider sphere
+        Collider[] hits = Physics.OverlapSphere(
+            legKickPoint.position,
+            kickRadius,
+            enemyLayer
+        );
+
+        if (hits.Length == 0)
+            yield return null;
+
+        float finalKickForce = baseKickForce;
+
+        // 🔥 Scale by player velocity
+        float speed = rb.velocity.magnitude;
+        finalKickForce += speed * velocityKickMultiplier;
+
+        // 🔥 Dash bonus (sliding OR very fast)
+        if (isSliding || speed > maxSpeed * 0.8f)
+            finalKickForce *= dashKickMultiplier;
+
+        // 🔥 Air kick bonus
+        if (!grounded)
+            finalKickForce *= airKickMultiplier;
+        
+        foreach (Collider hit in hits)
+        {
+            
+            Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
+           
+            DoTimeSlow();
+            // 🔥 APPLY NAVMESH KNOCKBACK
+            DoKickKnockback(hit.transform, kickDir, finalKickForce);
+
+           
+            hands.GetComponent<HitstopShake>().DoShake();
+            kickAnimator.GetComponent<HitstopShake>().DoShake();
+
+            ImpactFrameEffect.Instance.GoBlack();
+            LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
+            // Optional: damage call if present
+
+            Enemy enemy = hit.GetComponent<Enemy>();
+            StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
+
+            //Impact VFX
+            Vector3 hitPoint = enemy.transform.position + new Vector3(0,0.55f,0);
+
+            // Normal = direction from surface to attacker
+            Vector3 normal = (transform.position - hitPoint).normalized;
+
+            Quaternion rot = Quaternion.LookRotation(normal);
+
+            Instantiate(KickVFX, hitPoint, rot);
+
+            if (enemy != null)
+            {
+                SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
+                enemy.EnemyHit(15f); // tweakable
+                HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
+               
+                hitstop.DoShake();
+
+            }
+        }
+    }
+    public static IEnumerator ImpactColorCoroutine(
+     SpriteRenderer spriteRenderer,
+     Color impactColor,
+     float duration)
+    {
+        if (spriteRenderer == null)
+            yield break;
+
+        Color originalColor = spriteRenderer.color;
+
+        spriteRenderer.color = impactColor;
+
+        // NOT affected by Time.timeScale
+        yield return new WaitForSecondsRealtime(duration);
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = originalColor;
+    }
+
+    [Header("Time Slow Settings")]
+    [SerializeField] private float slowTimeScale = 0.15f;
+    [SerializeField] private float slowDuration = 1f;
+
+    private Coroutine timeRoutine;
+    public void DoTimeSlow()
+    {
+        if (timeRoutine != null)
+            StopCoroutine(timeRoutine);
+
+        timeRoutine = StartCoroutine(TimeSlowCoroutine());
+    }
+
+    private IEnumerator TimeSlowCoroutine()
+    {
+        // Apply slow motion
+        Time.timeScale = slowTimeScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+
+        // IMPORTANT: use unscaled time
+        yield return new WaitForSecondsRealtime(slowDuration);
+
+        // Restore normal time
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
+        timeRoutine = null;
+    }
+    private void DoKickKnockback(Transform target, Vector3 direction, float force)
+    {
+        StartCoroutine(KickKnockbackCoroutine(target, direction, force));
+    }
+
+    private IEnumerator KickKnockbackCoroutine(Transform target,Vector3 direction,float force)
+    {
+        
+        NavMeshAgent agent = target.GetComponent<NavMeshAgent>();
+        if (agent != null)
+            agent.enabled = false;
+
+        Collider col = target.GetComponent<Collider>();
+        float heightOffset = col != null ? col.bounds.extents.y : 0.5f;
+
+        Vector3 velocity = direction * force;
+        velocity.y = kickUpwardForce;
+
+        float airTimer = 0f;
+        bool groundedEnemy = false;
+
+        // -------- AIR PHASE --------
+        while (!groundedEnemy && airTimer < kickMaxAirTime)
+        {
+            airTimer += Time.deltaTime;
+
+            velocity.y -= kickGravity * Time.deltaTime;
+            target.position += velocity * Time.deltaTime;
+
+            if (velocity.y <= 0f)
+            {
+                Vector3 castOrigin = target.position + Vector3.up * 0.2f;
+
+                if (Physics.SphereCast(
+                    castOrigin,
+                    enemyGroundCheckRadius,
+                    Vector3.down,
+                    out RaycastHit hit,
+                    enemyGroundCheckDistance,
+                    ~0,
+                    QueryTriggerInteraction.Ignore))
+                {
+                    groundedEnemy = true;
+                    target.position = hit.point + Vector3.up * heightOffset;
+                }
+            }
+
+            yield return null;
+        }
+
+        // -------- SLIDE PHASE --------
+        Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
+        float slideTimer = 0f;
+
+        while (slideTimer < enemySlideDuration && horizontalVelocity.magnitude > 0.05f)
+        {
+            slideTimer += Time.deltaTime;
+
+            horizontalVelocity = Vector3.Lerp(
+                horizontalVelocity,
+                Vector3.zero,
+                enemySlideDamping * Time.deltaTime
+            );
+
+            target.position += horizontalVelocity * Time.deltaTime;
+            yield return null;
+        }
+
+        // -------- NAVMESH RECOVERY --------
+        if (agent != null)
+        {
+            if (NavMesh.SamplePosition(target.position, out NavMeshHit navHit, 3f, NavMesh.AllAreas))
+                agent.Warp(navHit.position);
+            else
+                agent.Warp(target.position);
+
+            agent.enabled = true;
+        }
+    }
+    // Called on kick impact frame
+    public void StartKickCameraTilt()
+    {
+        targetKickTilt = kickTiltAngle;
+    }
+
+    // Called near end of kick animation
+    public void EndKickCameraTilt()
+    {
+        targetKickTilt = 0f; // SNAP BACK
+    }
 
 
-   
+    private void OnDrawGizmosSelected()
+    {
+        if (legKickPoint == null) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(legKickPoint.position, kickRadius);
+    }
+
     private void HandleFootsteps()
     {
         if (!grounded) return;

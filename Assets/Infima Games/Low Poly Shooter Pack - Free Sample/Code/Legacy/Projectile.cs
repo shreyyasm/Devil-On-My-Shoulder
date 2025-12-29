@@ -258,7 +258,7 @@ public class Projectile : MonoBehaviour {
         }
 
 
-        if (collision.gameObject.layer != 16 && specialBullets != SpecialBullets.Eliminator)
+        if (collision.gameObject.layer != 16 && specialBullets != SpecialBullets.Eliminator && specialBullets != SpecialBullets.Ricocheter)
         {
             ContactPoint contact = collision.contacts[0];
             Quaternion rot = Quaternion.FromToRotation(Vector3.forward, contact.normal);

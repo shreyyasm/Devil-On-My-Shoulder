@@ -116,7 +116,7 @@ public class Enemy : MonoBehaviour
         health -= damageValue;
 
         BloodPool.GetObject().transform.position = transform.position;
-        AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
+        //AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
         ScoreManager.Instance.RegisterShotHit();
         if (health <= 0)
         {
@@ -149,13 +149,13 @@ public class Enemy : MonoBehaviour
             //gameObject.SetActive(false);
 
         }
-        if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
-            spriteRenderer.color = collisionColorYellow;
+        //if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
+        //    spriteRenderer.color = collisionColorYellow;
 
-        else if (health <= maxHealth / 2.5)
-            spriteRenderer.color = collisionColorRed;
-        else
-            spriteRenderer.color = Color.white;
+        //else if (health <= maxHealth / 2.5)
+        //    spriteRenderer.color = collisionColorRed;
+        //else
+        //    spriteRenderer.color = Color.white;
     }
     private void OnCollisionEnter(Collision collision)
     {
@@ -211,9 +211,9 @@ public class Enemy : MonoBehaviour
         {
             if(!slashEnemy)
             {
-                HurtPlayer();
-                collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
-                collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+                //HurtPlayer();
+                //collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
+                //collision.gameObject.GetComponent<PlayerHealth>().hit = true;
 
                 if(EyeEnemy)
                     SFXManager.Instance.PlayNPC_SFX(AttackAudioSource, $"Enemy/EyeAttack", 1f);
@@ -228,18 +228,18 @@ public class Enemy : MonoBehaviour
                     AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
 
                 }
-                ImpactFrameEffect.Instance.GoBlack();
-                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+                //ImpactFrameEffect.Instance.GoBlack();
+                //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
             }
             else
             {
                 
-                collision.gameObject.GetComponent<ExplosionScript>().Slash();
+                //collision.gameObject.GetComponent<ExplosionScript>().Slash();
 
-                if (PowerUpSelect.Instance.playerShielded) return;
-                HurtPlayer();
-                collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
-                collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+                //if (PowerUpSelect.Instance.playerShielded) return;
+                //HurtPlayer();
+                //collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
+                //collision.gameObject.GetComponent<PlayerHealth>().hit = true;
 
             }
 

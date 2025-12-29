@@ -164,6 +164,15 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Kick"",
+                    ""type"": ""Button"",
+                    ""id"": ""51ba51e7-a023-4022-a8cf-2adb25f6fc35"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Inspect"",
                     ""type"": ""Button"",
                     ""id"": ""f2d17bd7-8d54-496b-99fd-8cb954650514"",
@@ -745,6 +754,28 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
                     ""action"": ""Scroll"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ae66089e-2717-42ed-97fd-0323305f45ee"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Kick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0127c1d5-8fee-4a65-9652-a4fd2cc1a268"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Kick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -794,6 +825,7 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
         m_Player_Holster = m_Player.FindAction("Holster", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
+        m_Player_Kick = m_Player.FindAction("Kick", throwIfNotFound: true);
         m_Player_Inspect = m_Player.FindAction("Inspect", throwIfNotFound: true);
         m_Player_LockCursor = m_Player.FindAction("Lock Cursor", throwIfNotFound: true);
         m_Player_InventoryNext = m_Player.FindAction("Inventory Next", throwIfNotFound: true);
@@ -894,6 +926,7 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Holster;
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Run;
+    private readonly InputAction m_Player_Kick;
     private readonly InputAction m_Player_Inspect;
     private readonly InputAction m_Player_LockCursor;
     private readonly InputAction m_Player_InventoryNext;
@@ -949,6 +982,10 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Run".
         /// </summary>
         public InputAction @Run => m_Wrapper.m_Player_Run;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Kick".
+        /// </summary>
+        public InputAction @Kick => m_Wrapper.m_Player_Kick;
         /// <summary>
         /// Provides access to the underlying input action "Player/Inspect".
         /// </summary>
@@ -1047,6 +1084,9 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
             @Run.started += instance.OnRun;
             @Run.performed += instance.OnRun;
             @Run.canceled += instance.OnRun;
+            @Kick.started += instance.OnKick;
+            @Kick.performed += instance.OnKick;
+            @Kick.canceled += instance.OnKick;
             @Inspect.started += instance.OnInspect;
             @Inspect.performed += instance.OnInspect;
             @Inspect.canceled += instance.OnInspect;
@@ -1118,6 +1158,9 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
             @Run.started -= instance.OnRun;
             @Run.performed -= instance.OnRun;
             @Run.canceled -= instance.OnRun;
+            @Kick.started -= instance.OnKick;
+            @Kick.performed -= instance.OnKick;
+            @Kick.canceled -= instance.OnKick;
             @Inspect.started -= instance.OnInspect;
             @Inspect.performed -= instance.OnInspect;
             @Inspect.canceled -= instance.OnInspect;
@@ -1276,6 +1319,13 @@ public partial class @IA_Player: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRun(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Kick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnKick(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Inspect" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

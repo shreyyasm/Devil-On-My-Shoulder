@@ -483,20 +483,6 @@ namespace InfimaGames.LowPolyShooterPack
       
         }
 
-        private Vector3 GetShootDirectionFromCrosshair()
-        {
-            Ray ray = new Ray(playerCamera.position, playerCamera.forward);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, maximumDistance, mask))
-            {
-                return (hit.point - socket.position).normalized;
-            }
-
-            // If nothing hit, shoot forward to max distance
-            Vector3 targetPoint = playerCamera.position + playerCamera.forward * maximumDistance;
-            return (targetPoint - socket.position).normalized;
-        }
-
         private void FireSingle()
         {
             if (!HasAmmunition()) return;
