@@ -23,4 +23,9 @@ public class CharacterData : ScriptableObject
 
     [Header("Damage")]
     public float damageMultiplier = 100f;
+
+
+    [Header("Ability Data")]
+    public float duration = 3f;
+    public float rechargeTime = 5f;
 }

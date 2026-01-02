@@ -182,20 +182,20 @@ public class Enemy : MonoBehaviour
                 //Instantiate(coin, transform.position, Quaternion.identity);
 
 
-                GameObject obj = batteryLife.GetObject();
-                obj.transform.position = transform.position;
+                //GameObject obj = batteryLife.GetObject();
+                //obj.transform.position = transform.position;
 
                 //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
-                Rigidbody rb = obj.GetComponent<Rigidbody>();
-                if (rb != null)
-                {
-                    // Give it an upward "pop"
-                    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
-                }
+                //Rigidbody rb = obj.GetComponent<Rigidbody>();
+                //if (rb != null)
+                //{
+                //    // Give it an upward "pop"
+                //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
+                //}
                 ScoreManager.Instance.Kills++;
                 KillStreak.Instance.KilledEnemy();
-                EnemyPool.Release(gameObject);
-                   //gameObject.SetActive(false);
+                //EnemyPool.Release(gameObject);
+                   gameObject.SetActive(false);
 
             }
 

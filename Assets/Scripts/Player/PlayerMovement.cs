@@ -108,7 +108,6 @@ public class PlayerMovement : MonoBehaviour
     [Header("Kick Camera Tilt")]
     [SerializeField] private float kickTiltAngle = 12f;
     [SerializeField] private float kickReturnSpeed = 25f;
-    public Animator camAnim;
     private float currentKickTilt;
     private float targetKickTilt;
 
@@ -551,12 +550,34 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!canKick) return;
         kickAnimator.SetTrigger("Kick");
-        camAnim.SetTrigger("Kick");
+
         StartCoroutine(KickDelay());
-       
+        StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f)); // time in seconds
+
     }
+    public IEnumerator LerpCameraRotation(Vector3 targetEuler,float duration)
+    {
+        yield return new WaitForSeconds(0.24f);
+        Quaternion startRot = playerCameraMain.transform.localRotation;
+        Quaternion targetRot = Quaternion.Euler(targetEuler);
+
+        float t = 0f;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+            playerCameraMain.transform.localRotation =
+                Quaternion.Slerp(startRot, targetRot, t);
+            yield return null;
+        }
+
+        // Snap exactly at end
+        playerCameraMain.transform.localRotation = targetRot;
+    }
+
     IEnumerator KickDelay()
     {
+        
         yield return new WaitForSeconds(0.3f);
 
         canKick = false;
