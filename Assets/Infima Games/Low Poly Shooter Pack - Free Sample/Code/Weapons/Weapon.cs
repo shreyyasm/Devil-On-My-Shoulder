@@ -200,6 +200,9 @@ namespace InfimaGames.LowPolyShooterPack
         private float laserTickTimer;
 
 
+        
+
+
         #endregion
 
         #region UNITY
@@ -437,7 +440,7 @@ namespace InfimaGames.LowPolyShooterPack
             return gunType == GunType.Automatic;
         }
 
-        public override float GetRateOfFire() => roundsPerMinutes;
+        public override float GetRateOfFire() => roundsPerMinutes * Character.playerMovement.characterAbilities.GetFireRateModifier();
         public override bool IsFull() => ammunitionCurrent == ammunitionTotal;
         public override bool isChargedBeam() => gunType == GunType.ChargedBeam;
         public override bool IsLaserBeam() => gunType == GunType.LaserBeam;

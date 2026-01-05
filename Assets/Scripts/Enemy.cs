@@ -126,27 +126,31 @@ public class Enemy : MonoBehaviour
 
             //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
             ImpactFrameEffect.Instance.GoBlack();
-            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+            LeanTween.delayedCall(0.2f, () =>
+            {
+                ImpactFrameEffect.Instance.GoColor();
+            }).setIgnoreTimeScale(true);
+
 
             AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
             AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
             //Instantiate(coin, transform.position, Quaternion.identity);
 
 
-            GameObject obj = batteryLife.GetObject();
-            obj.transform.position = transform.position;
+            //GameObject obj = batteryLife.GetObject();
+            //obj.transform.position = transform.position;
 
-            //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
-            Rigidbody rb = obj.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                // Give it an upward "pop"
-                rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
-            }
+            ////SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
+            //Rigidbody rb = obj.GetComponent<Rigidbody>();
+            //if (rb != null)
+            //{
+            //    // Give it an upward "pop"
+            //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
+            //}
             ScoreManager.Instance.Kills++;
             KillStreak.Instance.KilledEnemy();
-            EnemyPool.Release(gameObject);
-            //gameObject.SetActive(false);
+            //EnemyPool.Release(gameObject);
+            gameObject.SetActive(false);
 
         }
         //if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)

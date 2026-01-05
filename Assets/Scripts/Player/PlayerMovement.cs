@@ -73,7 +73,7 @@ public class PlayerMovement : MonoBehaviour
 
     public AudioClip slideSFX;
     public Animator anim;
-    public Animator speedline;
+    public GameObject speedline;
 
 
     [Header("Kick Settings")]
@@ -147,6 +147,8 @@ public class PlayerMovement : MonoBehaviour
     public Slider HealthSlider;
     public Slider AgilitySlider;
     public Slider DamageSlider;
+    [HideInInspector]
+    public CharacterAbilities characterAbilities;
 
    
     public void LoadSliderPlayerData()
@@ -157,6 +159,7 @@ public class PlayerMovement : MonoBehaviour
     }
     void Awake() {
         rb = GetComponent<Rigidbody>();
+        characterAbilities = GetComponent<CharacterAbilities>();    
         if(Instance == null)
             Instance = this;
         targetHeight = 1.4f;
@@ -226,6 +229,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Update() {
+
         MyInput();
         CameraTiltSway();
         HandleFootsteps();
@@ -241,11 +245,17 @@ public class PlayerMovement : MonoBehaviour
         scale.y = Mathf.Lerp(scale.y, targetHeight, Time.deltaTime * heightSmoothSpeed);
         transform.localScale = scale;
 
-        // Smoothly adjust FOV
         float targetFOV = isSliding ? slideFOV : normalFOV;
-        playerCameraMain.fieldOfView = Mathf.Lerp(playerCameraMain.fieldOfView, targetFOV, Time.deltaTime * fovSmoothSpeed);
 
-        
+        if (Mathf.Abs(playerCameraMain.fieldOfView - targetFOV) > 0.05f)
+        {
+            playerCameraMain.fieldOfView = Mathf.Lerp(
+                playerCameraMain.fieldOfView,
+                targetFOV,
+                Time.deltaTime * fovSmoothSpeed
+            );
+        }
+
 
     }
     private Quaternion baseRotation;
@@ -346,8 +356,10 @@ public class PlayerMovement : MonoBehaviour
         if (grounded && crouching) multiplierV = 0f;
 
         //Apply forces to move player
-        rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier);
+        rb.AddForce(orientation.transform.forward * y * moveSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier * multiplierV);
+        rb.AddForce(orientation.transform.right * x * moveSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier );
+
+      
     }
 
     private void Jump()
@@ -507,7 +519,7 @@ public class PlayerMovement : MonoBehaviour
         audioSource.PlayOneShot(slideSFX, 0.8F);
         originalHeight = transform.localScale.y;
         //targetHeight = slideHeight; // start lowering height
-        speedline.SetTrigger("SpeedLines");
+        speedline.SetActive(true);
         // Capture input direction at slide start
         Vector3 inputDir = orientation.forward * y + orientation.right * x;
         if (inputDir.magnitude < 0.1f)
@@ -519,14 +531,14 @@ public class PlayerMovement : MonoBehaviour
         while (timer < slideDuration)
         {
             // Move in input direction
-            Vector3 vel = inputDir * slideForce;
+            Vector3 vel = inputDir * slideForce * characterAbilities.GetSlideSpeedModifier();
             vel.y = rb.velocity.y; // preserve vertical velocity
             rb.velocity = vel;
 
             timer += Time.deltaTime;
             yield return null;
         }
-
+        speedline.SetActive(false);
         // 🔥 Preserve slide momentum
         rb.velocity *= 1.1f;
 
@@ -538,7 +550,7 @@ public class PlayerMovement : MonoBehaviour
         readyToSlide = true;
         isSliding = false;
         //anim.ResetTrigger(boolNameRun);
-        speedline.ResetTrigger("SpeedLines");
+       
     }
     private IEnumerator KickCooldownRoutine()
     {

@@ -1,8 +1,14 @@
 ﻿using QFSW.MOP2;
 using System.Collections;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using static UnityEngine.GraphicsBuffer;
+
+
 
 public class CharacterAbilities : MonoBehaviour
 {
@@ -36,7 +42,16 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private bool recharging;
 
     private bool abilityPressed;
+    private Quaternion baseCameraRotation;
 
+    [Header("Camera FOV")]
+    [SerializeField] private Camera playerCam;
+    [SerializeField] private float fovSmoothSpeed = 12f; // how fast it blends
+
+    private float targetFOV;
+    private bool fovTransitionActive;
+
+    #region Ability1_Fields
     // ================= ABILITY 1 : DEVIL DUAL GUNS =================
 
     [Header("Ability 1 - Devil Dual Guns")]
@@ -57,6 +72,7 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private AudioClip audioClipFire;
     public AudioSource audioSource;
 
+    //Ability 1 Settings
 
     [Header("Ability 1 Fire Rate Scaling")]
     [SerializeField] private float startFireInterval = 0.18f;
@@ -91,10 +107,44 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private float targetIconSmoothTime = 0.06f; // lower = faster
     private Vector3 targetIconVelocity;
 
+    #endregion
 
 
+    #region Ability2_Fields
+    //Ability 2 Settings
+    [Header("Ability 2 - Sutaa")]
+    public bool Ability2_Active;
+    [SerializeField] public float movementSpeedModifer;
+    [SerializeField] public float slideSpeedModifer;
+    [SerializeField] public float fireRateModifer;
+    [SerializeField] public bool healthStable;
+    #endregion
 
+    #region Ability3_Fields
+    [Header("Ability 3 - Shield Ricochet")]
+    public GameObject shieldSaw;
+    public GameObject shieldParent;
+    [SerializeField] private float ricochetSpeed = 65f;
+    [SerializeField] private float shieldRange = 50f;
+    [SerializeField] private float ricochetDamage = 120f;
+    [SerializeField] private float hitRadius = 1.2f;
+    [SerializeField] private int maxRicochetCount = 5;
+    [SerializeField] private float retargetDelay = 0.05f;
+    public GameObject speedLines;
 
+    [SerializeField] private LayerMask ricochetEnemyLayer;
+
+    private Coroutine ability3Routine;
+    private bool isRicocheting;
+
+    [Header("Time Slow Settings")]
+    [SerializeField] private float slowTimeScale = 0.15f;
+    [SerializeField] private float slowDuration = 1f;
+    [SerializeField] private Volume postProcessVolume;
+    private MotionBlur motionBlur;
+    private Coroutine timeRoutine;
+ 
+    #endregion
 
 
     // ===============================================================
@@ -102,10 +152,25 @@ public class CharacterAbilities : MonoBehaviour
     private void Awake()
     {
         ResolveAbilityData();
+        if (postProcessVolume == null)
+        {
+            Debug.LogError("Post Process Volume not assigned!");
+            return;
+        }
+
+
+        if (!postProcessVolume.profile.TryGet(out motionBlur))
+        {
+            Debug.LogError("Motion Blur not found in Volume Profile!");
+        }
     }
 
     private void Start()
     {
+        if (playerCam == null)
+            playerCam = GetComponentInChildren<Camera>();
+
+        SetMotionBlur(false);
         CacheAbilityValues();
 
         if (leftGun != null)
@@ -126,11 +191,25 @@ public class CharacterAbilities : MonoBehaviour
     {
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
-;
+
+        if (!fovTransitionActive)
+            return;
+
+        if (!fovTransitionActive) return;
+
+        playerCam.fieldOfView = Mathf.Lerp(
+            playerCam.fieldOfView,
+            targetFOV,
+            fovSmoothSpeed * Time.deltaTime
+        );
+
+        if (Mathf.Abs(playerCam.fieldOfView - targetFOV) < 0.05f)
+        {
+            playerCam.fieldOfView = targetFOV;
+            fovTransitionActive = false;
+        }
+
     }
-
-    private Quaternion baseCameraRotation;
-
     private void LateUpdate()
     {
         // Smooth recoil return
@@ -158,12 +237,16 @@ public class CharacterAbilities : MonoBehaviour
 
         playerCamera.localRotation = baseCameraRotation * recoilRotation;
     }
+
+
+
     // ================= INPUT =================
     public void OnAbility(InputAction.CallbackContext context)
     {
         if (context.performed)
             abilityPressed = true;
     }
+
 
     // ================= DATA =================
     private void ResolveAbilityData()
@@ -233,6 +316,13 @@ public class CharacterAbilities : MonoBehaviour
         if (Ability == AbilityType.Ability1)
             StartAbility1();
 
+        if (Ability == AbilityType.Ability2)
+            StartAbility2();
+
+        if (Ability == AbilityType.Ability3)
+            StartAbility3();
+
+
         Debug.Log($"{Ability} Activated");
     }
 
@@ -245,9 +335,23 @@ public class CharacterAbilities : MonoBehaviour
         if (Ability == AbilityType.Ability1)
             StopAbility1();
 
+        if (Ability == AbilityType.Ability2)
+            StopAbility2();
+
+        if (Ability == AbilityType.Ability3)
+            StopAbility3();
+
+
         Debug.Log($"{Ability} Ended");
     }
+    public void SetTargetFOV(float newFOV, float transitionSpeed)
+    {
+        targetFOV = newFOV;
+        fovSmoothSpeed = transitionSpeed;
+        fovTransitionActive = true;
+    }
 
+    #region Ability1
     // ================= ABILITY 1 =================
 
     private void StartAbility1()
@@ -259,6 +363,8 @@ public class CharacterAbilities : MonoBehaviour
         ability1Routine = StartCoroutine(Ability1FireLoop());
 
         TargetIconCanvas.SetActive(true);
+        SetTargetFOV(85f, 10f);
+
     }
     private IEnumerator Ability1FireLoop()
     {
@@ -286,6 +392,7 @@ public class CharacterAbilities : MonoBehaviour
 
     private void StopAbility1()
     {
+        SetTargetFOV(90f, 10f);
         if (ability1Routine != null)
             StopCoroutine(ability1Routine);
 
@@ -487,4 +594,281 @@ public class CharacterAbilities : MonoBehaviour
 
         return 1f;
     }
+    #endregion
+
+    #region Ability2
+    public void StartAbility2()
+    {
+        Ability2_Active = true;
+        SetTargetFOV(120f, 10f);
+        healthStable = true;
+    }
+    public void StopAbility2()
+    {
+        Ability2_Active = false;
+        SetTargetFOV(90f, 10f);
+        healthStable = false;
+    }
+
+    public float GetMovementSpeedModifier()
+    {
+        return Ability2_Active ? movementSpeedModifer : 1f;
+    }
+
+    public float GetSlideSpeedModifier()
+    {
+        return Ability2_Active ? slideSpeedModifer : 1f;
+    }
+
+    public float GetFireRateModifier()
+    {
+        return Ability2_Active ? fireRateModifer : 1f;
+    }
+    public bool GetHealthModifier()
+    {
+        return Ability2_Active && healthStable;
+    }
+
+    #endregion
+
+    #region Ability3
+
+    private void StartAbility3()
+    {
+        if (isRicocheting)
+            return;
+
+        shieldSaw.SetActive(true);
+        shieldSaw.transform.SetParent(null);
+ 
+        ability3Routine = StartCoroutine(ShieldThrowRoutine());
+
+
+        DoTimeSlow();
+        SetTargetFOV(120f, 10f);
+        speedLines.SetActive(true);
+        SetMotionBlur(true);
+    }
+    private void StopAbility3()
+    {
+        if (ability3Routine != null)
+        {
+            StopCoroutine(ability3Routine);
+            ability3Routine = null;
+        }
+
+        isRicocheting = false;
+
+        speedLines.SetActive(false);
+        SetTargetFOV(90f, 10f);
+        SetMotionBlur(false);
+
+        // Shield reset
+        shieldSaw.transform.SetParent(shieldParent.transform);
+        shieldSaw.transform.localPosition = Vector3.zero;
+        shieldSaw.SetActive(false);
+    }
+
+
+    private IEnumerator ShieldThrowRoutine()
+    {
+        isRicocheting = true;
+
+        Vector3 dir = GetCrosshairDirection().normalized;
+        float traveled = 0f;
+
+        Transform firstHitEnemy = null;
+
+        // Detect EVERYTHING
+        int hitMask = ~0;
+
+        while (traveled < shieldRange)
+        {
+            Vector3 step = dir * ricochetSpeed * Time.deltaTime;
+
+            // 🔥 ONE SphereCast to rule them all
+            if (Physics.SphereCast(
+                shieldSaw.transform.position,
+                hitRadius,
+                dir,
+                out RaycastHit hit,
+                step.magnitude,
+                hitMask,
+                QueryTriggerInteraction.Ignore))
+            {
+                // ✅ ENEMY HIT
+                Enemy enemy = hit.collider.GetComponent<Enemy>();
+                if (enemy != null)
+                {
+                    enemy.EnemyHit(enemy.maxHealth);
+                    firstHitEnemy = enemy.transform;
+                    break;
+                }
+
+                // ❌ HIT ANYTHING ELSE → RETURN
+                yield return ReturnShieldToPlayer();
+                yield break;
+            }
+
+            // No hit → move
+            shieldSaw.transform.position += step;
+            RotateShield(dir);
+
+            traveled += step.magnitude;
+            yield return null;
+        }
+
+        // ❌ No enemy hit at all
+        if (firstHitEnemy == null)
+        {
+            yield return ReturnShieldToPlayer();
+            yield break;
+        }
+
+        // ✅ Enemy hit → ricochet
+        yield return RicochetLoop(firstHitEnemy);
+    }
+
+
+
+    private IEnumerator RicochetLoop(Transform firstTarget)
+    {
+        HashSet<Transform> hitEnemies = new HashSet<Transform>();
+        Transform currentTarget = firstTarget;
+        int hitCount = 1;
+
+        hitEnemies.Add(currentTarget);
+        DoTimeSlow();
+
+        while (hitCount < maxRicochetCount)
+        {
+            Transform nextTarget = FindNextRicochetTarget(hitEnemies);
+            if (nextTarget == null)
+                break;
+
+            Vector3 dir = (nextTarget.position - shieldSaw.transform.position).normalized;
+            RotateShield(dir);
+            yield return null;
+
+            while (Vector3.Distance(shieldSaw.transform.position, nextTarget.position) > hitRadius)
+            {
+                shieldSaw.transform.position += dir * ricochetSpeed * Time.deltaTime;
+                yield return null;
+            }
+
+            Enemy enemy = nextTarget.GetComponent<Enemy>();
+            if (enemy != null)
+                enemy.EnemyHit(enemy.maxHealth);
+
+            hitEnemies.Add(nextTarget);
+            hitCount++;
+
+            yield return new WaitForSecondsRealtime(retargetDelay);
+        }
+
+        yield return ReturnShieldToPlayer();
+    }
+
+
+    private void RotateShield(Vector3 direction)
+    {
+        if (direction.sqrMagnitude < 0.001f)
+            return;
+
+        Quaternion lookRot = Quaternion.LookRotation(direction);
+
+        // 🔧 Model alignment fix (adjust ONLY this if needed)
+        Quaternion modelFix = Quaternion.Euler(0f, 0f, -90f);
+
+        shieldSaw.transform.rotation = lookRot * modelFix;
+    }
+
+
+    private IEnumerator ReturnShieldToPlayer()
+    {
+        Transform player = shieldParent.transform;
+
+        Vector3 dir = (player.position - shieldSaw.transform.position).normalized;
+        RotateShield(-dir);
+
+        while (Vector3.Distance(shieldSaw.transform.position, player.position) > hitRadius)
+        {
+            shieldSaw.transform.position += dir * ricochetSpeed * Time.deltaTime;
+            RotateShield(dir);
+            yield return null;
+        }
+
+        shieldSaw.transform.SetParent(shieldParent.transform);
+        shieldSaw.transform.localPosition = Vector3.zero;
+        shieldSaw.SetActive(false);
+
+        StopAbility3();
+    }
+
+
+    private Transform FindNextRicochetTarget(HashSet<Transform> ignored)
+    {
+        Collider[] hits = Physics.OverlapSphere(
+            shieldSaw.transform.position,
+            autoAimRange,
+            ricochetEnemyLayer
+        );
+
+        float bestDist = float.MaxValue;
+        Transform best = null;
+
+        foreach (Collider c in hits)
+        {
+            if (ignored.Contains(c.transform))
+                continue;
+
+            float d = Vector3.Distance(shieldSaw.transform.position, c.transform.position);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = c.transform;
+            }
+        }
+
+        return best;
+    }
+    private Vector3 GetCrosshairDirection()
+    {
+        return playerCamera.forward;
+    }
+
+    public void DoTimeSlow()
+    {
+        if (timeRoutine != null)
+            StopCoroutine(timeRoutine);
+
+        timeRoutine = StartCoroutine(TimeSlowCoroutine());
+    }
+
+    private IEnumerator TimeSlowCoroutine()
+    {
+        // Apply slow motion
+        Time.timeScale = slowTimeScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+        Debug.Log("Smow-mo");
+
+        // IMPORTANT: use unscaled time
+        yield return new WaitForSecondsRealtime(slowDuration);
+        speedLines.SetActive(false);
+
+        // Restore normal time
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
+        timeRoutine = null;
+    }
+    public void SetMotionBlur(bool enabled)
+    {
+        if (motionBlur == null)
+            return;
+
+        motionBlur.active = enabled;
+    }
+
+    #endregion
 }

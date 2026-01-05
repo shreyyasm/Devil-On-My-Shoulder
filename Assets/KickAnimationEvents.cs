@@ -17,10 +17,22 @@ public class KickAnimationEvents : MonoBehaviour
     }
     private void Update()
     {
-        // Smoothly adjust FOV
         float targetFOVKick = isKicking ? kickFOV : normalFOV;
-        playerCameraMain.fieldOfView = Mathf.Lerp(playerCameraMain.fieldOfView, targetFOVKick, Time.deltaTime * fovSmoothSpeed);
+
+        float newFOV = Mathf.Lerp(
+            playerCameraMain.fieldOfView,
+            targetFOVKick,
+            Time.deltaTime * fovSmoothSpeed
+        );
+
+        if (Mathf.Abs(newFOV - targetFOVKick) < 0.05f)
+        {
+            newFOV = targetFOVKick;
+        }
+
+        playerCameraMain.fieldOfView = newFOV;
     }
+
     public void StartKickCameraTilt()
     {
         if (playerMovement != null)

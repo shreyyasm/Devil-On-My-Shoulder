@@ -198,7 +198,7 @@ public class ScoreManager : MonoBehaviour
         PlayerMovement.readyToSlide = true;
         PlayerMovement.isSliding = false;
         PlayerMovement.anim.ResetTrigger("Running");
-        PlayerMovement.speedline.ResetTrigger("SpeedLines");
+        //PlayerMovement.speedline.ResetTrigger("SpeedLines");
 
         if (choiceCanvas) choiceCanvas.SetActive(true);
         Card1.SetTrigger("GoUp");
@@ -260,7 +260,7 @@ public class ScoreManager : MonoBehaviour
             PlayerMovement.readyToSlide = true;
             PlayerMovement.isSliding = false;
             PlayerMovement.anim.ResetTrigger("Running");
-            PlayerMovement.speedline.ResetTrigger("SpeedLines");
+            //PlayerMovement.speedline.ResetTrigger("SpeedLines");
 
         });
         if(choosed)

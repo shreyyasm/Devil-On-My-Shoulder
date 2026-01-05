@@ -78,9 +78,11 @@ public class PlayerHealth : MonoBehaviour
 
 
        
-        if(drain) return; 
+        if(drain) return;
 
-       
+        if (PlayerMovement.characterAbilities.GetHealthModifier())
+            return;
+
         currentHealth -= healthDecreaseRate * Time.deltaTime;
 
         //if (powerUpSelect.batteryDrain)
@@ -89,10 +91,7 @@ public class PlayerHealth : MonoBehaviour
         //else
         //    healthDecreaseRate = 10;
 
-        if(Input.GetKeyDown(KeyCode.P))
-        {
-            TakeDamage(10);
-        }
+      
     }
    
     public PlayerMovement PlayerMovement;
