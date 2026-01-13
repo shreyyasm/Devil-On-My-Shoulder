@@ -109,7 +109,6 @@ public class CharacterAbilities : MonoBehaviour
 
     #endregion
 
-
     #region Ability2_Fields
     //Ability 2 Settings
     [Header("Ability 2 - Sutaa")]
@@ -143,9 +142,19 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private Volume postProcessVolume;
     private MotionBlur motionBlur;
     private Coroutine timeRoutine;
- 
+
     #endregion
 
+    #region Ability4_Fields
+    [Header("Ability 4 - Chainsaw Rush")]
+    [SerializeField] private GameObject chainsawObject;
+    [SerializeField] private float chainsawMoveSpeed = 25f;
+    [SerializeField] private float chainsawFOV = 110f;
+    [SerializeField] public bool Ability4_Active;
+    private Rigidbody rb;
+    public Transform orientation;
+
+    #endregion
 
     // ===============================================================
 
@@ -167,6 +176,8 @@ public class CharacterAbilities : MonoBehaviour
 
     private void Start()
     {
+        rb = GetComponent<Rigidbody>();
+
         if (playerCam == null)
             playerCam = GetComponentInChildren<Camera>();
 
@@ -208,6 +219,17 @@ public class CharacterAbilities : MonoBehaviour
             playerCam.fieldOfView = targetFOV;
             fovTransitionActive = false;
         }
+
+        if (abilityActive && Ability == AbilityType.Ability4)
+        {
+            Vector3 forwardMove = -orientation.transform.forward * chainsawMoveSpeed;
+            rb.velocity = new Vector3(
+                forwardMove.x,
+                rb.velocity.y,
+                forwardMove.z
+            );
+        }
+
 
     }
     private void LateUpdate()
@@ -322,6 +344,10 @@ public class CharacterAbilities : MonoBehaviour
         if (Ability == AbilityType.Ability3)
             StartAbility3();
 
+        if (Ability == AbilityType.Ability4)
+            StartAbility4();
+
+
 
         Debug.Log($"{Ability} Activated");
     }
@@ -340,6 +366,10 @@ public class CharacterAbilities : MonoBehaviour
 
         if (Ability == AbilityType.Ability3)
             StopAbility3();
+
+        if (Ability == AbilityType.Ability4)
+            StopAbility4();
+
 
 
         Debug.Log($"{Ability} Ended");
@@ -871,4 +901,31 @@ public class CharacterAbilities : MonoBehaviour
     }
 
     #endregion
+
+    private void StartAbility4()
+    {
+        chainsawObject.SetActive(true);
+
+        SetTargetFOV(chainsawFOV, 10f);
+        SetMotionBlur(true);
+        Ability4_Active = true;
+        chainsawObject.SetActive(true);
+
+     
+    }
+
+    private void StopAbility4()
+    {
+        chainsawObject.SetActive(false);
+
+        SetTargetFOV(90f, 10);
+        SetMotionBlur(false);
+
+        Ability4_Active = false;
+        chainsawObject.SetActive(false);
+        // Stop forced movement
+        rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+    }
+
+
 }

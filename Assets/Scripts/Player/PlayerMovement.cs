@@ -4,6 +4,7 @@ using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
@@ -24,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
 
     [Header("Movement Settings")]
+    public int characterindex = 1;
     public float moveSpeed = 4500;
     public float maxSpeed = 20;
     public bool grounded;
@@ -84,13 +86,14 @@ public class PlayerMovement : MonoBehaviour
     public float velocityKickMultiplier = 0.05f;
     public float kickUpwardForce = 2.5f;
 
-    public Transform legKickPoint; // empty object near foot
+
+    public List<Transform> legKickPoint; // empty object near foot
     public float kickRadius = 0.6f;
     public LayerMask enemyLayer;
 
     private bool canKick = true;
     private bool kickPressed;
-    public Animator kickAnimator;
+    public List<Animator> kickAnimator;
 
     [Header("Kick NavMesh Knockback")]
     [SerializeField] private float kickGravity = 30f;
@@ -166,7 +169,7 @@ public class PlayerMovement : MonoBehaviour
 
         Shader.Find("Hidden/ImpactFrame");
         baseRotation = hands.transform.localRotation;
-
+        
     }
 
     void Start()
@@ -178,10 +181,13 @@ public class PlayerMovement : MonoBehaviour
 
         if (playerCam != null)
             initialCamRot = playerCameraMain.transform.localEulerAngles;
+
+
     }
 
     private void ApplyCharacterData()
     {
+        characterindex = PlayerCharacterData.Instance.characterIndex;
 
         // Movement
         moveSpeed = PlayerCharacterData.Instance.moveSpeed;
@@ -195,6 +201,7 @@ public class PlayerMovement : MonoBehaviour
         //Health
         playerHealth.maxHealth = PlayerCharacterData.Instance.maxHealth;
         LoadSliderPlayerData();
+        kickAnimator[characterindex - 1].gameObject.SetActive(true);
     }
 
     private void FixedUpdate() {
@@ -229,7 +236,8 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Update() {
-
+        if (characterAbilities.Ability4_Active)
+            return;
         MyInput();
         CameraTiltSway();
         HandleFootsteps();
@@ -561,7 +569,8 @@ public class PlayerMovement : MonoBehaviour
     private void TryKick()
     {
         if (!canKick) return;
-        kickAnimator.SetTrigger("Kick");
+        
+        kickAnimator[characterindex - 1].SetTrigger("Kick");
 
         StartCoroutine(KickDelay());
         StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f)); // time in seconds
@@ -598,7 +607,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Detect enemies using leg collider sphere
         Collider[] hits = Physics.OverlapSphere(
-            legKickPoint.position,
+            legKickPoint[characterindex - 1].position,
             kickRadius,
             enemyLayer
         );
@@ -631,7 +640,7 @@ public class PlayerMovement : MonoBehaviour
 
            
             hands.GetComponent<HitstopShake>().DoShake();
-            kickAnimator.GetComponent<HitstopShake>().DoShake();
+            kickAnimator[characterindex - 1].GetComponent<HitstopShake>().DoShake();
 
             ImpactFrameEffect.Instance.GoBlack();
             LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
@@ -649,16 +658,16 @@ public class PlayerMovement : MonoBehaviour
             Quaternion rot = Quaternion.LookRotation(normal);
 
             Instantiate(KickVFX, hitPoint, rot);
-
+            //kickAnimator[characterindex - 1].gameObject.SetActive(false);
             if (enemy != null)
             {
                 SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
-                enemy.EnemyHit(15f); // tweakable
+                enemy.EnemyHit(15f,true); // tweakable
                 HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
-               
                 hitstop.DoShake();
 
             }
+           
         }
     }
     public static IEnumerator ImpactColorCoroutine(
@@ -805,7 +814,7 @@ public class PlayerMovement : MonoBehaviour
         if (legKickPoint == null) return;
 
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(legKickPoint.position, kickRadius);
+        Gizmos.DrawWireSphere(legKickPoint[characterindex - 1].position, kickRadius);
     }
 
     private void HandleFootsteps()

@@ -111,7 +111,7 @@ public class Enemy : MonoBehaviour
     }
 
     public ObjectPool EnemyPool;
-    public void EnemyHit(float damageValue)
+    public void EnemyHit(float damageValue, bool HealthUI = false)
     {
         health -= damageValue;
 
@@ -153,13 +153,17 @@ public class Enemy : MonoBehaviour
             gameObject.SetActive(false);
 
         }
-        //if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
-        //    spriteRenderer.color = collisionColorYellow;
+        if(!HealthUI)
+        {
+            if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
+                spriteRenderer.color = collisionColorYellow;
 
-        //else if (health <= maxHealth / 2.5)
-        //    spriteRenderer.color = collisionColorRed;
-        //else
-        //    spriteRenderer.color = Color.white;
+            else if (health <= maxHealth / 2.5)
+                spriteRenderer.color = collisionColorRed;
+            else
+                spriteRenderer.color = Color.white;
+        }
+        
     }
     private void OnCollisionEnter(Collision collision)
     {
