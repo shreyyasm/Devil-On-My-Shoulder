@@ -195,8 +195,8 @@ public class ScoreManager : MonoBehaviour
         // Cancel countdown anytime
         PlayerMovement.GetComponent<PlayerHealth>().StopCountdown();
 
-        PlayerMovement.readyToSlide = true;
-        PlayerMovement.isSliding = false;
+        PlayerMovement.readyToDash = true;
+        PlayerMovement.isDashing = false;
         PlayerMovement.anim.ResetTrigger("Running");
         //PlayerMovement.speedline.ResetTrigger("SpeedLines");
 
@@ -257,8 +257,8 @@ public class ScoreManager : MonoBehaviour
             Card1.ResetTrigger("GoDown");
             Card2.ResetTrigger("GoDown");
 
-            PlayerMovement.readyToSlide = true;
-            PlayerMovement.isSliding = false;
+            PlayerMovement.readyToDash = true;
+            PlayerMovement.isDashing = false;
             PlayerMovement.anim.ResetTrigger("Running");
             //PlayerMovement.speedline.ResetTrigger("SpeedLines");
 

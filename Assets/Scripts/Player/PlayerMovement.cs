@@ -55,18 +55,18 @@ public class PlayerMovement : MonoBehaviour
     public AudioClip jumpSFX;
     public AudioSource audioSource;
 
-    [Header("Slide Settings")]
-    public float slideForce = 15f;
-    public float slideDuration = 0.5f;
-    public float slideCooldown = 1f;
-    public float slideHeight = 0.5f; // target height when sliding
-    public bool isSliding = false;
-    public bool readyToSlide = true;
+    [Header("Dash Settings")]
+    public float dashForce = 15f;
+    public float dashDuration = 0.5f;
+    public float dashCooldown = 1f;
+    public float dashHeight = 0.5f; // target height when sliding
+    public bool isDashing = false;
+    public bool readyToDash = true;
 
     //Slide
     private Vector3 crouchScale = new Vector3(1, 0.5f, 1);
     private Vector3 playerScale;
-    public float slideCounterMovement = 0.2f;
+    public float dashCounterMovement = 0.2f;
 
     // For smooth height change
     private float targetHeight;
@@ -156,9 +156,9 @@ public class PlayerMovement : MonoBehaviour
    
     public void LoadSliderPlayerData()
     {
-        HealthSlider.value = playerHealth.maxHealth;
-        AgilitySlider.value = moveSpeed;
-        DamageSlider.value = 50;
+        //HealthSlider.value = playerHealth.maxHealth;
+        //AgilitySlider.value = moveSpeed;
+        //DamageSlider.value = 50;
     }
     void Awake() {
         rb = GetComponent<Rigidbody>();
@@ -196,12 +196,14 @@ public class PlayerMovement : MonoBehaviour
         jumpForce = PlayerCharacterData.Instance.jumpForce;
 
         // Slide
-        slideForce = PlayerCharacterData.Instance.slideForce;
+        dashForce = PlayerCharacterData.Instance.slideForce;
 
         //Health
         playerHealth.maxHealth = PlayerCharacterData.Instance.maxHealth;
-        LoadSliderPlayerData();
+
         kickAnimator[characterindex - 1].gameObject.SetActive(true);
+        LoadSliderPlayerData();
+        
     }
 
     private void FixedUpdate() {
@@ -234,6 +236,17 @@ public class PlayerMovement : MonoBehaviour
         if (context.performed)
             slidePressed = true;
     }
+    private bool IsForwardInput()
+    {
+        return y > 0.1f;
+    }
+
+
+
+    private bool HasMovementInput()
+    {
+        return Mathf.Abs(x) > 0.1f || Mathf.Abs(y) > 0.1f;
+    }
 
     private void Update() {
         if (characterAbilities.Ability4_Active)
@@ -253,7 +266,7 @@ public class PlayerMovement : MonoBehaviour
         scale.y = Mathf.Lerp(scale.y, targetHeight, Time.deltaTime * heightSmoothSpeed);
         transform.localScale = scale;
 
-        float targetFOV = isSliding ? slideFOV : normalFOV;
+        float targetFOV = isDashing ? slideFOV : normalFOV;
 
         if (Mathf.Abs(playerCameraMain.fieldOfView - targetFOV) > 0.05f)
         {
@@ -295,21 +308,22 @@ public class PlayerMovement : MonoBehaviour
         playerMoving = moveInput.magnitude > 0;
 
         jumping = jumpPressed;
-        if (slidePressed && readyToSlide && (x != 0 || y != 0))
+        if (slidePressed && readyToDash && HasMovementInput())
         {
-            StartCoroutine(Slide());
+            HandleDashOrSlide();
             slidePressed = false;
         }
+
 
     }
 
 
-    
+
 
     private void Movement() {
         //If holding jump && ready to jump, then jump
         if (readyToJump && jumping) Jump();
-        if (isSliding) return;
+        if (isDashing) return;
         //Extra gravity
         rb.AddForce(Vector3.down * Time.deltaTime * 20);
         
@@ -372,31 +386,25 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump()
     {
-        if (grounded && readyToJump)
-        {
-            readyToJump = false;
+        if (!grounded || !readyToJump)
+            return;
 
-            audioSource.PlayOneShot(jumpSFX, 0.7f);
-            //Add jump forces
-            rb.AddForce(Vector2.up * jumpForce * 1.5f);
-            rb.AddForce(normalVector * jumpForce * 0.5f);
+        // 🚨 CANCEL SLIDE FIRST
+        CancelSlideImmediately();
 
-            Vector3 horizontalVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+        readyToJump = false;
 
-            // Apply jump force
-            rb.AddForce(Vector2.up * jumpForce * 1.5f, ForceMode.Impulse);
-            rb.AddForce(normalVector * jumpForce * 0.5f, ForceMode.Impulse);
+        audioSource.PlayOneShot(jumpSFX, 0.7f);
 
-            // 🔥 Preserve + boost momentum
-            rb.velocity = horizontalVel * jumpMomentumBoost + Vector3.up * rb.velocity.y;
+        Vector3 horizontalVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+        rb.velocity = horizontalVel * jumpMomentumBoost;
 
-            // Record jump time
-            lastJumpTime = Time.time;
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
 
-
-            Invoke(nameof(ResetJump), jumpCooldown);
-        }
+        lastJumpTime = Time.time;
+        Invoke(nameof(ResetJump), jumpCooldown);
     }
+
 
     private void ResetJump()
     {
@@ -410,7 +418,7 @@ public class PlayerMovement : MonoBehaviour
 
         //Slow down sliding
         if (crouching) {
-            rb.AddForce(moveSpeed * Time.deltaTime * -rb.velocity.normalized * slideCounterMovement);
+            rb.AddForce(moveSpeed * Time.deltaTime * -rb.velocity.normalized * dashCounterMovement);
             return;
         }
 
@@ -517,11 +525,144 @@ public class PlayerMovement : MonoBehaviour
         // Smoothly rotate
         playerCameraMain.transform.localRotation = Quaternion.Lerp(playerCameraMain.transform.localRotation, targetRot, Time.deltaTime * swaySmooth);
     }
-   
+    private void HandleDashOrSlide()
+    {
+        if (!grounded)
+        {
+            // AIR → always dash
+            StartCoroutine(Dash());
+            return;
+        }
+
+        // GROUNDED
+        if (IsForwardInput())
+        {
+            slideRoutine = StartCoroutine(Slide()); // forward = slide
+        }
+        else
+        {
+            StartCoroutine(Dash()); // left/right/back = dash
+        }
+    }
+    [SerializeField] private float slideDownY = 1.4f;
+    [SerializeField] private float slideUpY = 1.8f;
+    [SerializeField] private float heightLerpSpeed = 10f;
+    public GameObject rootGameobject;
+
     private IEnumerator Slide()
     {
-        isSliding = true;
-        readyToSlide = false;
+        isDashing = true;
+        readyToDash = false;
+
+        audioSource.PlayOneShot(slideSFX, 0.8f);
+        speedline.SetActive(true);
+
+ 
+     
+        Transform root = rootGameobject.transform;
+
+        // -------- SLIDE DOWN (Y ONLY) --------
+        while (Mathf.Abs(root.position.y - slideDownY) > 0.01f)
+        {
+            float newY = Mathf.Lerp(
+                root.position.y,
+                slideDownY,
+                Time.deltaTime * heightLerpSpeed
+            );
+
+            root.position = new Vector3(
+                root.position.x,
+                newY,
+                root.position.z
+            );
+
+            yield return null;
+        }
+
+        // Capture input direction ONCE
+        Vector3 inputDir = orientation.forward * y + orientation.right * x;
+        if (inputDir.magnitude < 0.1f)
+            inputDir = orientation.forward;
+
+        inputDir.Normalize();
+
+        float timer = 0f;
+
+        // -------- SLIDE MOVEMENT --------
+        while (timer < dashDuration)
+        {
+            Vector3 vel = inputDir * dashForce * characterAbilities.GetSlideSpeedModifier();
+            vel.y = rb.velocity.y; // preserve vertical velocity
+            rb.velocity = vel;
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        speedline.SetActive(false);
+        rb.velocity *= 1.1f;
+
+        // -------- SLIDE UP (Y ONLY) --------
+        while (Mathf.Abs(root.position.y - slideUpY) > 0.01f)
+        {
+            float newY = Mathf.Lerp(
+                root.position.y,
+                slideUpY,
+                Time.deltaTime * heightLerpSpeed
+            );
+
+            root.position = new Vector3(
+                root.position.x,
+                newY,
+                root.position.z
+            );
+
+            yield return null;
+        }
+
+        isDashing = false;
+        slideCancelled = false;
+        yield return new WaitForSeconds(dashCooldown);
+        readyToDash = true;
+
+        Debug.Log("Slide");
+    }
+    private Coroutine slideRoutine;
+
+    private bool slideCancelled;
+
+    private void CancelSlideImmediately()
+    {
+        if (!isDashing)
+            return;
+
+        // 🔥 STOP the running Slide coroutine
+        if (slideRoutine != null)
+        {
+            StopCoroutine(slideRoutine);
+            slideRoutine = null;
+        }
+
+        Transform root = rootGameobject.transform;
+        root.position = new Vector3(
+            root.position.x,
+            slideUpY,   // standing height
+            root.position.z
+        );
+
+        isDashing = false;
+        isDashing = false;
+        slideCancelled = false;
+        readyToDash = true;
+        speedline.SetActive(false);
+    }
+
+
+
+    private IEnumerator Dash()
+    {
+        isDashing = true;
+        readyToDash = false;
         //const string boolNameRun = "Running";
         //anim.SetTrigger(boolNameRun);
         audioSource.PlayOneShot(slideSFX, 0.8F);
@@ -536,10 +677,10 @@ public class PlayerMovement : MonoBehaviour
 
         float timer = 0f;
 
-        while (timer < slideDuration)
+        while (timer < dashDuration)
         {
             // Move in input direction
-            Vector3 vel = inputDir * slideForce * characterAbilities.GetSlideSpeedModifier();
+            Vector3 vel = inputDir * dashForce * characterAbilities.GetSlideSpeedModifier();
             vel.y = rb.velocity.y; // preserve vertical velocity
             rb.velocity = vel;
 
@@ -552,13 +693,14 @@ public class PlayerMovement : MonoBehaviour
 
         // Restore height smoothly
         //targetHeight = originalHeight;
-        isSliding = false;
+        isDashing = false;
         // Wait for cooldown
-        yield return new WaitForSeconds(slideCooldown);
-        readyToSlide = true;
-        isSliding = false;
+        yield return new WaitForSeconds(dashCooldown);
+        readyToDash = true;
+        isDashing = false;
         //anim.ResetTrigger(boolNameRun);
-       
+        Debug.Log("Dash");
+
     }
     private IEnumerator KickCooldownRoutine()
     {
@@ -622,7 +764,7 @@ public class PlayerMovement : MonoBehaviour
         finalKickForce += speed * velocityKickMultiplier;
 
         // 🔥 Dash bonus (sliding OR very fast)
-        if (isSliding || speed > maxSpeed * 0.8f)
+        if (isDashing || speed > maxSpeed * 0.8f)
             finalKickForce *= dashKickMultiplier;
 
         // 🔥 Air kick bonus

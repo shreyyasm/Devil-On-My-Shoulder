@@ -6268,7 +6268,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &389321694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8699,9 +8699,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectedCharacter: {fileID: 11400000, guid: edac465c9a8036d44a90e788a682623c, type: 2}
-  characterIndex: 4
+  characterIndex: 1
   moveSpeed: 10000
-  jumpForce: 18
+  jumpForce: 25
   slideForce: 35
   maxHealth: 100
   damageMultipler: 50
@@ -13154,7 +13154,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &801032539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14096,7 +14096,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &854576145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30086,7 +30086,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1674459734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34297,7 +34297,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1964293632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78589,13 +78589,13 @@ MonoBehaviour:
   jumpCooldown: 0.25
   jumpSFX: {fileID: 8300000, guid: 29ce212dec4f89849ad1c5ea10e7e82e, type: 3}
   audioSource: {fileID: 5907842178987159678}
-  slideForce: 30
-  slideDuration: 0.5
-  slideCooldown: 0.8
-  slideHeight: 0.5
-  isSliding: 0
-  readyToSlide: 1
-  slideCounterMovement: 0.2
+  dashForce: 25
+  dashDuration: 0.5
+  dashCooldown: 1
+  dashHeight: 0.5
+  isDashing: 0
+  readyToDash: 1
+  dashCounterMovement: 0.2
   slideSFX: {fileID: 8300000, guid: 974e2d0c2893a7b48b098b72fc60cce9, type: 3}
   anim: {fileID: 205381098732019754}
   speedline: {fileID: 229768563}
@@ -78647,6 +78647,10 @@ MonoBehaviour:
   explosionPrefab: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
   explosionSound: {fileID: 8300000, guid: 53db5a3f0d662b144afda84a68aa8d84, type: 3}
   hands: {fileID: 6007798005602563102}
+  slideDownY: -1.8
+  slideUpY: -0.47
+  heightLerpSpeed: 20
+  rootGameobject: {fileID: 7423825783842180410}
   slowTimeScale: 0.3
   slowDuration: 0.2
 --- !u!114 &8503794986803200625
@@ -78723,7 +78727,7 @@ MonoBehaviour:
   slowDuration: 0.2
   postProcessVolume: {fileID: 62432048}
   chainsawObject: {fileID: 1669577672}
-  chainsawMoveSpeed: 80
+  chainsawMoveSpeed: 70
   chainsawFOV: 120
   Ability4_Active: 0
   orientation: {fileID: 9170376369062593276}

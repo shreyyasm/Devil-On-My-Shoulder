@@ -60,9 +60,9 @@ public class PlayerHealth : MonoBehaviour
         float healthPercent = Mathf.Clamp01(displayedHealth / maxHealth);
 
         // Scale the sprite
-        Vector3 scale = healthBarSprite.transform.localScale;
-        scale.y = healthPercent * maxYScale;
-        healthBarSprite.transform.localScale = scale;
+        //Vector3 scale = healthBarSprite.transform.localScale;
+        //scale.y = healthPercent * maxYScale;
+        //healthBarSprite.transform.localScale = scale;
         //if (regenerateHealth && health <= 100)
         //{
         //    health += Time.deltaTime * 2;

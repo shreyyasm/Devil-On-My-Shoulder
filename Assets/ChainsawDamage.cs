@@ -46,7 +46,7 @@ public class ChainsawDamageOverlap : MonoBehaviour
                 Enemy enemy = c.GetComponent<Enemy>();
                 if (enemy != null)
                 {
-                    enemy.EnemyHit(damagePerTick);
+                    enemy.EnemyHit(enemy.maxHealth);
                 }
             }
 
