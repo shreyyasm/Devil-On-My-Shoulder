@@ -276,6 +276,10 @@ public class PlayerMovement : MonoBehaviour
                 Time.deltaTime * fovSmoothSpeed
             );
         }
+        if (grounded && !isDashing)
+        {
+            standHeightY = rootGameobject.transform.position.y;
+        }
 
 
     }
@@ -308,11 +312,17 @@ public class PlayerMovement : MonoBehaviour
         playerMoving = moveInput.magnitude > 0;
 
         jumping = jumpPressed;
-        if (slidePressed && readyToDash && HasMovementInput())
+        if (slidePressed)
         {
-            HandleDashOrSlide();
+            if (readyToDash && HasMovementInput())
+            {
+                HandleDashOrSlide();
+            }
+
+            // ❌ ALWAYS consume the input
             slidePressed = false;
         }
+
 
 
     }
@@ -513,18 +523,25 @@ public class PlayerMovement : MonoBehaviour
     private void CameraTiltSway()
     {
         if (playerCameraMain == null) return;
+        if (cameraLocked) return; // 🚨 STOP sway during slide
 
-        // Calculate target tilt
-        float tiltZ = -x * swayTiltX; // roll for strafing
-        float tiltX = y * swayTiltY;  // pitch for forward/back
+        float tiltZ = -x * swayTiltX;
+        float tiltX = y * swayTiltY;
 
-        Quaternion targetRot = Quaternion.Euler(initialCamRot.x + tiltX,
-                                                 initialCamRot.y,
-                                                 initialCamRot.z + tiltZ);
+        Quaternion targetRot = Quaternion.Euler(
+            initialCamRot.x + tiltX,
+            initialCamRot.y,
+            initialCamRot.z + tiltZ
+        );
 
-        // Smoothly rotate
-        playerCameraMain.transform.localRotation = Quaternion.Lerp(playerCameraMain.transform.localRotation, targetRot, Time.deltaTime * swaySmooth);
+        playerCameraMain.transform.localRotation =
+            Quaternion.Lerp(
+                playerCameraMain.transform.localRotation,
+                targetRot,
+                Time.deltaTime * swaySmooth
+            );
     }
+
     private void HandleDashOrSlide()
     {
         if (!grounded)
@@ -548,25 +565,38 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float slideUpY = 1.8f;
     [SerializeField] private float heightLerpSpeed = 10f;
     public GameObject rootGameobject;
-
+    private bool cameraLocked;
+    private float standHeightY;
+    private float tempHeight;
     private IEnumerator Slide()
     {
+        Transform root = rootGameobject.transform;
+
+        float startY = standHeightY;
+        tempHeight = standHeightY;
+
+
+        // define EXACT targets
+        float downY = startY - slideDownY; // slide down amount
+        float upY = startY;        // return EXACTLY here
+
+
+        cameraLocked = true;
+        cameralerpRoutine = StartCoroutine(LerpCameraRotation(new Vector3(0f, 0f, 8f), 0.8f, 100,0)); // time in seconds
+
         isDashing = true;
         readyToDash = false;
 
         audioSource.PlayOneShot(slideSFX, 0.8f);
         speedline.SetActive(true);
+        kickAnimator[characterindex - 1].SetTrigger("Slide");
 
- 
-     
-        Transform root = rootGameobject.transform;
 
-        // -------- SLIDE DOWN (Y ONLY) --------
-        while (Mathf.Abs(root.position.y - slideDownY) > 0.01f)
+        while (Mathf.Abs(root.position.y - downY) > 0.01f)
         {
             float newY = Mathf.Lerp(
                 root.position.y,
-                slideDownY,
+                downY,
                 Time.deltaTime * heightLerpSpeed
             );
 
@@ -579,6 +609,8 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
         }
 
+
+
         // Capture input direction ONCE
         Vector3 inputDir = orientation.forward * y + orientation.right * x;
         if (inputDir.magnitude < 0.1f)
@@ -587,7 +619,7 @@ public class PlayerMovement : MonoBehaviour
         inputDir.Normalize();
 
         float timer = 0f;
-
+       
         // -------- SLIDE MOVEMENT --------
         while (timer < dashDuration)
         {
@@ -603,11 +635,11 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity *= 1.1f;
 
         // -------- SLIDE UP (Y ONLY) --------
-        while (Mathf.Abs(root.position.y - slideUpY) > 0.01f)
+        while (Mathf.Abs(root.position.y - upY) > 0.01f)
         {
             float newY = Mathf.Lerp(
                 root.position.y,
-                slideUpY,
+                upY,
                 Time.deltaTime * heightLerpSpeed
             );
 
@@ -620,15 +652,18 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
         }
 
+
+
         isDashing = false;
         slideCancelled = false;
+        //cameraLocked = false;
+        Debug.Log("Slide");
         yield return new WaitForSeconds(dashCooldown);
         readyToDash = true;
-
-        Debug.Log("Slide");
+       
     }
     private Coroutine slideRoutine;
-
+    private Coroutine cameralerpRoutine;
     private bool slideCancelled;
 
     private void CancelSlideImmediately()
@@ -641,16 +676,19 @@ public class PlayerMovement : MonoBehaviour
         {
             StopCoroutine(slideRoutine);
             slideRoutine = null;
+            StopCoroutine(cameralerpRoutine);
+            cameralerpRoutine = null;
         }
-
         Transform root = rootGameobject.transform;
         root.position = new Vector3(
             root.position.x,
-            slideUpY,   // standing height
+            standHeightY,
             root.position.z
         );
 
-        isDashing = false;
+
+        cameraLocked = false;
+
         isDashing = false;
         slideCancelled = false;
         readyToDash = true;
@@ -715,28 +753,53 @@ public class PlayerMovement : MonoBehaviour
         kickAnimator[characterindex - 1].SetTrigger("Kick");
 
         StartCoroutine(KickDelay());
-        StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f)); // time in seconds
+        if(!cameraLocked)
+            StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f, 100,0.24f)); // time in seconds
 
     }
-    public IEnumerator LerpCameraRotation(Vector3 targetEuler,float duration)
+    public IEnumerator LerpCameraRotation(
+     Vector3 targetEuler,
+     float duration,
+     float rotationSpeed,
+     float delay)
     {
-        yield return new WaitForSeconds(0.24f);
-        Quaternion startRot = playerCameraMain.transform.localRotation;
+        yield return new WaitForSeconds(delay);
+
+        Transform cam = playerCameraMain.transform;
         Quaternion targetRot = Quaternion.Euler(targetEuler);
 
-        float t = 0f;
+        float elapsed = 0f;
+        bool reachedTarget = false;
 
-        while (t < 1f)
+        while (elapsed < duration)
         {
-            t += Time.deltaTime / duration;
-            playerCameraMain.transform.localRotation =
-                Quaternion.Slerp(startRot, targetRot, t);
+            if (!reachedTarget)
+            {
+                float angle = Quaternion.Angle(cam.localRotation, targetRot);
+
+                if (angle <= 0.1f)
+                {
+                    reachedTarget = true;
+                }
+                else
+                {
+                    cam.localRotation = Quaternion.RotateTowards(
+                        cam.localRotation,
+                        targetRot,
+                        rotationSpeed * Time.deltaTime
+                    );
+                }
+            }
+
+            elapsed += Time.deltaTime;
             yield return null;
         }
-
-        // Snap exactly at end
-        playerCameraMain.transform.localRotation = targetRot;
+        cameraLocked = false;
+        // Final guarantee
+        cam.localRotation = targetRot;
     }
+
+
 
     IEnumerator KickDelay()
     {
