@@ -411,14 +411,73 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
 
+
+        // 🎥 LOCK CAMERA FOR JUMP
+        cameraLocked = true;
+
+        // stop any previous camera lerp
+        if (cameralerpRoutine != null)
+        {
+            StopCoroutine(cameralerpRoutine);
+            cameralerpRoutine = null;
+        }
+
+        Vector3 jumpTilt = Vector3.zero;
+
+        // Determine dominant axis
+        if (Mathf.Abs(x) > Mathf.Abs(y))
+        {
+            // LEFT / RIGHT
+            if (x < -0.1f)
+            {
+                jumpTilt = new Vector3(0f, 0f, -8f);
+                targetKickTilt = -6;
+            }
+               
+            else if (x > 0.1f)
+            {
+                jumpTilt = new Vector3(0f, 0f, 8f);
+                targetKickTilt = 6;
+            }
+           
+        }
+        else
+        {
+            // FORWARD / BACK
+            if (y > 0.1f)
+                jumpTilt = new Vector3(8f, 0f, 0f);
+            else if (y < -0.1f)
+            {
+                jumpTilt = new Vector3(-8f, 0f, 0f);
+                StartCoroutine(
+                LerpCameraZPosition(-0.1f, 0.5f, 8f, 0f));
+
+            }
+           
+
+        }
+
+        if (jumpTilt != Vector3.zero)
+        {
+            cameralerpRoutine = StartCoroutine(
+                LerpCameraRotation(jumpTilt, 0.5f, 80f, 0f)
+            );
+        }
+        else
+        {
+            cameraLocked = false;
+        }
+
         lastJumpTime = Time.time;
         Invoke(nameof(ResetJump), jumpCooldown);
     }
 
 
+
     private void ResetJump()
     {
         readyToJump = true;
+        //targetKickTilt = 0;
     }
 
 
@@ -794,9 +853,88 @@ public class PlayerMovement : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+
+        // -------- SMOOTH BLEND OUT --------
+        Quaternion startRot = cam.localRotation;
+        Quaternion neutralRot = Quaternion.Euler(initialCamRot);
+
+        float outTime = 0f;
+        float outDuration = 0.2f; // tweak: how fast it wears off
+
+        while (outTime < outDuration)
+        {
+            cam.localRotation = Quaternion.Slerp(
+                startRot,
+                neutralRot,
+                outTime / outDuration
+            );
+
+            outTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // snap to exact neutral at end
+        cam.localRotation = neutralRot;
+
+        // NOW release control
         cameraLocked = false;
-        // Final guarantee
-        cam.localRotation = targetRot;
+        targetKickTilt = 0;
+
+    }
+    public IEnumerator LerpCameraZPosition(
+    float zOffset,
+    float duration,
+    float lerpSpeed,
+    float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        Transform cam = playerCameraMain.transform;
+
+        cameraLocked = true;
+
+        Vector3 startPos = cam.localPosition;
+        Vector3 targetPos = new Vector3(
+            startPos.x,
+            startPos.y,
+            startPos.z + zOffset
+        );
+
+        float elapsed = 0f;
+
+        // -------- BLEND IN --------
+        while (elapsed < duration)
+        {
+            cam.localPosition = Vector3.Lerp(
+                cam.localPosition,
+                targetPos,
+                lerpSpeed * Time.deltaTime
+            );
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // -------- BLEND OUT --------
+        Vector3 blendOutStart = cam.localPosition;
+        float outTime = 0f;
+        float outDuration = 0.2f; // wear-off speed
+
+        while (outTime < outDuration)
+        {
+            cam.localPosition = Vector3.Lerp(
+                blendOutStart,
+                startPos,
+                outTime / outDuration
+            );
+
+            outTime += Time.deltaTime;
+            yield return null;
+        }
+
+        cam.localPosition = startPos;
+
+        cameraLocked = false;
     }
 
 
