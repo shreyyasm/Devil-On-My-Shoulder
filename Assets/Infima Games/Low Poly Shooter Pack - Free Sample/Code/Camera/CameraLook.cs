@@ -228,5 +228,15 @@ namespace InfimaGames.LowPolyShooterPack
         }
 
         #endregion
+
+        public float GetMouseX()
+        {
+            if (!playerCharacter.IsCursorLocked())
+                return 0f;
+
+            Vector2 look = playerCharacter.GetInputLook();
+            return look.x * sensitivity.x;
+        }
     }
+
 }

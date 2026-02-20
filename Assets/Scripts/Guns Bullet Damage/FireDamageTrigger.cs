@@ -14,7 +14,7 @@ public class FireDamageTrigger : MonoBehaviour
     }
     private void Start()
     {
-        Destroy(gameObject,5);
+        Destroy(gameObject,8);
     }
     // Tracks enemies and their timers
     private Dictionary<GameObject, float> damageTimers = new Dictionary<GameObject, float>();

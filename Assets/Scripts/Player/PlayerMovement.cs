@@ -249,8 +249,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Update() {
-        if (characterAbilities.Ability4_Active)
-            return;
+ 
         MyInput();
         CameraTiltSway();
         HandleFootsteps();
@@ -400,6 +399,8 @@ public class PlayerMovement : MonoBehaviour
             return;
 
         // 🚨 CANCEL SLIDE FIRST
+        if(isDashing)
+            kickAnimator[characterindex - 1].Play("Slide", 0, 0.75f);
         CancelSlideImmediately();
 
         readyToJump = false;
@@ -1065,45 +1066,44 @@ public class PlayerMovement : MonoBehaviour
         StartCoroutine(KickKnockbackCoroutine(target, direction, force));
     }
 
-    private IEnumerator KickKnockbackCoroutine(Transform target,Vector3 direction,float force)
+    private IEnumerator KickKnockbackCoroutine(
+     Transform target,
+     Vector3 direction,
+     float force)
     {
-        
         NavMeshAgent agent = target.GetComponent<NavMeshAgent>();
+        Rigidbody rb = target.GetComponent<Rigidbody>();
+
         if (agent != null)
             agent.enabled = false;
 
-        Collider col = target.GetComponent<Collider>();
-        float heightOffset = col != null ? col.bounds.extents.y : 0.5f;
+        if (rb == null)
+            yield break;
 
-        Vector3 velocity = direction * force;
-        velocity.y = kickUpwardForce;
+        rb.isKinematic = false;
+        rb.useGravity = true;
 
+        // 🔥 Launch
+        Vector3 launchVelocity = direction * force;
+        launchVelocity.y = kickUpwardForce;
+        rb.velocity = launchVelocity;
+
+        // -------- WAIT UNTIL GROUNDED --------
         float airTimer = 0f;
-        bool groundedEnemy = false;
+        bool grounded = false;
 
-        // -------- AIR PHASE --------
-        while (!groundedEnemy && airTimer < kickMaxAirTime)
+        while (!grounded && airTimer < kickMaxAirTime)
         {
             airTimer += Time.deltaTime;
 
-            velocity.y -= kickGravity * Time.deltaTime;
-            target.position += velocity * Time.deltaTime;
-
-            if (velocity.y <= 0f)
+            if (rb.velocity.y <= 0f)
             {
-                Vector3 castOrigin = target.position + Vector3.up * 0.2f;
-
-                if (Physics.SphereCast(
-                    castOrigin,
-                    enemyGroundCheckRadius,
+                if (Physics.Raycast(
+                    target.position,
                     Vector3.down,
-                    out RaycastHit hit,
-                    enemyGroundCheckDistance,
-                    ~0,
-                    QueryTriggerInteraction.Ignore))
+                    1.2f))
                 {
-                    groundedEnemy = true;
-                    target.position = hit.point + Vector3.up * heightOffset;
+                    grounded = true;
                 }
             }
 
@@ -1111,30 +1111,42 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // -------- SLIDE PHASE --------
-        Vector3 horizontalVelocity = new Vector3(velocity.x, 0f, velocity.z);
+        Vector3 slideVelocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+        rb.velocity = slideVelocity;
+
         float slideTimer = 0f;
 
-        while (slideTimer < enemySlideDuration && horizontalVelocity.magnitude > 0.05f)
+        while (slideTimer < enemySlideDuration && rb.velocity.magnitude > 0.1f)
         {
             slideTimer += Time.deltaTime;
 
-            horizontalVelocity = Vector3.Lerp(
-                horizontalVelocity,
+            Vector3 horizontal = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+            horizontal = Vector3.Lerp(
+                horizontal,
                 Vector3.zero,
                 enemySlideDamping * Time.deltaTime
             );
 
-            target.position += horizontalVelocity * Time.deltaTime;
+            rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
+
             yield return null;
         }
+
+        rb.velocity = Vector3.zero;
+        rb.isKinematic = true;
 
         // -------- NAVMESH RECOVERY --------
         if (agent != null)
         {
-            if (NavMesh.SamplePosition(target.position, out NavMeshHit navHit, 3f, NavMesh.AllAreas))
-                agent.Warp(navHit.position);
-            else
-                agent.Warp(target.position);
+            if (NavMesh.SamplePosition(
+                target.position,
+                out NavMeshHit hit,
+                3f,
+                NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
 
             agent.enabled = true;
         }

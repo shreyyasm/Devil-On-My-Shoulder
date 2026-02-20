@@ -1,4 +1,6 @@
-﻿using QFSW.MOP2;
+﻿using InfimaGames.LowPolyShooterPack;
+using QFSW.MOP2;
+using System.Buffers.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -6,6 +8,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.TestTools;
 using static UnityEngine.GraphicsBuffer;
 
 
@@ -146,11 +149,16 @@ public class CharacterAbilities : MonoBehaviour
     #endregion
 
     #region Ability4_Fields
-    [Header("Ability 4 - Chainsaw Rush")]
-    [SerializeField] private GameObject chainsawObject;
-    [SerializeField] private float chainsawMoveSpeed = 25f;
-    [SerializeField] private float chainsawFOV = 110f;
-    [SerializeField] public bool Ability4_Active;
+    [Header("Ability 4 - Inferno Room Lockdown")]
+    public bool Ability4_Active;
+   [SerializeField] private GameObject fireRoomPrefab;
+    
+    [SerializeField] private LayerMask roomLayer;
+
+    private GameObject spawnedFire;
+    private List<UnityEngine.AI.NavMeshAgent> frozenAgents = new List<UnityEngine.AI.NavMeshAgent>();
+
+    private float currentY;
     private Rigidbody rb;
     public Transform orientation;
 
@@ -178,6 +186,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+       
         if (playerCam == null)
             playerCam = GetComponentInChildren<Camera>();
 
@@ -219,17 +228,8 @@ public class CharacterAbilities : MonoBehaviour
             playerCam.fieldOfView = targetFOV;
             fovTransitionActive = false;
         }
-
-        if (abilityActive && Ability == AbilityType.Ability4)
-        {
-            Vector3 forwardMove = -orientation.transform.forward * chainsawMoveSpeed;
-            rb.velocity = new Vector3(
-                forwardMove.x,
-                rb.velocity.y,
-                forwardMove.z
-            );
-        }
-
+        
+        
 
     }
     private void LateUpdate()
@@ -440,15 +440,12 @@ public class CharacterAbilities : MonoBehaviour
         TargetIconCanvas.SetActive(false);
     }
 
-    
+
 
     private void FireAbility1Shot()
     {
         Transform target = FindNearestEnemy();
-        currentAbility1Target = target;
-
-        if (target == null)
-            return;
+        currentAbility1Target = target;   // lock target for this shot
 
         bool fireLeft = fireLeftNext;
 
@@ -458,7 +455,18 @@ public class CharacterAbilities : MonoBehaviour
 
         if (gun == null || socket == null) return;
 
-        Vector3 dir = (target.position - socket.position).normalized;
+        Vector3 dir;
+
+        // ✅ If we have a target, always aim at the CLOSEST one returned
+        if (target != null)
+        {
+            dir = (target.position - socket.position).normalized;
+        }
+        else
+        {
+            // ✅ No enemy → shoot center screen
+            dir = playerCamera.forward;
+        }
 
         flash.SetTrigger("Flash");
 
@@ -474,10 +482,9 @@ public class CharacterAbilities : MonoBehaviour
 
         ApplyRecoil(Recoil);
         audioSource.PlayOneShot(audioClipFire);
-        // ✅ TOGGLE ONLY AFTER SUCCESSFUL FIRE
+
         fireLeftNext = !fireLeftNext;
     }
-
 
     private Transform FindNearestEnemy()
     {
@@ -818,13 +825,15 @@ public class CharacterAbilities : MonoBehaviour
     {
         Transform player = shieldParent.transform;
 
-        Vector3 dir = (player.position - shieldSaw.transform.position).normalized;
-        RotateShield(-dir);
-
         while (Vector3.Distance(shieldSaw.transform.position, player.position) > hitRadius)
         {
+            // 🔄 Recalculate direction every frame
+            Vector3 dir = (player.position - shieldSaw.transform.position).normalized;
+
             shieldSaw.transform.position += dir * ricochetSpeed * Time.deltaTime;
+
             RotateShield(dir);
+
             yield return null;
         }
 
@@ -902,30 +911,169 @@ public class CharacterAbilities : MonoBehaviour
 
     #endregion
 
+    #region Ability4
+    private Bounds detectedRoomBounds;
+    private bool roomDetected;
+    private RoomVolume currentRoom;
     private void StartAbility4()
     {
-        chainsawObject.SetActive(true);
-
-        SetTargetFOV(chainsawFOV, 10f);
-        SetMotionBlur(true);
         Ability4_Active = true;
-        chainsawObject.SetActive(true);
 
-     
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            8f,
+            roomLayer
+        );
+
+        if (hits.Length == 0)
+        {
+            Debug.LogWarning("No room colliders detected.");
+            return;
+        }
+
+        // Collect unique RoomVolume parents
+        HashSet<RoomVolume> foundRooms = new HashSet<RoomVolume>();
+
+        foreach (Collider col in hits)
+        {
+            RoomVolume room = col.GetComponentInParent<RoomVolume>();
+            if (room != null)
+                foundRooms.Add(room);
+        }
+
+        if (foundRooms.Count == 0)
+        {
+            Debug.LogWarning("No RoomVolume found in parents.");
+            return;
+        }
+
+        // Select the room that contains the player
+        RoomVolume selectedRoom = null;
+
+        foreach (RoomVolume room in foundRooms)
+        {
+            Bounds b = room.GetCombinedBounds();
+            if (b.Contains(transform.position))
+            {
+                selectedRoom = room;
+                break;
+            }
+        }
+
+        // Fallback to closest room if needed
+        if (selectedRoom == null)
+        {
+            float closest = float.MaxValue;
+
+            foreach (RoomVolume room in foundRooms)
+            {
+                float dist = Vector3.Distance(
+                    transform.position,
+                    room.transform.position
+                );
+
+                if (dist < closest)
+                {
+                    closest = dist;
+                    selectedRoom = room;
+                }
+            }
+        }
+
+        if (selectedRoom == null)
+            return;
+
+        detectedRoomBounds = selectedRoom.GetCombinedBounds();
+        roomDetected = true;
+
+        // 🔥 Spawn fire
+        spawnedFire = new GameObject("RoomFire");
+        FireRoomSpawner spawner = spawnedFire.AddComponent<FireRoomSpawner>();
+        spawner.fireTilePrefab = fireRoomPrefab;
+        spawner.groundLayer = LayerMask.GetMask("Ground");
+        spawner.SpawnFireInRoom(detectedRoomBounds);
+
+        // ❄ Freeze enemies inside FULL room bounds
+        Collider[] enemies = Physics.OverlapBox(
+            detectedRoomBounds.center,
+            detectedRoomBounds.extents,
+            Quaternion.identity,
+            enemyLayer
+        );
+
+        foreach (Collider col in enemies)
+        {
+            UnityEngine.AI.NavMeshAgent agent =
+                col.GetComponent<UnityEngine.AI.NavMeshAgent>();
+
+            if (agent != null && !frozenAgents.Contains(agent))
+            {
+                agent.isStopped = true;
+                frozenAgents.Add(agent);
+            }
+        }
+
+        StartCoroutine(Ability4DurationRoutine());
     }
-
     private void StopAbility4()
     {
-        chainsawObject.SetActive(false);
-
-        SetTargetFOV(90f, 10);
-        SetMotionBlur(false);
-
         Ability4_Active = false;
-        chainsawObject.SetActive(false);
-        // Stop forced movement
-        rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+
+        // Unfreeze enemies
+        foreach (var agent in frozenAgents)
+        {
+            if (agent != null)
+                agent.isStopped = false;
+        }
+
+        frozenAgents.Clear();
+
+        // Destroy fire
+        if (spawnedFire != null)
+            Destroy(spawnedFire);
+
+        roomDetected = false;
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        RoomVolume room = other.GetComponent<RoomVolume>();
+        if (room != null)
+            currentRoom = room;
     }
 
+    private void OnTriggerExit(Collider other)
+    {
+        RoomVolume room = other.GetComponent<RoomVolume>();
+        if (room != null && currentRoom == room)
+            currentRoom = null;
+    }
+    private IEnumerator Ability4DurationRoutine()
+    {
+        yield return new WaitForSeconds(abilityDuration);
+        StopAbility4();
+    }
+    private void OnDrawGizmos()
+    {
+        // 🔵 Detection Sphere
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, 8f);
 
+        if (!roomDetected)
+            return;
+
+        // 🟢 Selected Room Bounds
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(
+            detectedRoomBounds.center,
+            detectedRoomBounds.size
+        );
+
+        // 🟡 Enemy Freeze Box (same as OverlapBox)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(
+            detectedRoomBounds.center,
+            detectedRoomBounds.size
+        );
+    }
+    #endregion
 }
