@@ -975,7 +975,9 @@ public class PlayerMovement : MonoBehaviour
         
         foreach (Collider hit in hits)
         {
-            
+            if (hit.GetComponent<EnemyManager>().isGrabbing)
+                hit.GetComponent<EnemyManager>().EndGrab();
+
             Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
            
             DoTimeSlow();
@@ -1005,6 +1007,7 @@ public class PlayerMovement : MonoBehaviour
             //kickAnimator[characterindex - 1].gameObject.SetActive(false);
             if (enemy != null)
             {
+                
                 SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
                 enemy.EnemyHit(15f,true); // tweakable
                 HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();

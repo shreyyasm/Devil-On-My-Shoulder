@@ -65,7 +65,20 @@ public class EnemyManager : MonoBehaviour
     public float dashDuration = 0.3f;
     public float dashStopDistance = 1.5f;
 
+    [Header("Grab Settings")]
+    public bool canGrab;
+    public float grabDamageInterval = 0.5f;
+    public float grabOffset = 1.0f;
+    public float grabHeightOffset = 1.5f;
 
+    public bool isGrabbing;
+    private float grabDamageTimer;
+
+    private Collider enemyCollider;
+    private Collider playerCollider;
+    private FixedJoint grabJoint;
+    private Rigidbody playerRb;
+    private static EnemyManager currentGrabber = null;
     // ================================
     // SHOOT ENEMY SETTINGS
     // ================================
@@ -133,6 +146,8 @@ public class EnemyManager : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        enemyCollider = GetComponent<Collider>();
+        playerCollider = player.GetComponent<Collider>();
     }
 
     private void Start()
@@ -178,6 +193,14 @@ public class EnemyManager : MonoBehaviour
         canDash = enemyStats.canDash;
 
         // =====================
+        // Grabber STATS
+        // =====================
+
+        canGrab = enemyStats.canGrab;
+        grabDamageInterval = enemyStats.grabDamageInterval;
+        grabOffset = enemyStats.grabOffset;
+        grabHeightOffset = enemyStats.grabHeightOffset;
+        // =====================
         // SHOOT STATS
         // =====================
         shootSpeed = enemyStats.ShootSpeed;
@@ -185,6 +208,17 @@ public class EnemyManager : MonoBehaviour
         changePositionTime = enemyStats.ChangePositionTime;
         moveRadius = enemyStats.MoveRadius;
         canShootMove = enemyStats.canShootMove;
+
+
+        // =====================
+        // Cover STATS
+        // =====================
+
+        coverTime = enemyStats.CoverTime;
+        peekDuration = enemyStats.PeekDuration;
+        peekRadius = enemyStats.PeekRadius;
+        coverSearchRadius = enemyStats.CoverSearchRadius;
+        visionHeight = enemyStats.VisionHeight;
 
         // =====================
         // STATE INITIALIZATION
@@ -251,13 +285,12 @@ public class EnemyManager : MonoBehaviour
 
     void HandleChase()
     {
-        // Recalculate real-time distance
         float currentDistance = Vector3.Distance(transform.position, player.position);
 
-        if(enemyType == EnemyStats.EnemyType.Melee && canDash)
+        if (enemyType == EnemyStats.EnemyType.Melee && canDash)
             agent.stoppingDistance = attackRange;
 
-        if (currentDistance > attackRange) 
+        if (currentDistance > attackRange)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
@@ -268,23 +301,42 @@ public class EnemyManager : MonoBehaviour
 
             if (!isBusy && Time.time >= nextAttackTime)
             {
+                // =============================
+                // GRAB LOGIC
+                // =============================
 
-                StartCoroutine(AttackRoutine());
-                isAttacking = true;
+                if (canGrab && !isGrabbing)
+                {
+                    // If no one is grabbing → grab
+                    if (currentGrabber == null)
+                    {
+                        currentGrabber = this;
+                        StartCoroutine(GrabRoutine());
+                    }
+                    else
+                    {
+                        // Someone else is grabbing → fallback to melee attack
+                        StartCoroutine(AttackRoutine());
+                    }
+                }
+                else
+                {
+                    // Normal melee
+                    StartCoroutine(AttackRoutine());
+                }
             }
         }
     }
-
     // ================================
     // ATTACK ROUTINE
     // ================================
 
     IEnumerator AttackRoutine()
     {
-       
+      
         isBusy = true;
         currentState = State.Attack;
-       
+        isAttacking = true;
         agent.isStopped = true;
 
         // ================= DASH PHASE =================
@@ -344,7 +396,7 @@ public class EnemyManager : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         if (!collision.transform.CompareTag("Player")) return;
-        if (enemyType == EnemyStats.EnemyType.Melee) return;
+        if (enemyType != EnemyStats.EnemyType.Melee) return;
         if (!isBusy) return;
 
         // Immediate first hit
@@ -358,7 +410,7 @@ public class EnemyManager : MonoBehaviour
     private void OnCollisionStay(Collision collision)
     {
         if (!collision.transform.CompareTag("Player")) return;
-        if (enemyType == EnemyStats.EnemyType.Melee) return;
+        if (enemyType != EnemyStats.EnemyType.Melee) return;
         if (!isBusy) return;
 
         if (Time.time < nextAttackTime) return;
@@ -385,7 +437,84 @@ public class EnemyManager : MonoBehaviour
         nextAttackTime = Time.time + randomTime;
     }
 
+    IEnumerator GrabRoutine()
+    {
+        if (isGrabbing) yield break;
 
+        isBusy = true;
+        isGrabbing = true;
+        Physics.IgnoreCollision(enemyCollider, playerCollider, true);
+        // Disable NavMesh
+        agent.isStopped = true;
+        agent.enabled = false;
+
+        Rigidbody enemyRb = GetComponent<Rigidbody>();
+
+        // Keep rigidbody NON-kinematic but frozen
+        enemyRb.isKinematic = false;
+        enemyRb.velocity = Vector3.zero;
+        enemyRb.angularVelocity = Vector3.zero;
+
+        // Freeze physics movement completely
+        enemyRb.constraints =
+            RigidbodyConstraints.FreezePosition |
+            RigidbodyConstraints.FreezeRotation;
+
+        yield return new WaitForSeconds(0.2f);
+
+        grabDamageTimer = 0f;
+
+        while (isGrabbing)
+        {
+            Vector3 targetPos =
+                player.position +
+                player.forward * grabOffset +
+                Vector3.up * grabHeightOffset;
+
+            transform.position = targetPos;
+
+            // Face player
+            Vector3 lookDir = player.position - transform.position;
+            lookDir.y = 0f;
+            if (lookDir != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(lookDir);
+
+            grabDamageTimer -= Time.deltaTime;
+
+            if (grabDamageTimer <= 0f)
+            {
+                Debug.Log("Grab Damage: " + damage);
+                // player.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+
+                grabDamageTimer = grabDamageInterval;
+            }
+
+            yield return null;
+        }
+    }
+    public void EndGrab()
+    {
+        if (currentGrabber == this)
+            currentGrabber = null;
+
+        Rigidbody enemyRb = GetComponent<Rigidbody>();
+
+        enemyRb.constraints = RigidbodyConstraints.FreezeRotation;
+        enemyRb.isKinematic = true;
+
+        if (agent != null)
+        {
+            agent.enabled = true;
+            agent.isStopped = false;
+        }
+
+        Physics.IgnoreCollision(enemyCollider, playerCollider, false);
+
+        isGrabbing = false;
+        isBusy = false;
+
+        SetNextAttackTime();
+    }
     // =======================================================================
     // Shoot Enemy Methods
     // =======================================================================

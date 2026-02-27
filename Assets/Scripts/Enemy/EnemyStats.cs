@@ -51,7 +51,18 @@ public class EnemyStats : ScriptableObject
     public float AttackIntervalMax;
     public float RecoverTime;
     public float StoppingDistance;
+
     public bool canDash;
+
+    // ================================
+    // GRAB (Melee Subtype)
+    // ================================
+
+    [Header("Grab Settings")]
+    public bool canGrab;
+    public float grabDamageInterval = 0.5f;
+    public float grabOffset = 1.0f;
+    public float grabHeightOffset;
     // ================================
     // DASH
     // ================================
@@ -72,4 +83,11 @@ public class EnemyStats : ScriptableObject
     public float ChangePositionTime;
     public float MoveRadius;
     public bool canShootMove;
+
+    [Header("Cover Settingns")]
+    public float CoverTime;
+    public float PeekDuration;
+    public float PeekRadius;
+    public float CoverSearchRadius;
+    public float VisionHeight;
 }

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1625a88454a40574289e67afe35d40a3, type: 3}
-  m_Name: Dash Melee Enemy 1
+  m_Name: Move & Cover Shoot Enemy 1
   m_EditorClassIdentifier: 
-  enemyType: 0
-  coverType: 0
+  enemyType: 1
+  coverType: 1
   deathType: 0
   surfaceType: 0
   health: 100
@@ -26,13 +26,21 @@ MonoBehaviour:
   AttackIntervalMax: 1.5
   RecoverTime: 2
   StoppingDistance: 0
-  canDash: 1
+  canDash: 0
+  canGrab: 0
+  grabDamageInterval: 0.5
+  grabOffset: 1
   DashForce: 15
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
-  ShootSpeed: 1
+  ShootSpeed: 20
   ShootInterval: 2
   ChangePositionTime: 3
   MoveRadius: 10
-  canShootMove: 0
+  canShootMove: 1
+  CoverTime: 3
+  PeekDuration: 2
+  PeekRadius: 3
+  CoverSearchRadius: 50
+  VisionHeight: 1
