@@ -431,13 +431,13 @@ public class PlayerMovement : MonoBehaviour
             // LEFT / RIGHT
             if (x < -0.1f)
             {
-                jumpTilt = new Vector3(0f, 0f, -8f);
+                jumpTilt = new Vector3(0f, 0f, -6f);
                 targetKickTilt = -6;
             }
                
             else if (x > 0.1f)
             {
-                jumpTilt = new Vector3(0f, 0f, 8f);
+                jumpTilt = new Vector3(0f, 0f, 6f);
                 targetKickTilt = 6;
             }
            
