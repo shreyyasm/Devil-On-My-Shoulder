@@ -7,14 +7,16 @@ public class EnemyStats : ScriptableObject
     // TYPE DEFINITIONS
     // ================================
 
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Boss }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone }
     public enum CoverType { No, Yes }
+    public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
 
     [Header("Enemy Type Settings")]
     public EnemyType enemyType;
     public CoverType coverType;
+    public ShieldType shieldType;
     public DeathType deathType;
     public SurfaceType surfaceType;
 
@@ -78,6 +80,7 @@ public class EnemyStats : ScriptableObject
     // ================================
 
     [Header("Shooting Stats")]
+    public GameObject projectilePrefab;
     public float ShootSpeed;
     public float ShootInterval;
     public float ChangePositionTime;
@@ -90,4 +93,28 @@ public class EnemyStats : ScriptableObject
     public float PeekRadius;
     public float CoverSearchRadius;
     public float VisionHeight;
+
+
+    [Header("Tombstone Settings")]
+    public GameObject spawnEnemyPrefab;
+    public float spawnInterval = 3f;
+    public int spawnLimit = 5;
+    public bool useSpawnLimit;
+
+    [Header("Shooter Tombstone Settings")]
+    public bool isShooterTombstone;
+    public float repositionInterval = 6f;
+
+    public int spawnBatchCount = 3;
+
+    public float shootDelayAfterSpawn = 2f;
+    public GameObject shootProjectilePrefab;
+    public float mortarArcHeight = 6f;
+    public float shootProjectileSpeed = 20f;
+
+    public float recoverAfterShot = 3f;
+    public float initialSpawnDelay = 3f;
+
+    [Header("Audio")]
+    public string attackSoundKey;
 }

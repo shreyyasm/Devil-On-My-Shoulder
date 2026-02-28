@@ -11,7 +11,7 @@ public class CryoFreeze : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
 
-    private Enemy enemy;
+    private EnemyHealth enemy;
 
     public void Initialize(float duration, Color color)
     {
@@ -23,7 +23,7 @@ public class CryoFreeze : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        enemy = GetComponent<Enemy>();
+        enemy = GetComponent<EnemyHealth>();
     }
 
     private void Start()

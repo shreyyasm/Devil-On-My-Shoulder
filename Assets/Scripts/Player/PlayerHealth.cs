@@ -107,7 +107,7 @@ public class PlayerHealth : MonoBehaviour
         if(amount < 0)
         {
             SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
-            healthAnim.SetTrigger("HealthMinus");
+            //healthAnim.SetTrigger("HealthMinus");
             ScoreManager.Instance.hitsTakken++;
 
         }
@@ -115,7 +115,7 @@ public class PlayerHealth : MonoBehaviour
 
         if (amount > 0)
         {
-            healthAnim.SetTrigger("HealthAdd");
+            //healthAnim.SetTrigger("HealthAdd");
             SFXManager.Instance.PlaySFX("Player/HealthAdd", 1f);
 
             // Cancel countdown anytime

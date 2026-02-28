@@ -734,7 +734,7 @@ public class CharacterAbilities : MonoBehaviour
                 QueryTriggerInteraction.Ignore))
             {
                 // ✅ ENEMY HIT
-                Enemy enemy = hit.collider.GetComponent<Enemy>();
+                EnemyHealth enemy = hit.collider.GetComponent<EnemyHealth>();
                 if (enemy != null)
                 {
                     enemy.EnemyHit(enemy.maxHealth);
@@ -793,7 +793,7 @@ public class CharacterAbilities : MonoBehaviour
                 yield return null;
             }
 
-            Enemy enemy = nextTarget.GetComponent<Enemy>();
+            EnemyHealth enemy = nextTarget.GetComponent<EnemyHealth>();
             if (enemy != null)
                 enemy.EnemyHit(enemy.maxHealth);
 

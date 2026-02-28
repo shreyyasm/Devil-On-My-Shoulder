@@ -43,7 +43,7 @@ public class ChainsawDamageOverlap : MonoBehaviour
 
             foreach (Collider c in hits)
             {
-                Enemy enemy = c.GetComponent<Enemy>();
+                EnemyHealth enemy = c.GetComponent<EnemyHealth>();
                 if (enemy != null)
                 {
                     enemy.EnemyHit(enemy.maxHealth);

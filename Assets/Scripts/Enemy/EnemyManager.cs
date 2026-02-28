@@ -18,7 +18,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Boss }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone }
     public enum CoverType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
@@ -113,6 +113,7 @@ public class EnemyManager : MonoBehaviour
     private Vector3 coverPos;
     private Vector3 peekPos;
 
+    private AudioSource attack3dAudioSource;
     private CoverState coverState;
 
     private enum CoverState
@@ -122,6 +123,50 @@ public class EnemyManager : MonoBehaviour
         MovingToPeek,
         Peeking
     }
+
+
+    // ================================
+    // TOMBSTONE (SPAWNER)
+    // ================================
+
+    [Header("Tombstone Settings")]
+    public GameObject spawnEnemyPrefab;
+    public float spawnInterval = 3f;
+    public int spawnLimit = 5;
+    public bool useSpawnLimit = true;
+
+    private float spawnTimer;
+    private int currentSpawnedCount;
+
+
+    // ================================
+    // SHOOTER TOMBSTONE
+    // ================================
+
+    [Header("Shooter Tombstone Settings")]
+    public bool isShooterTombstone;
+    public float repositionInterval = 6f;
+
+    public int spawnBatchCount = 3;
+
+    public float shootDelayAfterSpawn = 2f;
+    public GameObject shootProjectilePrefab;
+    public float mortarArcHeight = 6f;
+    public float shootProjectileSpeed = 20f;
+
+    public float recoverAfterShot = 3f;
+    public float initialSpawnDelay = 3f;
+
+    private float repositionTimer;
+    private float recoverTimer;
+
+    private bool isSpawningPhase;
+    private bool isChargingShot;
+    private bool isRecovering;
+
+    private Vector3 tombstoneTargetPos;
+    private float initialDelayTimer;
+    private bool hasStartedCycle;
     // ================================
     // PRIVATE VARIABLES
     // ================================
@@ -138,16 +183,21 @@ public class EnemyManager : MonoBehaviour
     private float positionTimer;
     private Vector3 shootMoveTarget;
 
+
     // ================================
     // UNITY METHODS
     // ================================
     public bool RotateExternally;
+
+    [Header("Audio")]
+    public string attackSoundKey;
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         enemyCollider = GetComponent<Collider>();
         playerCollider = player.GetComponent<Collider>();
+        attack3dAudioSource = GetComponent<AudioSource>();
     }
 
     private void Start()
@@ -203,6 +253,7 @@ public class EnemyManager : MonoBehaviour
         // =====================
         // SHOOT STATS
         // =====================
+        projectilePrefab = enemyStats.projectilePrefab;
         shootSpeed = enemyStats.ShootSpeed;
         shootInterval = enemyStats.ShootInterval;
         changePositionTime = enemyStats.ChangePositionTime;
@@ -221,6 +272,34 @@ public class EnemyManager : MonoBehaviour
         visionHeight = enemyStats.VisionHeight;
 
         // =====================
+        //TombStone STATS
+        // =====================
+
+        spawnEnemyPrefab = enemyStats.spawnEnemyPrefab;
+        spawnInterval = enemyStats.spawnInterval;
+        spawnLimit = enemyStats.spawnLimit;
+        useSpawnLimit = enemyStats.useSpawnLimit;
+
+        // =====================
+        //Royal Shooter TombStone STATS
+        // =====================
+
+        isShooterTombstone = enemyStats.isShooterTombstone;
+        repositionInterval = enemyStats.repositionInterval;
+        spawnBatchCount = enemyStats.spawnBatchCount;
+        shootDelayAfterSpawn = enemyStats.shootDelayAfterSpawn;
+        shootProjectilePrefab = enemyStats.shootProjectilePrefab;
+        shootProjectileSpeed = enemyStats.shootProjectileSpeed;
+        recoverAfterShot = enemyStats.recoverAfterShot;
+        initialSpawnDelay = enemyStats.initialSpawnDelay;
+        mortarArcHeight = enemyStats.mortarArcHeight;
+
+        // =====================
+        // Audio KEYS
+        // =====================
+        attackSoundKey = enemyStats.attackSoundKey;
+
+        // =====================
         // STATE INITIALIZATION
         // =====================
 
@@ -236,6 +315,18 @@ public class EnemyManager : MonoBehaviour
             positionTimer = changePositionTime;
 
             peekTimer = peekDuration;
+        }
+
+        if (enemyType == EnemyStats.EnemyType.Tombstone)
+        {
+            spawnTimer = enemyStats.spawnInterval;
+        }
+        if (enemyType == EnemyStats.EnemyType.Tombstone && enemyStats.isShooterTombstone)
+        {
+            repositionTimer = enemyStats.repositionInterval;
+
+            initialDelayTimer = enemyStats.initialSpawnDelay;
+            hasStartedCycle = false;
         }
     }
 
@@ -277,6 +368,15 @@ public class EnemyManager : MonoBehaviour
                 HandleStaticShooter();
             }
         }
+        if (enemyType == EnemyStats.EnemyType.Tombstone)
+        {
+            if (enemyStats.isShooterTombstone)
+                HandleShooterTombstone();
+            else
+                HandleTombstone();
+
+            return;
+        }
     }
 
     // =======================================================================
@@ -290,13 +390,15 @@ public class EnemyManager : MonoBehaviour
         if (enemyType == EnemyStats.EnemyType.Melee && canDash)
             agent.stoppingDistance = attackRange;
 
-        if (currentDistance > attackRange)
+        if (currentDistance > attackRange && agent.enabled)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
         }
         else
         {
+            if (!agent.enabled) return;
+
             agent.isStopped = true;
 
             if (!isBusy && Time.time >= nextAttackTime)
@@ -395,31 +497,46 @@ public class EnemyManager : MonoBehaviour
     // ================================
     private void OnCollisionEnter(Collision collision)
     {
-        if (!collision.transform.CompareTag("Player")) return;
-        if (enemyType != EnemyStats.EnemyType.Melee) return;
-        if (!isBusy) return;
+        if (collision.gameObject.CompareTag("Player"))
+        {          
+            if (enemyType != EnemyStats.EnemyType.Melee) return;
+            if (!isBusy) return;
 
-        // Immediate first hit
-        Debug.Log("Melee Damage: " + damage);
+            // Immediate first hit
+            Debug.Log("Melee Damage: " + damage);
 
-        // collision.transform.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+            // Start interval cooldown
+            HurtPlayer();
+            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
+            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
 
-        // Start interval cooldown
-        nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource,attackSoundKey, 1f);
+
+            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+        }
+
     }
     private void OnCollisionStay(Collision collision)
     {
-        if (!collision.transform.CompareTag("Player")) return;
-        if (enemyType != EnemyStats.EnemyType.Melee) return;
-        if (!isBusy) return;
+        if (collision.gameObject.CompareTag("Player"))
+        {
 
-        if (Time.time < nextAttackTime) return;
+            if (enemyType != EnemyStats.EnemyType.Melee) return;
+            if (!isBusy) return;
 
-        Debug.Log("Melee Damage (Interval): " + damage);
+            if (Time.time < nextAttackTime) return;
 
-        // collision.transform.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+            Debug.Log("Melee Damage (Interval): " + damage);
 
-        nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+            HurtPlayer();
+            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
+            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+
+            SFXManager.Instance.PlaySFX(attackSoundKey, 1f);
+
+
+            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+        }
     }
     void PerformAttack()
     {
@@ -783,6 +900,291 @@ public class EnemyManager : MonoBehaviour
             shootMoveTarget = hit.position;
         }
     }
-  
-   
+
+    void HandleTombstone()
+    {
+        if (enemyStats.spawnEnemyPrefab == null) return;
+
+        spawnTimer -= Time.deltaTime;
+
+        if (spawnTimer > 0f) return;
+
+        spawnTimer = enemyStats.spawnInterval;
+
+        // =============================
+        // LIMIT MODE
+        // =============================
+        if (enemyStats.useSpawnLimit)
+        {
+            if (currentSpawnedCount < enemyStats.spawnLimit)
+            {
+                SpawnEnemy();
+                currentSpawnedCount++;
+            }
+        }
+        else
+        {
+            // =============================
+            // ENDLESS MODE
+            // =============================
+            SpawnEnemy();
+        }
+    }
+
+    void SpawnEnemy()
+    {
+        Vector3 spawnPos =
+            transform.position +
+            transform.forward * 1.5f +
+            Vector3.up * 0.5f;
+
+        GameObject newEnemy = Instantiate(
+            enemyStats.spawnEnemyPrefab,
+            spawnPos,
+            Quaternion.identity
+        );
+
+        // Small pop effect
+        Rigidbody rb = newEnemy.GetComponent<Rigidbody>();
+        if (rb != null)
+            rb.AddForce(Vector3.up * 4f, ForceMode.Impulse);
+
+        if (enemyStats.useSpawnLimit)
+        {
+            EnemyHealth health = newEnemy.GetComponent<EnemyHealth>();
+            if (health != null)
+            {
+                health.OnDeath += () =>
+                {
+                    currentSpawnedCount--;
+                };
+            }
+        }
+    }
+    void SpawnBatch()
+    {
+        int count = enemyStats.spawnBatchCount;
+
+        float coneAngle = 60f;
+        float angleStep = count > 1 ? coneAngle / (count - 1) : 0f;
+        float startAngle = -coneAngle / 2f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float currentAngle = startAngle + angleStep * i;
+
+            Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
+            Vector3 direction = rotation * transform.forward;
+
+            Vector3 spawnPos =
+                transform.position +
+                direction * 1.5f +
+                Vector3.up * 0.5f;
+
+            GameObject enemy = Instantiate(
+                enemyStats.spawnEnemyPrefab,
+                spawnPos,
+                Quaternion.identity
+            );
+
+            StartCoroutine(LaunchSpawnedEnemy(enemy, direction));
+        }
+    }
+    IEnumerator LaunchSpawnedEnemy(GameObject enemy, Vector3 direction)
+    {
+        NavMeshAgent spawnedAgent = enemy.GetComponent<NavMeshAgent>();
+        Rigidbody rb = enemy.GetComponent<Rigidbody>();
+
+        if (spawnedAgent != null)
+            spawnedAgent.enabled = false;
+
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.useGravity = true;
+            rb.AddForce(direction * 30f + Vector3.up * 4f, ForceMode.Impulse);
+        }
+
+
+        // Small settle delay (optional but smoother)
+        yield return new WaitForSeconds(1f);
+
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        if (spawnedAgent != null)
+        {
+            spawnedAgent.enabled = true;
+            spawnedAgent.Warp(enemy.transform.position);
+        }
+    }
+ 
+    void HandleShooterTombstone()
+    {
+        if (player == null) return;
+
+        // =========================
+        // INITIAL DELAY
+        // =========================
+        if (!hasStartedCycle)
+        {
+            initialDelayTimer -= Time.deltaTime;
+
+            if (initialDelayTimer <= 0f)
+                hasStartedCycle = true;
+
+            return;
+        }
+
+        // =========================
+        // MOVEMENT PHASE
+        // =========================
+        repositionTimer -= Time.deltaTime;
+
+        if (repositionTimer <= 0f)
+        {
+            SetRandomTombstonePosition();
+            repositionTimer = enemyStats.repositionInterval;
+        }
+
+        agent.SetDestination(tombstoneTargetPos);
+
+        // =========================
+        // SPAWN PHASE
+        // =========================
+        if (!isSpawningPhase && !isChargingShot && !isRecovering)
+        {
+            //SpawnBatch();
+            isSpawningPhase = true;
+            shootTimer = enemyStats.shootDelayAfterSpawn;
+        }
+
+        // =========================
+        // CHARGE SHOT PHASE
+        // =========================
+        if (isSpawningPhase)
+        {
+            shootTimer -= Time.deltaTime;
+
+            if (shootTimer <= 0f)
+            {
+                FireProjectileAtPlayer();
+                isSpawningPhase = false;
+                isRecovering = true;
+                recoverTimer = enemyStats.recoverAfterShot;
+            }
+        }
+
+        // =========================
+        // RECOVER PHASE
+        // =========================
+        if (isRecovering)
+        {
+            recoverTimer -= Time.deltaTime;
+
+            if (recoverTimer <= 0f)
+            {
+                isRecovering = false;
+            }
+        }
+    }
+    void FireProjectileAtPlayer()
+    {
+        if (enemyStats.shootProjectilePrefab == null || player == null)
+            return;
+
+        Vector3 start = transform.position + Vector3.up;
+        Vector3 target = player.position + Vector3.up;
+
+        GameObject proj = Instantiate(
+            enemyStats.shootProjectilePrefab,
+            start,
+            Quaternion.identity
+        );
+
+        Rigidbody rb = proj.GetComponent<Rigidbody>();
+        if (rb == null) return;
+
+        rb.useGravity = true;
+        rb.drag = 0f;
+
+        Vector3 velocity;
+
+        if (SolveBallisticArc(start, target, Mathf.Abs(Physics.gravity.y), out velocity))
+        {
+            rb.velocity = velocity;
+            proj.transform.rotation = Quaternion.LookRotation(rb.velocity);
+        }
+    }
+    bool SolveBallisticArc(Vector3 start, Vector3 target, float gravity, out Vector3 velocity)
+    {
+        velocity = Vector3.zero;
+
+        Vector3 toTarget = target - start;
+
+        Vector3 toTargetXZ = new Vector3(toTarget.x, 0f, toTarget.z);
+        float horizontalDistance = toTargetXZ.magnitude;
+        float verticalOffset = toTarget.y;
+
+        float speed = enemyStats.shootProjectileSpeed; // use fixed launch speed
+
+        float speedSquared = speed * speed;
+        float speedFourth = speedSquared * speedSquared;
+
+        float gravityTimesDistance = gravity * horizontalDistance;
+
+        float discriminant = speedFourth
+                             - gravity * (gravity * horizontalDistance * horizontalDistance
+                             + 2 * verticalOffset * speedSquared);
+
+        if (discriminant < 0)
+        {
+            // No solution (target too far for given speed)
+            return false;
+        }
+
+        float sqrt = Mathf.Sqrt(discriminant);
+
+        // Low arc solution (more mortar-like feel)
+        float angle = Mathf.Atan((speedSquared - sqrt) / gravityTimesDistance);
+
+        Vector3 direction = toTargetXZ.normalized;
+
+        velocity =
+            direction * Mathf.Cos(angle) * speed +
+            Vector3.up * Mathf.Sin(angle) * speed;
+
+        return true;
+    }
+    void SetRandomTombstonePosition()
+    {
+        Vector3 randomDir = Random.insideUnitSphere * enemyStats.MoveRadius;
+        randomDir.y = 0;
+
+        Vector3 targetPos = transform.position + randomDir;
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(targetPos, out hit, enemyStats.MoveRadius, NavMesh.AllAreas))
+        {
+            tombstoneTargetPos = hit.position;
+        }
+    }   
+
+    [SerializeField] GameObject Sender;
+    public void HurtPlayer()
+    {
+
+        //PlayerHealth.instance.Damage(damageDone);
+        bl_DamageInfo info = new bl_DamageInfo(damage);
+        info.Sender = Sender;
+        Sender.SetIndicator();
+        bl_DamageDelegate.OnDamageEvent(info);
+        //CameraShake.Instance.shakeDuration += 0.3f;
+    }
 }

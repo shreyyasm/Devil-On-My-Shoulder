@@ -797,7 +797,7 @@ namespace InfimaGames.LowPolyShooterPack
 
                 Debug.Log("EnemyHit");
 
-                hit.collider.gameObject.GetComponent<Enemy>().EnemyHit(damageToApply);
+                hit.collider.gameObject.GetComponent<EnemyHealth>().EnemyHit(damageToApply);
                 Debug.Log("Enemy Hit By " + damageToApply + "Damage");
 
 

@@ -76,7 +76,7 @@ public class ExplosionSystem : MonoBehaviour
     }
     public void DoExplosionDamge(Collider other)
     {
-        Enemy enemy = other.gameObject.GetComponent<Enemy>();
+        EnemyHealth enemy = other.gameObject.GetComponent<EnemyHealth>();
         if (enemy != null)
         {
             enemy.EnemyHit(damage);

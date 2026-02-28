@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyType: 1
   coverType: 1
+  shieldType: 0
   deathType: 0
   surfaceType: 0
   health: 100
@@ -30,10 +31,13 @@ MonoBehaviour:
   canGrab: 0
   grabDamageInterval: 0.5
   grabOffset: 1
+  grabHeightOffset: 0
   DashForce: 15
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
+  projectilePrefab: {fileID: 7978933150496085672, guid: 1245c33789663e6439d0caedbd64aac8,
+    type: 3}
   ShootSpeed: 20
   ShootInterval: 2
   ChangePositionTime: 3
@@ -44,3 +48,15 @@ MonoBehaviour:
   PeekRadius: 3
   CoverSearchRadius: 50
   VisionHeight: 1
+  spawnEnemyPrefab: {fileID: 0}
+  spawnInterval: 3
+  spawnLimit: 5
+  useSpawnLimit: 0
+  isShooterTombstone: 0
+  repositionInterval: 6
+  spawnBatchCount: 3
+  shootDelayAfterSpawn: 2
+  shootProjectilePrefab: {fileID: 0}
+  shootProjectileSpeed: 20
+  recoverAfterShot: 3
+  attackSoundKey: 

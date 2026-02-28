@@ -445,7 +445,7 @@ public class Projectile : MonoBehaviour {
     {
         while (riftsawActive && riftsawTarget != null)
         {
-            Enemy enemy = riftsawTarget.GetComponent<Enemy>();
+            EnemyHealth enemy = riftsawTarget.GetComponent<EnemyHealth>();
             if (enemy != null)
             {
                 enemy.EnemyHit(riftsawDamagePerTick);

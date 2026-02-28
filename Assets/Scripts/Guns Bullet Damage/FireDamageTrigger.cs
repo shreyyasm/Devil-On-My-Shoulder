@@ -69,7 +69,7 @@ public class FireDamageTrigger : MonoBehaviour
     private void DealDamage(GameObject enemy)
     {
         // Example: generic health script
-        var health = enemy.GetComponent<Enemy>();
+        var health = enemy.GetComponent<EnemyHealth>();
         if (health != null)
         {
             health.EnemyHit(damagePerTick);

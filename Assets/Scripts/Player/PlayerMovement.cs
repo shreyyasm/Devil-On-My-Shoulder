@@ -992,7 +992,7 @@ public class PlayerMovement : MonoBehaviour
             LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
             // Optional: damage call if present
 
-            Enemy enemy = hit.GetComponent<Enemy>();
+            EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
             StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
 
             //Impact VFX
