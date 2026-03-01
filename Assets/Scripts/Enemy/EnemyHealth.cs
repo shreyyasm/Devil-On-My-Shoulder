@@ -110,8 +110,8 @@ public class EnemyHealth : MonoBehaviour
             }).setIgnoreTimeScale(true);
 
 
-            SFXManager.Instance.PlaySFX("Enemy/KillSoud", 1f);
-            SFXManager.Instance.PlaySFX("Enemy/Destory", 1f);
+            SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
+            SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
    
           
             

@@ -669,22 +669,21 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
         }
 
-
-
-        // Capture input direction ONCE
-        Vector3 inputDir = orientation.forward * y + orientation.right * x;
-        if (inputDir.magnitude < 0.1f)
-            inputDir = orientation.forward;
-
+        // Always slide in player's forward direction
+        Vector3 inputDir = orientation.forward;
+        inputDir.y = 0f; // prevent upward/downward tilt
         inputDir.Normalize();
 
         float timer = 0f;
-       
+
         // -------- SLIDE MOVEMENT --------
         while (timer < dashDuration)
         {
             Vector3 vel = inputDir * dashForce * characterAbilities.GetSlideSpeedModifier();
-            vel.y = rb.velocity.y; // preserve vertical velocity
+
+            // preserve vertical velocity (gravity / jumping)
+            vel.y = rb.velocity.y;
+
             rb.velocity = vel;
 
             timer += Time.deltaTime;

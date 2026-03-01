@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.AI;
-using System.Collections;
 
 public class EnemyManager : MonoBehaviour
 {
-
+    #region EnemyData Settings
     // ================================
     // SCRIPTABLE OBJECT
     // ================================
@@ -44,6 +45,10 @@ public class EnemyManager : MonoBehaviour
     public float damage;
     public float speed;
 
+
+    #endregion
+
+    #region Melee Enemy Settings
     // ================================
     // MELEE ATTACK SETTINGS
     // ================================
@@ -79,8 +84,11 @@ public class EnemyManager : MonoBehaviour
     private FixedJoint grabJoint;
     private Rigidbody playerRb;
     private static EnemyManager currentGrabber = null;
+    #endregion
+
+    #region Shooter Enemy Settings
     // ================================
-    // SHOOT ENEMY SETTINGS
+    // SHOOTER ENEMY SETTINGS
     // ================================
 
     [Header("Shoot Enemy Settings")]
@@ -123,8 +131,9 @@ public class EnemyManager : MonoBehaviour
         MovingToPeek,
         Peeking
     }
+    #endregion
 
-
+    #region TombStone Enemy Settings
     // ================================
     // TOMBSTONE (SPAWNER)
     // ================================
@@ -146,20 +155,15 @@ public class EnemyManager : MonoBehaviour
     [Header("Shooter Tombstone Settings")]
     public bool isShooterTombstone;
     public float repositionInterval = 6f;
-
     public int spawnBatchCount = 3;
 
     public float shootDelayAfterSpawn = 2f;
-    public GameObject shootProjectilePrefab;
-    public float mortarArcHeight = 6f;
-    public float shootProjectileSpeed = 20f;
-
+ 
     public float recoverAfterShot = 3f;
     public float initialSpawnDelay = 3f;
 
     private float repositionTimer;
     private float recoverTimer;
-
     private bool isSpawningPhase;
     private bool isChargingShot;
     private bool isRecovering;
@@ -167,6 +171,45 @@ public class EnemyManager : MonoBehaviour
     private Vector3 tombstoneTargetPos;
     private float initialDelayTimer;
     private bool hasStartedCycle;
+
+    private Transform Target;
+    [SerializeField]
+
+    private Rigidbody AttackProjectile;
+    [Range(0, 1)]
+    [Tooltip("Using a values closer to 0 will make the agent throw with the lower force"
+        + "down to the least possible force (highest angle) to reach the target.\n"
+        + "Using a value of 1 the agent will always throw with the MaxThrowForce below.")]
+    public float ForceRatio = 0;
+    [SerializeField]
+    [Tooltip("If the required force to throw the attack is greater than this value, "
+        + "the agent will move closer until they come within range.")]
+    private float MaxThrowForce = 25;
+
+    [SerializeField]
+    private LayerMask SightLayers;
+    [SerializeField]
+    private float AttackDelay = 5f;
+
+    [SerializeField]
+    private bool UseMovementPrediction;
+    public PredictionMode MovementPredictionMode;
+    [Range(0.01f, 5f)]
+    public float HistoricalTime = 1f;
+    [Range(1, 100)]
+    public int HistoricalResolution = 10;
+    private Queue<Vector3> HistoricalPositions;
+
+    private float HistoricalPositionInterval;
+    private float LastHistoryRecordedTime;
+
+   
+    private float SpherecastRadius = 0.5f;
+    private float LastAttackTime;
+
+    #endregion
+
+    #region Private Variables
     // ================================
     // PRIVATE VARIABLES
     // ================================
@@ -189,8 +232,14 @@ public class EnemyManager : MonoBehaviour
     // ================================
     public bool RotateExternally;
 
+    #endregion
+
+    #region Audio Keys
     [Header("Audio")]
     public string attackSoundKey;
+
+    #endregion
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -198,6 +247,7 @@ public class EnemyManager : MonoBehaviour
         enemyCollider = GetComponent<Collider>();
         playerCollider = player.GetComponent<Collider>();
         attack3dAudioSource = GetComponent<AudioSource>();
+        Target = player;
     }
 
     private void Start()
@@ -205,6 +255,7 @@ public class EnemyManager : MonoBehaviour
         if (enemyStats == null)
             return;
 
+        #region Type Reference Set
         // =====================
         // TYPE SETTINGS (FROM SO)
         // =====================
@@ -225,6 +276,9 @@ public class EnemyManager : MonoBehaviour
             agent.stoppingDistance = enemyStats.StoppingDistance;
         }
 
+        #endregion
+
+        #region Melee Stats Reference Set
         // =====================
         // MELEE STATS
         // =====================
@@ -250,6 +304,10 @@ public class EnemyManager : MonoBehaviour
         grabDamageInterval = enemyStats.grabDamageInterval;
         grabOffset = enemyStats.grabOffset;
         grabHeightOffset = enemyStats.grabHeightOffset;
+
+        #endregion
+
+        #region Tombstone Stats Reference Set
         // =====================
         // SHOOT STATS
         // =====================
@@ -288,16 +346,30 @@ public class EnemyManager : MonoBehaviour
         repositionInterval = enemyStats.repositionInterval;
         spawnBatchCount = enemyStats.spawnBatchCount;
         shootDelayAfterSpawn = enemyStats.shootDelayAfterSpawn;
-        shootProjectilePrefab = enemyStats.shootProjectilePrefab;
-        shootProjectileSpeed = enemyStats.shootProjectileSpeed;
         recoverAfterShot = enemyStats.recoverAfterShot;
         initialSpawnDelay = enemyStats.initialSpawnDelay;
-        mortarArcHeight = enemyStats.mortarArcHeight;
 
+        //EnemyThrowData
+        AttackProjectile.useGravity = false;
+        AttackProjectile.isKinematic = true;
+        SpherecastRadius = AttackProjectile.GetComponent<SphereCollider>().radius;
+        LastAttackTime = Random.Range(0, 5);
+
+        int capacity = Mathf.CeilToInt(HistoricalResolution * HistoricalTime);
+        HistoricalPositions = new Queue<Vector3>(capacity);
+        for (int i = 0; i < capacity; i++)
+        {
+            HistoricalPositions.Enqueue(Target.position);
+        }
+        HistoricalPositionInterval = HistoricalTime / HistoricalResolution;
+        #endregion
+
+        #region Audio key Set
         // =====================
         // Audio KEYS
         // =====================
         attackSoundKey = enemyStats.attackSoundKey;
+        #endregion
 
         // =====================
         // STATE INITIALIZATION
@@ -319,15 +391,17 @@ public class EnemyManager : MonoBehaviour
 
         if (enemyType == EnemyStats.EnemyType.Tombstone)
         {
-            spawnTimer = enemyStats.spawnInterval;
+            spawnTimer = spawnInterval;
         }
-        if (enemyType == EnemyStats.EnemyType.Tombstone && enemyStats.isShooterTombstone)
+        if (enemyType == EnemyStats.EnemyType.Tombstone && isShooterTombstone)
         {
-            repositionTimer = enemyStats.repositionInterval;
+            repositionTimer = repositionInterval;
 
-            initialDelayTimer = enemyStats.initialSpawnDelay;
+            initialDelayTimer = initialSpawnDelay;
             hasStartedCycle = false;
         }
+
+        
     }
 
     private void Update()
@@ -370,15 +444,73 @@ public class EnemyManager : MonoBehaviour
         }
         if (enemyType == EnemyStats.EnemyType.Tombstone)
         {
-            if (enemyStats.isShooterTombstone)
+            if (isShooterTombstone)
                 HandleShooterTombstone();
             else
                 HandleTombstone();
 
             return;
         }
+
+       
+        if (LastHistoryRecordedTime + HistoricalPositionInterval < Time.time)
+        {
+            LastHistoryRecordedTime = Time.time;
+            HistoricalPositions.Dequeue();
+            HistoricalPositions.Enqueue(Target.position);
+        }
     }
 
+    #region Collision - Methods
+    // ================================
+    // ATTACK EXECUTION
+    // ================================
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if (enemyType != EnemyStats.EnemyType.Melee) return;
+            if (!isBusy) return;
+
+            // Immediate first hit
+            Debug.Log("Melee Damage: " + damage);
+
+            // Start interval cooldown
+            HurtPlayer();
+            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
+            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+
+            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, attackSoundKey, 1f);
+
+            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+        }
+
+    }
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+
+            if (enemyType != EnemyStats.EnemyType.Melee) return;
+            if (!isBusy) return;
+
+            if (Time.time < nextAttackTime) return;
+
+            Debug.Log("Melee Damage (Interval): " + damage);
+
+            HurtPlayer();
+            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
+            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+
+            SFXManager.Instance.PlaySFX(attackSoundKey, 1f);
+
+
+            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
+        }
+    }
+    #endregion
+
+    #region Melee - Enemy Method
     // =======================================================================
     // Melee Enemy Methods
     // =======================================================================
@@ -479,8 +611,6 @@ public class EnemyManager : MonoBehaviour
             agent.updateRotation = true;
         }
 
-        // ================= ATTACK =================
-        PerformAttack();
 
         // ================= RECOVER =================
         currentState = State.Idle;
@@ -490,58 +620,6 @@ public class EnemyManager : MonoBehaviour
         currentState = State.Chase;
         isBusy = false;
         isAttacking = false;
-    }
-
-    // ================================
-    // ATTACK EXECUTION
-    // ================================
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {          
-            if (enemyType != EnemyStats.EnemyType.Melee) return;
-            if (!isBusy) return;
-
-            // Immediate first hit
-            Debug.Log("Melee Damage: " + damage);
-
-            // Start interval cooldown
-            HurtPlayer();
-            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
-            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
-
-            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource,attackSoundKey, 1f);
-
-            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
-        }
-
-    }
-    private void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-
-            if (enemyType != EnemyStats.EnemyType.Melee) return;
-            if (!isBusy) return;
-
-            if (Time.time < nextAttackTime) return;
-
-            Debug.Log("Melee Damage (Interval): " + damage);
-
-            HurtPlayer();
-            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
-            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
-
-            SFXManager.Instance.PlaySFX(attackSoundKey, 1f);
-
-
-            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
-        }
-    }
-    void PerformAttack()
-    {
-        
-        // Later you can add hit detection here
     }
 
     // ================================
@@ -632,6 +710,9 @@ public class EnemyManager : MonoBehaviour
 
         SetNextAttackTime();
     }
+    #endregion
+
+    #region Shooter - Enemy Method
     // =======================================================================
     // Shoot Enemy Methods
     // =======================================================================
@@ -900,23 +981,25 @@ public class EnemyManager : MonoBehaviour
             shootMoveTarget = hit.position;
         }
     }
+    #endregion
 
+    #region Tombstone - Enemy Methods
     void HandleTombstone()
     {
-        if (enemyStats.spawnEnemyPrefab == null) return;
+        if (spawnEnemyPrefab == null) return;
 
         spawnTimer -= Time.deltaTime;
 
         if (spawnTimer > 0f) return;
 
-        spawnTimer = enemyStats.spawnInterval;
+        spawnTimer = spawnInterval;
 
         // =============================
         // LIMIT MODE
         // =============================
-        if (enemyStats.useSpawnLimit)
+        if (useSpawnLimit)
         {
-            if (currentSpawnedCount < enemyStats.spawnLimit)
+            if (currentSpawnedCount < spawnLimit)
             {
                 SpawnEnemy();
                 currentSpawnedCount++;
@@ -939,7 +1022,7 @@ public class EnemyManager : MonoBehaviour
             Vector3.up * 0.5f;
 
         GameObject newEnemy = Instantiate(
-            enemyStats.spawnEnemyPrefab,
+            spawnEnemyPrefab,
             spawnPos,
             Quaternion.identity
         );
@@ -949,7 +1032,7 @@ public class EnemyManager : MonoBehaviour
         if (rb != null)
             rb.AddForce(Vector3.up * 4f, ForceMode.Impulse);
 
-        if (enemyStats.useSpawnLimit)
+        if (useSpawnLimit)
         {
             EnemyHealth health = newEnemy.GetComponent<EnemyHealth>();
             if (health != null)
@@ -963,7 +1046,7 @@ public class EnemyManager : MonoBehaviour
     }
     void SpawnBatch()
     {
-        int count = enemyStats.spawnBatchCount;
+        int count = spawnBatchCount;
 
         float coneAngle = 60f;
         float angleStep = count > 1 ? coneAngle / (count - 1) : 0f;
@@ -982,7 +1065,7 @@ public class EnemyManager : MonoBehaviour
                 Vector3.up * 0.5f;
 
             GameObject enemy = Instantiate(
-                enemyStats.spawnEnemyPrefab,
+                spawnEnemyPrefab,
                 spawnPos,
                 Quaternion.identity
             );
@@ -1050,19 +1133,19 @@ public class EnemyManager : MonoBehaviour
         if (repositionTimer <= 0f)
         {
             SetRandomTombstonePosition();
-            repositionTimer = enemyStats.repositionInterval;
+            repositionTimer = repositionInterval;
         }
-
-        agent.SetDestination(tombstoneTargetPos);
+        if (agent.enabled)
+            agent.SetDestination(tombstoneTargetPos);
 
         // =========================
         // SPAWN PHASE
         // =========================
         if (!isSpawningPhase && !isChargingShot && !isRecovering)
         {
-            //SpawnBatch();
+            SpawnBatch();
             isSpawningPhase = true;
-            shootTimer = enemyStats.shootDelayAfterSpawn;
+            shootTimer = shootDelayAfterSpawn;
         }
 
         // =========================
@@ -1074,10 +1157,42 @@ public class EnemyManager : MonoBehaviour
 
             if (shootTimer <= 0f)
             {
-                FireProjectileAtPlayer();
+                agent.isStopped = true;
+                //FireProjectileAtPlayer();
+
+                // EnemyThrow Data
+
+                Vector3 origin = transform.position + Vector3.up * 1.5f; // cast from chest height
+                Vector3 targetPoint = Target.position + Vector3.up * 1.0f; // aim at chest height
+
+                Vector3 direction = (targetPoint - origin).normalized;
+                float distance = Vector3.Distance(origin, targetPoint);
+
+                bool canSeeTarget = Physics.SphereCast(
+                    origin,
+                    SpherecastRadius,
+                    direction,
+                    out RaycastHit hit,
+                    distance,                // limit cast to target distance
+                    SightLayers,
+                    QueryTriggerInteraction.Ignore
+                );
+
+                if (canSeeTarget && hit.transform.root == Target.root)
+                {
+                    LastAttackTime = Time.time;
+
+                    AttackProjectile.transform.SetParent(transform, true);
+                    AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
+
+                    AttackProjectile.useGravity = false;
+                    AttackProjectile.velocity = Vector3.zero;
+
+                    StartCoroutine(Attack());
+                }
                 isSpawningPhase = false;
                 isRecovering = true;
-                recoverTimer = enemyStats.recoverAfterShot;
+                recoverTimer = recoverAfterShot;
             }
         }
 
@@ -1094,88 +1209,250 @@ public class EnemyManager : MonoBehaviour
             }
         }
     }
-    void FireProjectileAtPlayer()
+    private void OnDrawGizmos()
     {
-        if (enemyStats.shootProjectilePrefab == null || player == null)
-            return;
+        if (Target == null) return;
 
-        Vector3 start = transform.position + Vector3.up;
-        Vector3 target = player.position + Vector3.up;
+        Vector3 origin = transform.position;
+        Vector3 direction = (Target.position + Vector3.up - transform.position).normalized;
+        float distance = Vector3.Distance(origin, Target.position);
 
-        GameObject proj = Instantiate(
-            enemyStats.shootProjectilePrefab,
-            start,
-            Quaternion.identity
+        // Check hit
+        bool hasHit = Physics.SphereCast(
+            origin,
+            SpherecastRadius,
+            direction,
+            out RaycastHit hit,
+            distance,
+            SightLayers
         );
 
-        Rigidbody rb = proj.GetComponent<Rigidbody>();
-        if (rb == null) return;
+        // Choose color
+        if (hasHit && hit.transform == Target)
+            Gizmos.color = Color.green;
+        else if (hasHit)
+            Gizmos.color = Color.red;
+        else
+            Gizmos.color = Color.yellow;
 
-        rb.useGravity = true;
-        rb.drag = 0f;
+        // Draw center line
+        Gizmos.DrawLine(origin, origin + direction * distance);
 
-        Vector3 velocity;
+        // Draw start sphere
+        Gizmos.DrawWireSphere(origin, SpherecastRadius);
 
-        if (SolveBallisticArc(start, target, Mathf.Abs(Physics.gravity.y), out velocity))
+        // Draw end sphere
+        Gizmos.DrawWireSphere(origin + direction * distance, SpherecastRadius);
+
+        // Draw hit point if something was hit
+        if (hasHit)
         {
-            rb.velocity = velocity;
-            proj.transform.rotation = Quaternion.LookRotation(rb.velocity);
+            Gizmos.DrawWireSphere(hit.point, SpherecastRadius * 0.5f);
         }
     }
-    bool SolveBallisticArc(Vector3 start, Vector3 target, float gravity, out Vector3 velocity)
+       
+    public IEnumerator Attack()
     {
-        velocity = Vector3.zero;
+   
+        transform.LookAt(Target);
 
-        Vector3 toTarget = target - start;
+        AttackProjectile.gameObject.SetActive(true);
+        AttackProjectile.transform.SetParent(null, true);
+        yield return null;
 
-        Vector3 toTargetXZ = new Vector3(toTarget.x, 0f, toTarget.z);
-        float horizontalDistance = toTargetXZ.magnitude;
-        float verticalOffset = toTarget.y;
-
-        float speed = enemyStats.shootProjectileSpeed; // use fixed launch speed
-
-        float speedSquared = speed * speed;
-        float speedFourth = speedSquared * speedSquared;
-
-        float gravityTimesDistance = gravity * horizontalDistance;
-
-        float discriminant = speedFourth
-                             - gravity * (gravity * horizontalDistance * horizontalDistance
-                             + 2 * verticalOffset * speedSquared);
-
-        if (discriminant < 0)
+        if (playerRb == null)
         {
-            // No solution (target too far for given speed)
-            return false;
+            playerRb = Target.GetComponent<Rigidbody>();
         }
 
-        float sqrt = Mathf.Sqrt(discriminant);
+        if (playerCollider == null)
+        {
+            playerCollider = Target.GetComponent<Collider>();
+        }
 
-        // Low arc solution (more mortar-like feel)
-        float angle = Mathf.Atan((speedSquared - sqrt) / gravityTimesDistance);
+        // Use collider bounds center if available, otherwise use position
+        Vector3 targetPoint = Target.position;
 
-        Vector3 direction = toTargetXZ.normalized;
+        if (playerCollider != null)
+            targetPoint = playerCollider.bounds.center;
 
-        velocity =
-            direction * Mathf.Cos(angle) * speed +
-            Vector3.up * Mathf.Sin(angle) * speed;
+        ThrowData throwData = CalculateThrowData(
+            targetPoint,
+            AttackProjectile.position
+        );
 
-        return true;
+        if (UseMovementPrediction && playerRb != null)
+        {
+            throwData = GetPredictedPositionThrowData(throwData);
+        }
+
+        DoThrow(throwData);
+ 
+        yield return null;
+
+        agent.isStopped = false;
+
+    }
+
+    private ThrowData GetPredictedPositionThrowData(ThrowData directThrowData)
+    {
+        Vector3 throwVelocity = directThrowData.ThrowVelocity;
+        throwVelocity.y = 0;
+
+        float time = directThrowData.DeltaXZ / throwVelocity.magnitude;
+
+        Vector3 playerMovement = Vector3.zero;
+
+        if (MovementPredictionMode == PredictionMode.CurrentVelocity)
+        {
+            if (playerRb != null)
+            {
+                playerMovement = playerRb.velocity * time;
+            }
+        }
+        else
+        {
+            Vector3[] positions = HistoricalPositions.ToArray();
+            Vector3 averageVelocity = Vector3.zero;
+
+            for (int i = 1; i < positions.Length; i++)
+            {
+                averageVelocity += (positions[i] - positions[i - 1]) / HistoricalPositionInterval;
+            }
+
+            if (positions.Length > 1)
+            {
+                averageVelocity /= (positions.Length - 1);
+            }
+
+            playerMovement = averageVelocity * time;
+        }
+
+        Vector3 baseTargetPosition = Target.position;
+
+        if (playerCollider != null)
+            baseTargetPosition = playerCollider.bounds.center;
+
+        Vector3 newTargetPosition = baseTargetPosition + playerMovement;
+
+        ThrowData predictiveThrowData = CalculateThrowData(
+            newTargetPosition,
+            AttackProjectile.position
+        );
+
+        predictiveThrowData.ThrowVelocity = Vector3.ClampMagnitude(
+            predictiveThrowData.ThrowVelocity,
+            MaxThrowForce
+        );
+
+        return predictiveThrowData;
+    }
+
+    private void DoThrow(ThrowData ThrowData)
+    {
+        AttackProjectile.useGravity = true;
+        AttackProjectile.isKinematic = false;
+        AttackProjectile.velocity = ThrowData.ThrowVelocity;
+    }
+
+    private ThrowData CalculateThrowData(Vector3 TargetPosition, Vector3 StartPosition)
+    {
+        // v = initial velocity, assume max speed for now
+        // x = distance to travel on X/Z plane only
+        // y = difference in altitudes from thrown point to target hit point
+        // g = gravity
+
+        Vector3 displacement = new Vector3(
+            TargetPosition.x,
+            StartPosition.y,
+            TargetPosition.z
+        ) - StartPosition;
+        float deltaY = TargetPosition.y - StartPosition.y;
+        float deltaXZ = displacement.magnitude;
+
+        // find lowest initial launch velocity with other magic formula from https://en.wikipedia.org/wiki/Projectile_motion
+        // v^2 / g = y + sqrt(y^2 + x^2)
+        // meaning.... v = sqrt(g * (y+ sqrt(y^2 + x^2)))
+        float gravity = Mathf.Abs(Physics.gravity.y);
+        float throwStrength = Mathf.Clamp(
+            Mathf.Sqrt(
+                gravity
+                * (deltaY + Mathf.Sqrt(Mathf.Pow(deltaY, 2)
+                + Mathf.Pow(deltaXZ, 2)))),
+            0.01f,
+            MaxThrowForce
+        );
+        throwStrength = Mathf.Lerp(throwStrength, MaxThrowForce, ForceRatio);
+
+        float angle;
+        if (ForceRatio == 0)
+        {
+            // optimal angle is chosen with a relatively simple formula
+            angle = Mathf.PI / 2f - (0.5f * (Mathf.PI / 2 - (deltaY / deltaXZ)));
+        }
+        else
+        {
+            // when we know the initial velocity, we have to calculate it with this formula
+            // Angle to throw = arctan((v^2 +- sqrt(v^4 - g * (g * x^2 + 2 * y * v^2)) / g*x)
+            angle = Mathf.Atan(
+                (Mathf.Pow(throwStrength, 2) - Mathf.Sqrt(
+                    Mathf.Pow(throwStrength, 4) - gravity
+                    * (gravity * Mathf.Pow(deltaXZ, 2)
+                    + 2 * deltaY * Mathf.Pow(throwStrength, 2)))
+                ) / (gravity * deltaXZ)
+            );
+        }
+
+        if (float.IsNaN(angle))
+        {
+            // you will need to handle this case when there
+            // is no feasible angle to throw the object and reach the target.
+            return new ThrowData();
+        }
+
+        Vector3 initialVelocity =
+            Mathf.Cos(angle) * throwStrength * displacement.normalized
+            + Mathf.Sin(angle) * throwStrength * Vector3.up;
+
+        return new ThrowData
+        {
+            ThrowVelocity = initialVelocity,
+            Angle = angle,
+            DeltaXZ = deltaXZ,
+            DeltaY = deltaY
+        };
+    }
+
+    private struct ThrowData
+    {
+        public Vector3 ThrowVelocity;
+        public float Angle;
+        public float DeltaXZ;
+        public float DeltaY;
+    }
+
+    public enum PredictionMode
+    {
+        CurrentVelocity,
+        AverageVelocity
     }
     void SetRandomTombstonePosition()
     {
-        Vector3 randomDir = Random.insideUnitSphere * enemyStats.MoveRadius;
+        agent.isStopped = false;
+        Vector3 randomDir = Random.insideUnitSphere * moveRadius;
         randomDir.y = 0;
 
         Vector3 targetPos = transform.position + randomDir;
 
         NavMeshHit hit;
-        if (NavMesh.SamplePosition(targetPos, out hit, enemyStats.MoveRadius, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(targetPos, out hit, moveRadius, NavMesh.AllAreas))
         {
             tombstoneTargetPos = hit.position;
         }
-    }   
+    }
+    #endregion
 
+    #region Hurt Player Method
     [SerializeField] GameObject Sender;
     public void HurtPlayer()
     {
@@ -1187,4 +1464,5 @@ public class EnemyManager : MonoBehaviour
         bl_DamageDelegate.OnDamageEvent(info);
         //CameraShake.Instance.shakeDuration += 0.3f;
     }
+    #endregion
 }

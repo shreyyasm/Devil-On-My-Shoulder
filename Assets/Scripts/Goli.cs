@@ -67,7 +67,7 @@ public class Goli : MonoBehaviour
         if (collision.CompareTag("Untagged"))
         {
             //bullet.Release(gameObject);
-            Destroy(gameObject);
+            //Destroy(gameObject);
         }
     }
 }
