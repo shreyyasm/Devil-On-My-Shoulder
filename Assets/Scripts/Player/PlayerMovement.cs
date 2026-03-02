@@ -91,7 +91,7 @@ public class PlayerMovement : MonoBehaviour
     public float kickRadius = 0.6f;
     public LayerMask enemyLayer;
 
-    private bool canKick = true;
+    public bool canKick = true;
     private bool kickPressed;
     public List<Animator> kickAnimator;
 
@@ -201,9 +201,11 @@ public class PlayerMovement : MonoBehaviour
         //Health
         playerHealth.maxHealth = PlayerCharacterData.Instance.maxHealth;
 
-        kickAnimator[characterindex - 1].gameObject.SetActive(true);
+       
         LoadSliderPlayerData();
-        
+        //RefreshLeg();
+
+
     }
 
     private void FixedUpdate() {
@@ -630,6 +632,7 @@ public class PlayerMovement : MonoBehaviour
     private float tempHeight;
     private IEnumerator Slide()
     {
+        kickAnimator[characterindex - 1].gameObject.SetActive(true);
         Transform root = rootGameobject.transform;
 
         float startY = standHeightY;
@@ -716,10 +719,11 @@ public class PlayerMovement : MonoBehaviour
         isDashing = false;
         slideCancelled = false;
         //cameraLocked = false;
-        Debug.Log("Slide");
+        kickAnimator[characterindex - 1].gameObject.SetActive(false);
         yield return new WaitForSeconds(dashCooldown);
         readyToDash = true;
        
+
     }
     private Coroutine slideRoutine;
     private Coroutine cameralerpRoutine;
@@ -758,6 +762,7 @@ public class PlayerMovement : MonoBehaviour
 
     private IEnumerator Dash()
     {
+        
         isDashing = true;
         readyToDash = false;
         //const string boolNameRun = "Running";
@@ -796,19 +801,21 @@ public class PlayerMovement : MonoBehaviour
         readyToDash = true;
         isDashing = false;
         //anim.ResetTrigger(boolNameRun);
-        Debug.Log("Dash");
+
 
     }
     private IEnumerator KickCooldownRoutine()
     {
         yield return new WaitForSeconds(kickCooldown);
         canKick = true;
+         kickAnimator[characterindex - 1].gameObject.SetActive(false);
+
     }
 
     private void TryKick()
     {
         if (!canKick) return;
-        
+        kickAnimator[characterindex - 1].gameObject.SetActive(true);
         kickAnimator[characterindex - 1].SetTrigger("Kick");
 
         StartCoroutine(KickDelay());
@@ -977,9 +984,13 @@ public class PlayerMovement : MonoBehaviour
             if (hit.GetComponent<EnemyManager>().isGrabbing)
                 hit.GetComponent<EnemyManager>().EndGrab();
 
+            if(hit.GetComponent<EnemyManager>().canDash)
+                hit.GetComponent<EnemyManager>().StopDashImmediate();
+
             Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
            
             DoTimeSlow();
+
             // 🔥 APPLY NAVMESH KNOCKBACK
             DoKickKnockback(hit.transform, kickDir, finalKickForce);
 
@@ -1013,9 +1024,11 @@ public class PlayerMovement : MonoBehaviour
                 hitstop.DoShake();
 
             }
-           
+            // LeanTween.delayedCall(1f, () => { kickAnimator[characterindex - 1].gameObject.SetActive(false); });
+          
         }
     }
+
     public static IEnumerator ImpactColorCoroutine(
      SpriteRenderer spriteRenderer,
      Color impactColor,
@@ -1094,13 +1107,18 @@ public class PlayerMovement : MonoBehaviour
         float airTimer = 0f;
         bool grounded = false;
 
+
         while (!grounded && airTimer < kickMaxAirTime)
         {
+            // 🔥 Stop immediately if rb is destroyed
+            if (rb == null)
+                yield break;
+
             airTimer += Time.deltaTime;
 
             if (rb.velocity.y <= 0f)
             {
-                if (Physics.Raycast(
+                if (target != null && Physics.Raycast(
                     target.position,
                     Vector3.down,
                     1.2f))

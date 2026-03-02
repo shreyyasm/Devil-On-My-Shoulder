@@ -21,6 +21,9 @@ public class HitstopShake : MonoBehaviour
     /// </summary>
     public void DoShake()
     {
+        if (!gameObject.activeInHierarchy)
+            return;
+
         if (shakeRoutine != null)
             StopCoroutine(shakeRoutine);
 

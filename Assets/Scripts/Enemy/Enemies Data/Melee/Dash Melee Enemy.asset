@@ -21,7 +21,7 @@ MonoBehaviour:
   gunHealth: 0
   shieldHealth: 0
   speed: 10
-  damage: 50
+  damage: 10
   AttackRange: 5
   AttackIntervalMin: 1
   AttackIntervalMax: 1.5
@@ -34,8 +34,9 @@ MonoBehaviour:
   grabHeightOffset: 0
   DashForce: 15
   DashLoadTime: 0.05
-  DashDurationTime: 0.5
+  DashDurationTime: 0.4
   DashStopTime: 1.5
+  projectilePrefab: {fileID: 0}
   ShootSpeed: 1
   ShootInterval: 2
   ChangePositionTime: 3
@@ -46,3 +47,17 @@ MonoBehaviour:
   PeekRadius: 0
   CoverSearchRadius: 0
   VisionHeight: 0
+  spawnEnemyPrefab: {fileID: 0}
+  spawnInterval: 3
+  spawnLimit: 5
+  useSpawnLimit: 0
+  isShooterTombstone: 0
+  repositionInterval: 6
+  spawnBatchCount: 3
+  shootDelayAfterSpawn: 2
+  shootProjectilePrefab: {fileID: 0}
+  mortarArcHeight: 6
+  shootProjectileSpeed: 20
+  recoverAfterShot: 3
+  initialSpawnDelay: 3
+  attackSoundKey: 

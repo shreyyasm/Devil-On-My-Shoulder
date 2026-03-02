@@ -84,6 +84,9 @@ public class EnemyManager : MonoBehaviour
     private FixedJoint grabJoint;
     private Rigidbody playerRb;
     private static EnemyManager currentGrabber = null;
+
+    private Coroutine dashCoroutine;
+    public bool isDashing;
     #endregion
 
     #region Shooter Enemy Settings
@@ -467,24 +470,28 @@ public class EnemyManager : MonoBehaviour
     // ================================
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            if (enemyType != EnemyStats.EnemyType.Melee) return;
-            if (!isBusy) return;
+        if (!collision.gameObject.CompareTag("Player")) return;
+        if (enemyType != EnemyStats.EnemyType.Melee) return;
+        if (!isBusy) return;
 
-            // Immediate first hit
-            Debug.Log("Melee Damage: " + damage);
+        // 🔥 IMPORTANT: Cooldown check
+        if (Time.time < nextAttackTime) return;
 
-            // Start interval cooldown
-            HurtPlayer();
-            collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
-            collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+        if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
-            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, attackSoundKey, 1f);
+        Debug.Log("Melee Damage: " + damage);
 
-            nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
-        }
+        HurtPlayer();
 
+        PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
+        playerHealth.ManageHealth(-damage);
+        playerHealth.hit = true;
+
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, attackSoundKey, 1f);
+
+        
+        // Set cooldown immediately
+        nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
     }
     private void OnCollisionStay(Collision collision)
     {
@@ -494,6 +501,7 @@ public class EnemyManager : MonoBehaviour
             if (enemyType != EnemyStats.EnemyType.Melee) return;
             if (!isBusy) return;
 
+            if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
             if (Time.time < nextAttackTime) return;
 
             Debug.Log("Melee Damage (Interval): " + damage);
@@ -564,55 +572,43 @@ public class EnemyManager : MonoBehaviour
     // ================================
     // ATTACK ROUTINE
     // ================================
-
+    private int dashToken = 0;
+    private bool dashForceCancelled;
     IEnumerator AttackRoutine()
     {
-      
         isBusy = true;
-        currentState = State.Attack;
-        isAttacking = true;
-        agent.isStopped = true;
+        dashForceCancelled = false;   // 🔥 Reset at start
 
-        // ================= DASH PHASE =================
-        // ================= DASH PHASE =================
-        if (canDash)
+        yield return new WaitForSeconds(1);
+
+        // 🔥 If dash was cancelled during delay → exit attack
+        if (dashForceCancelled)
         {
-            yield return new WaitForSeconds(dashLoadTime);
-
-            Rigidbody rb = GetComponent<Rigidbody>();
-
-            // Disable NavMesh movement control
-            agent.updatePosition = false;
-            agent.updateRotation = false;
-            agent.isStopped = true;
-
-            // Enable physics temporarily
-            rb.isKinematic = false;
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-
-            // PURE HORIZONTAL DIRECTION
-            Vector3 dashDir = player.position - transform.position;
-            dashDir.y = 0f;                 // 🚀 REMOVE vertical influence
-            dashDir = dashDir.normalized;   // normalize AFTER removing Y
-
-            rb.AddForce(dashDir * dashForce, ForceMode.Impulse);
-
-            yield return new WaitForSeconds(dashDuration);
-
-            // Stop movement
-            rb.velocity = Vector3.zero;
-
-            // Restore controlled state
-            rb.isKinematic = true;
-
-            agent.Warp(transform.position);
-            agent.updatePosition = true;
-            agent.updateRotation = true;
+            isBusy = false;
+            yield break;
         }
 
+        currentState = State.Attack;
+        isAttacking = true;
 
-        // ================= RECOVER =================
+        if (agent.enabled)
+            agent.isStopped = true;
+
+        if (canDash && !dashForceCancelled)
+        {
+            StartDash();
+
+            if (dashCoroutine != null)
+                yield return dashCoroutine;
+        }
+
+        if (dashForceCancelled)
+        {
+            isBusy = false;
+            isAttacking = false;
+            yield break;
+        }
+
         currentState = State.Idle;
         yield return new WaitForSeconds(recoverTime);
 
@@ -621,7 +617,110 @@ public class EnemyManager : MonoBehaviour
         isBusy = false;
         isAttacking = false;
     }
+    void StartDash()
+    {
+        if (dashCoroutine != null)
+            return;
 
+        dashToken++; // New dash session
+
+        dashCoroutine = StartCoroutine(DashRoutine(dashToken));
+    }
+    IEnumerator DashRoutine(int token)
+    {
+        yield return new WaitForSeconds(dashLoadTime);
+
+        if (token != dashToken) yield break;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        agent.updatePosition = false;
+        agent.updateRotation = false;
+
+        if (agent.enabled)
+            agent.isStopped = true;
+
+        rb.isKinematic = false;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        Vector3 dashDir = player.position - transform.position;
+        dashDir.y = 0f;
+        dashDir.Normalize();
+
+        rb.AddForce(dashDir * dashForce, ForceMode.Impulse);
+
+        yield return new WaitForSeconds(dashDuration);
+
+        if (token != dashToken) yield break;
+
+        EndDash(token);
+    }
+    void EndDash(int token)
+    {
+        if (token != dashToken)
+            return; // Dash was cancelled
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        if (agent != null)
+        {
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+
+            if (!agent.enabled)
+                agent.enabled = true;
+
+            agent.Warp(transform.position);
+            agent.isStopped = true;
+        }
+
+        dashCoroutine = null;
+
+        Debug.Log("DashStopped Normally");
+    }
+    public void StopDashImmediate()
+    {
+        dashForceCancelled = true;   // 🔥 Mark dash as cancelled
+
+        if (dashCoroutine != null)
+        {
+            StopCoroutine(dashCoroutine);
+            dashCoroutine = null;
+        }
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        if (agent != null)
+        {
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+
+            if (!agent.enabled)
+                agent.enabled = true;
+
+            agent.Warp(transform.position);
+            agent.isStopped = true;
+        }
+        SetNextAttackTime();
+        currentState = State.Chase;
+        isBusy = false;
+        isAttacking = false;
+        Debug.Log("DashStopped immediately");
+    }
     // ================================
     // RANDOM ATTACK INTERVAL
     // ================================
