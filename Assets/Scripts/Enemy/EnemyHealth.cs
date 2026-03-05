@@ -17,6 +17,7 @@ public class EnemyHealth : MonoBehaviour
     public EnemyStats.ShieldType shieldType;
     public float shieldHealth;
 
+    public bool isInvincible;
     private NavMeshAgent agent;
 
     [Header("Enemy Health UI")]
@@ -54,6 +55,7 @@ public class EnemyHealth : MonoBehaviour
     }
     public void TakeDamage(float amount)
     {
+
         // If shield exists AND still has health
         if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
         {
@@ -85,12 +87,16 @@ public class EnemyHealth : MonoBehaviour
     }
     void Die()
     {
+        enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
         Destroy(gameObject);
+
     }
 
     public void EnemyHit(float damageValue, bool HealthUI = false)
     {
+        if (isInvincible)
+            return;
         health -= damageValue;
 
         BloodPool.GetObject().transform.position = transform.position;
@@ -145,7 +151,8 @@ public class EnemyHealth : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bullet"))
         {
-
+            if (isInvincible)
+                return;
             health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
 
             BloodPool.GetObject().transform.position = transform.position;

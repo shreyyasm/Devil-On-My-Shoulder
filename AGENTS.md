@@ -2,7 +2,7 @@
 - Project name: Devil On My Shoulder
 - Unity version: Unity 2022.3.62f3
 - Active game object:
-  - Name: Eye  Enemy
-  - Tag: Blood
-  - Layer: Enemy
+  - Name: johnglockidle
+  - Tag: Untagged
+  - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

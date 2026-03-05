@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using static UnityEngine.UI.Image;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -19,7 +21,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, HellRain }
     public enum CoverType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
@@ -212,6 +214,38 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    #region Thrower Enemy Settings
+    // ================================
+    // THROWER DASH SETTINGS
+    // ================================
+
+    [Header("Thrower Dash Settings")]
+
+    public bool canThrowerDash = true;
+
+    public float throwerDashForce = 15f;
+    public float throwerDashDuration = 0.35f;
+
+    public float throwerDashInterval = 2f;
+
+    private float throwerDashTimer;
+    private bool isThrowerDashing;
+
+    #endregion
+
+    [Header("Guard Shooter Settings")]
+    public float ImmortalRadius;
+    private List<EnemyHealth> guardedEnemies = new List<EnemyHealth>();
+
+    [Header("Guard-Shooter Settings")]
+    public bool isShooterGuard;
+
+    public GameObject GuardProjectile;     
+    public float GuardShootSpeed;          
+    public float GuardShootInterval;
+
+    private float guardShootTimer;
+
     #region Private Variables
     // ================================
     // PRIVATE VARIABLES
@@ -310,7 +344,7 @@ public class EnemyManager : MonoBehaviour
 
         #endregion
 
-        #region Tombstone Stats Reference Set
+        #region Shooter Stats Reference Set
         // =====================
         // SHOOT STATS
         // =====================
@@ -331,6 +365,10 @@ public class EnemyManager : MonoBehaviour
         peekRadius = enemyStats.PeekRadius;
         coverSearchRadius = enemyStats.CoverSearchRadius;
         visionHeight = enemyStats.VisionHeight;
+
+        #endregion
+
+        #region Tombstone Stats Reference Set
 
         // =====================
         //TombStone STATS
@@ -367,6 +405,15 @@ public class EnemyManager : MonoBehaviour
         HistoricalPositionInterval = HistoricalTime / HistoricalResolution;
         #endregion
 
+        #region Guard Stats Reference Set
+
+        ImmortalRadius = enemyStats.ImmortalRadius;
+        isShooterGuard = enemyStats.isShooterGuard; 
+        GuardProjectile = enemyStats.GuardProjectile;
+        GuardShootSpeed = enemyStats.GuardShootSpeed;
+        GuardShootInterval = enemyStats.GuardShootInterval;
+        #endregion
+
         #region Audio key Set
         // =====================
         // Audio KEYS
@@ -396,6 +443,8 @@ public class EnemyManager : MonoBehaviour
         {
             spawnTimer = spawnInterval;
         }
+
+   
         if (enemyType == EnemyStats.EnemyType.Tombstone && isShooterTombstone)
         {
             repositionTimer = repositionInterval;
@@ -454,14 +503,30 @@ public class EnemyManager : MonoBehaviour
 
             return;
         }
+        if (enemyType == EnemyStats.EnemyType.Thrower)
+        {
+            if (isShooterTombstone)
+                HandleShooterTombstone();
+            return;
+        }
+        if (enemyType == EnemyStats.EnemyType.Guard)
+        {
+            HandleGuardAura();
 
-       
-        if (LastHistoryRecordedTime + HistoricalPositionInterval < Time.time)
+            if (enemyStats.isShooterGuard)
+                HandleShooterGuard();
+
+            return;
+        }
+
+        if (LastHistoryRecordedTime + HistoricalPositionInterval < Time.time && isShooterTombstone)
         {
             LastHistoryRecordedTime = Time.time;
             HistoricalPositions.Dequeue();
             HistoricalPositions.Enqueue(Target.position);
         }
+
+      
     }
 
     #region Collision - Methods
@@ -1551,6 +1616,138 @@ public class EnemyManager : MonoBehaviour
     }
     #endregion
 
+    #region Guard - Enemy Methods
+    void HandleGuardAura()
+    {
+        float radius = enemyStats.ImmortalRadius;
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+
+        List<EnemyHealth> currentlyInside = new List<EnemyHealth>();
+
+        foreach (Collider col in hits)
+        {
+            EnemyHealth eh = col.GetComponent<EnemyHealth>();
+
+            if (eh == null)
+                continue;
+
+            if (eh == GetComponent<EnemyHealth>())
+                continue; // Skip self
+
+            currentlyInside.Add(eh);
+
+            if (!eh.isInvincible)
+            {
+                eh.isInvincible = true;
+            }
+        }
+
+        // Remove invincibility from enemies that left radius
+        foreach (EnemyHealth eh in guardedEnemies)
+        {
+            if (eh != null && !currentlyInside.Contains(eh))
+            {
+                eh.isInvincible = false;
+            }
+        }
+
+        guardedEnemies = currentlyInside;
+    }
+    void HandleShooterGuard()
+    {
+        if (player == null)
+            return;
+
+        guardShootTimer -= Time.deltaTime;
+
+        if (guardShootTimer <= 0f)
+        {
+            ShootGuardProjectile();
+            guardShootTimer = enemyStats.GuardShootInterval;
+        }
+    }
+
+    void ShootGuardProjectile()
+    {
+        if (enemyStats.GuardProjectile == null || firePoint == null || player == null)
+            return;
+
+        Vector3 targetPosition = player.position + Vector3.up * 2.3f;
+
+        Vector3 direction = (targetPosition - firePoint.position).normalized;
+
+        GameObject proj = Instantiate(
+            enemyStats.GuardProjectile,
+            firePoint.position,
+            Quaternion.LookRotation(direction)
+        );
+
+        Rigidbody rb = proj.GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            rb.useGravity = false;
+            rb.drag = 0f;
+
+            rb.velocity = direction * enemyStats.GuardShootSpeed;
+        }
+
+        Debug.DrawRay(firePoint.position, direction * 5f, Color.cyan, 2f);
+    }
+    public void RemoveAllGuardEffects()
+    {
+        if (enemyType != EnemyStats.EnemyType.Guard)
+            return;
+        foreach (EnemyHealth eh in guardedEnemies)
+        {
+            if (eh != null)
+                eh.isInvincible = false;
+        }
+
+        guardedEnemies.Clear();
+    }
+    #endregion
+
+    public void AttackThrower()
+    {
+
+        agent.isStopped = true;
+        //FireProjectileAtPlayer();
+
+        // EnemyThrow Data
+
+        Vector3 origin = transform.position + Vector3.up * 2f; // cast from chest height
+        Vector3 targetPoint = Target.position + Vector3.up * 2f; // aim at chest height
+
+        Vector3 direction = (targetPoint - origin).normalized;
+        float distance = Vector3.Distance(origin, targetPoint);
+
+        bool canSeeTarget = Physics.SphereCast(
+                   origin,
+                   SpherecastRadius,
+                   direction,
+                   out RaycastHit hit,
+                   distance,                // limit cast to target distance
+                   SightLayers,
+                   QueryTriggerInteraction.Ignore
+               );
+        if (canSeeTarget && hit.transform.root == Target.root)
+        {
+            LastAttackTime = Time.time;
+
+            AttackProjectile.transform.SetParent(transform, true);
+            AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
+
+            AttackProjectile.useGravity = false;
+            AttackProjectile.velocity = Vector3.zero;
+
+            StartCoroutine(Attack());
+        }
+    }
     #region Hurt Player Method
     [SerializeField] GameObject Sender;
     public void HurtPlayer()

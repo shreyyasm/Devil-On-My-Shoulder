@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "EnemyStats", menuName = "FPS/Enemy Stats")]
 public class EnemyStats : ScriptableObject
@@ -7,7 +7,7 @@ public class EnemyStats : ScriptableObject
     // TYPE DEFINITIONS
     // ================================
 
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, HellRain }
     public enum CoverType { No, Yes }
     public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
@@ -114,6 +114,24 @@ public class EnemyStats : ScriptableObject
 
     public float recoverAfterShot = 3f;
     public float initialSpawnDelay = 3f;
+
+    [Header("Thrower Dash Settings")]
+
+    public bool canThrowerDash = true;
+
+    public float throwerDashForce = 15f;
+    public float throwerDashDuration = 0.35f;
+
+    public float throwerDashInterval = 2f;
+
+    [Header("Guard Settings")]
+    public float ImmortalRadius;
+
+    [Header("Guard-Shooter Settings")]
+    public bool isShooterGuard;
+    public GameObject GuardProjectile;    
+    public float GuardShootSpeed;         
+    public float GuardShootInterval;       
 
     [Header("Audio")]
     public string attackSoundKey;
