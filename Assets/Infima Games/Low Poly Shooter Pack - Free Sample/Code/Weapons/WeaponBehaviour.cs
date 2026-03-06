@@ -136,6 +136,8 @@ namespace InfimaGames.LowPolyShooterPack
 
         public abstract void StopBeam();
         public abstract void ReleaseChargedShot();
+
+        public abstract Animator GetAnimatorHands();
         #endregion
     }
 }

@@ -47,7 +47,7 @@ public class BowserMain : MonoBehaviour
         info.Sender = Sender;
         Sender.SetIndicator();
         bl_DamageDelegate.OnDamageEvent(info);
-        CameraShake.Instance.shakeDuration += 0.3f;
+
     }
 
     Transform FindBowser()

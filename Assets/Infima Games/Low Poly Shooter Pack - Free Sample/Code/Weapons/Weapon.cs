@@ -4,6 +4,7 @@ using QFSW.MOP2;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using static CartoonFX.CFXR_Effect;
 using static UnityEditor.PlayerSettings;
@@ -20,6 +21,7 @@ namespace InfimaGames.LowPolyShooterPack
             public int characterIndex;
             public GameObject weaponHands;
             public GameObject healthHands;
+            public Animator animator;
         }
 
         // ===================== GUN TYPE =====================
@@ -179,7 +181,7 @@ namespace InfimaGames.LowPolyShooterPack
 
         private Animator animator;
         private WeaponAttachmentManagerBehaviour attachmentManager;
-        private int ammunitionCurrent;
+        public int ammunitionCurrent;
         private IGameModeService gameModeService;
         private CharacterBehaviour characterBehaviour;
         private Transform playerCamera;
@@ -435,6 +437,7 @@ namespace InfimaGames.LowPolyShooterPack
         public override int GetAmmunitionCurrent() => ammunitionCurrent;
         public override int GetAmmunitionTotal() => ammunitionTotal;
 
+        public override Animator GetAnimatorHands() => playerCharacterHands[PlayerCharacterData.Instance.characterIndex - 1].animator;
         public override bool IsAutomatic()
         {
             return gunType == GunType.Automatic;
@@ -454,6 +457,17 @@ namespace InfimaGames.LowPolyShooterPack
         public override void Reload()
         {
             animator.Play(HasAmmunition() ? "Reload" : "Reload Empty", 0, 0.0f);
+            StartCoroutine(AddAmmunination());
+            audioSource.PlayOneShot(audioClipReload,1);
+            
+        }
+        IEnumerator AddAmmunination()
+        {
+            yield return new WaitForSeconds(0.4f);
+            FillAmmunition(ammunitionTotal);
+
+            yield return new WaitForSeconds(1f);
+            characterBehaviour.AnimationEndedReload();
         }
 
         public override void Fire(float spreadMultiplier = 1.0f)
@@ -496,7 +510,7 @@ namespace InfimaGames.LowPolyShooterPack
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
 
@@ -540,7 +554,7 @@ namespace InfimaGames.LowPolyShooterPack
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
 
@@ -583,7 +597,7 @@ namespace InfimaGames.LowPolyShooterPack
             Character.crosshairAnim.SetTrigger("Fire");
             const string stateName = "Fire";
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
 
@@ -652,7 +666,7 @@ namespace InfimaGames.LowPolyShooterPack
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
 
@@ -840,7 +854,7 @@ namespace InfimaGames.LowPolyShooterPack
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
         }
 
         public override void StopBeam()
@@ -864,7 +878,7 @@ namespace InfimaGames.LowPolyShooterPack
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
-            Character.cameraShake.shakeDuration += 0.15f;
+            CameraShake.Instance.Shake();
 
         }
 

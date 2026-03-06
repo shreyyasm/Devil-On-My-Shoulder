@@ -109,7 +109,7 @@ public class PlayerHealth : MonoBehaviour
             SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
             //healthAnim.SetTrigger("HealthMinus");
             ScoreManager.Instance.hitsTakken++;
-
+            CameraShake.Instance.Shake();
         }
            
 

@@ -3,6 +3,7 @@
 using InfimaGames.LowPolyShooterPack.Interface;
 using System;
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static WeaponSelectionManager;
@@ -101,7 +102,7 @@ namespace InfimaGames.LowPolyShooterPack
 		/// <summary>
 		/// True if the character is reloading.
 		/// </summary>
-		private bool reloading;
+		public bool reloading;
 		
 		/// <summary>
 		/// True if the character is inspecting its weapon.
@@ -315,17 +316,18 @@ namespace InfimaGames.LowPolyShooterPack
 			//Get the name of the animation state to play, which depends on weapon settings, and ammunition!
 			string stateName = equippedWeapon.HasAmmunition() ? "Reload" : "Reload Empty";
 			//Play the animation state!
-			characterAnimator.Play(stateName, layerActions, 0.0f);
+			equippedWeapon.GetAnimatorHands().SetTrigger("Reload");
+			//characterAnimator.Play(stateName, layerActions, 0.0f);
 
-			//Set.
-			reloading = true;
+            //Set.
+            reloading = true;
 
 			#endregion
 			//Crosshair.instance.Tricks();
             //Reload.
             equippedWeapon.Reload();
             crosshairAnim.SetTrigger("Reload");
-            StartCoroutine(HandsBack());
+  
         }
 
 		/// <summary>
@@ -599,18 +601,16 @@ namespace InfimaGames.LowPolyShooterPack
 						{
 							Fire();
                         }
-						
-						cameraShake.shakeDuration += 0.1f;
-                       
+
+                        //CameraShake.Instance.Shake(0.2f, 0.25f);
+
                     }
 					//Fire Empty.
 					else
 					{
                         // FireEmpty();
                         PlayReloadAnimation();
-                        //gunhand1.SetBool("Down", true);
-                        //gunhand2.SetBool("Down", true);
-                        StartCoroutine(HandsBack());
+
                     }
 						
 					break;
@@ -652,13 +652,7 @@ namespace InfimaGames.LowPolyShooterPack
 					break;
 			}
 		}
-		IEnumerator HandsBack()
-        {
-			yield return new WaitForSeconds(1.5f);
-			//gunhand1.SetBool("Down", false);
-			//gunhand2.SetBool("Down", false);
-
-		}
+		
 		/// <summary>
 		/// Inspect.
 		/// </summary>
