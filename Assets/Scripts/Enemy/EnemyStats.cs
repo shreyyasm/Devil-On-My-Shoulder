@@ -7,7 +7,7 @@ public class EnemyStats : ScriptableObject
     // TYPE DEFINITIONS
     // ================================
 
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, HellRain }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain }
     public enum CoverType { No, Yes }
     public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }

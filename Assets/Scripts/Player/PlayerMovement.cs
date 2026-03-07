@@ -5,12 +5,14 @@ using QFSW.MOP2;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Services.Analytics;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 using UnityEngine.VFX;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class PlayerMovement : MonoBehaviour 
 {
@@ -169,7 +171,9 @@ public class PlayerMovement : MonoBehaviour
 
         Shader.Find("Hidden/ImpactFrame");
         baseRotation = hands.transform.localRotation;
-        
+
+
+       
     }
 
     void Start()
@@ -182,7 +186,7 @@ public class PlayerMovement : MonoBehaviour
         if (playerCam != null)
             initialCamRot = playerCameraMain.transform.localEulerAngles;
 
-
+        
     }
 
     private void ApplyCharacterData()
@@ -282,7 +286,7 @@ public class PlayerMovement : MonoBehaviour
             standHeightY = rootGameobject.transform.position.y;
         }
 
-
+     
     }
     private Quaternion baseRotation;
     void LateUpdate()
@@ -809,7 +813,11 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(kickCooldown);
         canKick = true;
          kickAnimator[characterindex - 1].gameObject.SetActive(false);
+        playerKickedSomething = false;
 
+        yield return new WaitForSeconds(1);
+        if (targetEnemy.GetComponent<EnemyManager>().projectile_Parried)
+            targetEnemy.GetComponent<EnemyManager>().ResetParrayable();
     }
 
     private void TryKick()
@@ -945,7 +953,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-
+    public bool playerKickedSomething;
     IEnumerator KickDelay()
     {
         
@@ -964,6 +972,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (hits.Length == 0)
             yield return null;
+        playerKickedSomething = true;
 
         float finalKickForce = baseKickForce;
 
@@ -981,54 +990,75 @@ public class PlayerMovement : MonoBehaviour
         
         foreach (Collider hit in hits)
         {
-            if (hit.GetComponent<EnemyManager>().isGrabbing)
-                hit.GetComponent<EnemyManager>().EndGrab();
-
-            if(hit.GetComponent<EnemyManager>().canDash)
-                hit.GetComponent<EnemyManager>().StopDashImmediate();
-
-            Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
-           
-            DoTimeSlow();
-
-            // 🔥 APPLY NAVMESH KNOCKBACK
-            DoKickKnockback(hit.transform, kickDir, finalKickForce);
-
-           
-            hands.GetComponent<HitstopShake>().DoShake();
-            kickAnimator[characterindex - 1].GetComponent<HitstopShake>().DoShake();
-
-            ImpactFrameEffect.Instance.GoBlack();
-            LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
-            // Optional: damage call if present
-
-            EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
-            StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
-
-            //Impact VFX
-            Vector3 hitPoint = enemy.transform.position + new Vector3(0,0.55f,0);
-
-            // Normal = direction from surface to attacker
-            Vector3 normal = (transform.position - hitPoint).normalized;
-
-            Quaternion rot = Quaternion.LookRotation(normal);
-
-            Instantiate(KickVFX, hitPoint, rot);
-            //kickAnimator[characterindex - 1].gameObject.SetActive(false);
-            if (enemy != null)
+            
+            if(hit.gameObject.layer == 16)
             {
-                
-                SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
-                enemy.EnemyHit(15f,true); // tweakable
-                HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
-                hitstop.DoShake();
+                if (hit.GetComponent<EnemyManager>().isGrabbing)
+                    hit.GetComponent<EnemyManager>().EndGrab();
+
+                if (hit.GetComponent<EnemyManager>().canDash)
+                    hit.GetComponent<EnemyManager>().StopDashImmediate();
+
+                Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
+
+                DoTimeSlow();
+
+                // 🔥 APPLY NAVMESH KNOCKBACK
+                DoKickKnockback(hit.transform, kickDir, finalKickForce);
+
+
+                hands.GetComponent<HitstopShake>().DoShake();
+                kickAnimator[characterindex - 1].GetComponent<HitstopShake>().DoShake();
+
+                ImpactFrameEffect.Instance.GoBlack();
+                LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
+                // Optional: damage call if present
+
+                EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
+                StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
+
+                //Impact VFX
+                Vector3 hitPoint = enemy.transform.position + new Vector3(0, 0.55f, 0);
+
+                // Normal = direction from surface to attacker
+                Vector3 normal = (transform.position - hitPoint).normalized;
+
+                Quaternion rot = Quaternion.LookRotation(normal);
+
+                Instantiate(KickVFX, hitPoint, rot);
+                //kickAnimator[characterindex - 1].gameObject.SetActive(false);
+                if (enemy != null)
+                {
+
+                    SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
+                    enemy.EnemyHit(15f, true); // tweakable
+                    HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
+                    hitstop.DoShake();
+
+                }
+        
+            }
+            else if(hit.gameObject.layer == 15)
+            {
+
+                hit.GetComponent<Goli>().enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
+                hit.GetComponent<Goli>().enemyRigibody.GetComponent<EnemyManager>().StopEnemy();
+                DoTimeSlow();
+
+                targetEnemy = hit.GetComponent<Goli>().enemyRigibody.gameObject;
+
+              
+                Rigidbody rb = hit.GetComponent<Rigidbody>();
+
+                ShootProjectile(rb, targetEnemy.transform, 50f);
+
 
             }
-            // LeanTween.delayedCall(1f, () => { kickAnimator[characterindex - 1].gameObject.SetActive(false); });
-          
+
         }
     }
 
+    public GameObject targetEnemy;
     public static IEnumerator ImpactColorCoroutine(
      SpriteRenderer spriteRenderer,
      Color impactColor,
@@ -1212,5 +1242,24 @@ public class PlayerMovement : MonoBehaviour
         string sfxKey = $"Player/Footstep";
         SFXManager.Instance.PlaySFX(sfxKey, 1f);
     }
+
+    //Projectile Kickback
+
+    public void ShootProjectile(Rigidbody projectile, Transform target, float speed)
+    {
+        if (projectile == null || target == null)
+            return;
+
+        Vector3 targetPos = target.position + Vector3.up * 1.5f;
+
+        Vector3 direction = (targetPos - projectile.position).normalized;
+
+        projectile.useGravity = false;
+        projectile.velocity = Vector3.zero;
+        projectile.angularVelocity = Vector3.zero;
+
+        projectile.velocity = direction * speed;
+    }
+
 
 }

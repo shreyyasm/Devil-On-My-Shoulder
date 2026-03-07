@@ -21,7 +21,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, HellRain }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain }
     public enum CoverType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
@@ -277,6 +277,7 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    public bool projectile_Parried;
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -405,6 +406,14 @@ public class EnemyManager : MonoBehaviour
         HistoricalPositionInterval = HistoricalTime / HistoricalResolution;
         #endregion
 
+        #region Thrower Stats Reference Set
+
+        canThrowerDash = enemyStats.canThrowerDash;
+        throwerDashDuration = enemyStats.throwerDashDuration;
+        throwerDashForce = enemyStats.throwerDashForce;
+        throwerDashInterval = enemyStats.throwerDashInterval;
+        #endregion
+
         #region Guard Stats Reference Set
 
         ImmortalRadius = enemyStats.ImmortalRadius;
@@ -453,7 +462,7 @@ public class EnemyManager : MonoBehaviour
             hasStartedCycle = false;
         }
 
-        
+
     }
 
     private void Update()
@@ -506,9 +515,17 @@ public class EnemyManager : MonoBehaviour
         if (enemyType == EnemyStats.EnemyType.Thrower)
         {
             if (isShooterTombstone)
+            {
                 HandleShooterTombstone();
+
+            }
+            if (canThrowerDash)
+                HandleThrower();
+
+
             return;
         }
+
         if (enemyType == EnemyStats.EnemyType.Guard)
         {
             HandleGuardAura();
@@ -1321,6 +1338,9 @@ public class EnemyManager : MonoBehaviour
 
             if (shootTimer <= 0f)
             {
+                if (projectile_Parried)
+                    return;
+
                 agent.isStopped = true;
                 //FireProjectileAtPlayer();
 
@@ -1345,7 +1365,7 @@ public class EnemyManager : MonoBehaviour
                 if (canSeeTarget && hit.transform.root == Target.root)
                 {
                     LastAttackTime = Time.time;
-
+                    AttackProjectile.GetComponent<Goli>().enemyRigibody = GetComponent<Rigidbody>();
                     AttackProjectile.transform.SetParent(transform, true);
                     AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
 
@@ -1414,7 +1434,7 @@ public class EnemyManager : MonoBehaviour
             Gizmos.DrawWireSphere(hit.point, SpherecastRadius * 0.5f);
         }
     }
-       
+
     public IEnumerator Attack()
     {
    
@@ -1600,8 +1620,10 @@ public class EnemyManager : MonoBehaviour
         CurrentVelocity,
         AverageVelocity
     }
+
     void SetRandomTombstonePosition()
     {
+
         agent.isStopped = false;
         Vector3 randomDir = Random.insideUnitSphere * moveRadius;
         randomDir.y = 0;
@@ -1712,42 +1734,118 @@ public class EnemyManager : MonoBehaviour
     }
     #endregion
 
-    public void AttackThrower()
+    #region Thrower Enemy Method
+    void HandleThrower()
     {
+        if (!canThrowerDash || isThrowerDashing)
+            return;
 
-        agent.isStopped = true;
-        //FireProjectileAtPlayer();
+        if (projectile_Parried) return;
+        throwerDashTimer -= Time.deltaTime;
 
-        // EnemyThrow Data
-
-        Vector3 origin = transform.position + Vector3.up * 2f; // cast from chest height
-        Vector3 targetPoint = Target.position + Vector3.up * 2f; // aim at chest height
-
-        Vector3 direction = (targetPoint - origin).normalized;
-        float distance = Vector3.Distance(origin, targetPoint);
-
-        bool canSeeTarget = Physics.SphereCast(
-                   origin,
-                   SpherecastRadius,
-                   direction,
-                   out RaycastHit hit,
-                   distance,                // limit cast to target distance
-                   SightLayers,
-                   QueryTriggerInteraction.Ignore
-               );
-        if (canSeeTarget && hit.transform.root == Target.root)
+        if (throwerDashTimer <= 0f)
         {
-            LastAttackTime = Time.time;
-
-            AttackProjectile.transform.SetParent(transform, true);
-            AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
-
-            AttackProjectile.useGravity = false;
-            AttackProjectile.velocity = Vector3.zero;
-
-            StartCoroutine(Attack());
+            throwerDashCoroutine = StartCoroutine(ThrowerDash());
+            throwerDashTimer = throwerDashInterval;
         }
     }
+    Coroutine throwerDashCoroutine;
+    bool dashCancelled;
+    IEnumerator ThrowerDash()
+    {
+        isThrowerDashing = true;
+        dashCancelled = false;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        if (agent != null && agent.enabled)
+        {
+            agent.updatePosition = false;
+            agent.updateRotation = false;
+            agent.isStopped = true;
+        }
+
+        rb.isKinematic = false;
+        rb.constraints = RigidbodyConstraints.None;
+        rb.velocity = Vector3.zero;
+
+        int dir = Random.value > 0.5f ? 1 : -1;
+        Vector3 dashDir = transform.right * dir;
+
+        rb.AddForce(dashDir * throwerDashForce, ForceMode.Impulse);
+
+        float timer = 0f;
+
+        while (timer < throwerDashDuration)
+        {
+            if (dashCancelled)
+                yield break;
+
+            timer += Time.deltaTime;
+            yield return null;
+        }
+        StopThrowerDash();
+    }
+    public void StopThrowerDash()
+    {
+        if (!isThrowerDashing)
+            return;
+
+        // Stop coroutine
+        if (throwerDashCoroutine != null)
+        {
+            StopCoroutine(throwerDashCoroutine);
+            throwerDashCoroutine = null;
+        }
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            rb.isKinematic = true;
+            rb.constraints = RigidbodyConstraints.FreezeAll; // fully freeze
+        }
+
+        if (agent != null)
+        {
+            if (!agent.enabled)
+                agent.enabled = true;
+
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+
+            agent.Warp(transform.position);
+
+            // make enemy completely stop
+            agent.isStopped = true;
+        }
+
+        isThrowerDashing = false;
+    }
+    public void StopEnemy()
+    {
+        StopThrowerDash();
+        //Rigidbody rb = GetComponent<Rigidbody>();
+        //rb.velocity = Vector3.zero ;
+        //if (agent != null)
+        //{
+        //    agent.updatePosition = true;
+        //    agent.updateRotation = true;
+
+        //    if (!agent.enabled)
+        //        agent.enabled = true;
+
+        //    agent.Warp(transform.position);
+        //    agent.isStopped = false;
+        //}
+
+        //isThrowerDashing = false;
+    }
+    #endregion
+
     #region Hurt Player Method
     [SerializeField] GameObject Sender;
     public void HurtPlayer()
@@ -1759,6 +1857,15 @@ public class EnemyManager : MonoBehaviour
         Sender.SetIndicator();
         bl_DamageDelegate.OnDamageEvent(info);
         //CameraShake.Instance.shakeDuration += 0.3f;
+    }
+    public void ResetParrayable()
+    {
+        StartCoroutine(ResetEnemy());
+    }
+    public IEnumerator ResetEnemy()
+    {
+        yield return new WaitForSeconds(2f);
+        projectile_Parried = false;
     }
     #endregion
 }

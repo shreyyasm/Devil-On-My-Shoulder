@@ -12,8 +12,19 @@ public class Goli : MonoBehaviour
     public float projSpeed = 5f; // Speed at which the GameObject moves away
 
     public ObjectPool bullet;
+
+    public bool parryable;
+    public Rigidbody enemyRigibody;
+
+    private PlayerMovement playerMovement;
+    private void Awake()
+    {
+        playerMovement = FindObjectOfType<PlayerMovement>();
+    }
     void Update()
     {
+        if(parryable) return;
+
         if (flame != null)
         {
             // Calculate the direction away from the flame
@@ -45,7 +56,7 @@ public class Goli : MonoBehaviour
     }
     private void OnTriggerEnter(Collider collision)
     {
-        if (collision.CompareTag("Player") && !PowerUpSelect.Instance.playerShielded)
+        if (collision.CompareTag("Player") && !collision.GetComponent<PlayerMovement>().playerKickedSomething )
         {
             Rigidbody playerRigidbody = collision.GetComponent<Rigidbody>();
             if (playerRigidbody != null)
@@ -59,6 +70,7 @@ public class Goli : MonoBehaviour
                     HurtPlayer();
                     collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
                     collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+                    Debug.Log("playerHit");
                     bullet.Release(gameObject);
                 }
             }
@@ -68,5 +80,17 @@ public class Goli : MonoBehaviour
             //bullet.Release(gameObject);
             //Destroy(gameObject);
         }
+        if (collision.CompareTag("Blood") &&  parryable && enemyRigibody.GetComponent<EnemyManager>().projectile_Parried)
+        {
+            Debug.Log("Hit Enemy");
+            collision.GetComponent<EnemyHealth>().EnemyHit(playerDamage);
+            collision.GetComponent<EnemyManager>().ResetParrayable();
+            enemyRigibody = null;
+            playerMovement.playerKickedSomething = false;       
+            gameObject.SetActive(false);
+
+        }
+
     }
+  
 }

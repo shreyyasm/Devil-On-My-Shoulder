@@ -36,6 +36,7 @@ MonoBehaviour:
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
+  projectilePrefab: {fileID: 0}
   ShootSpeed: 1
   ShootInterval: 2
   ChangePositionTime: 3
@@ -51,4 +52,22 @@ MonoBehaviour:
   spawnInterval: 5
   spawnLimit: 5
   useSpawnLimit: 0
+  isShooterTombstone: 0
+  repositionInterval: 6
+  spawnBatchCount: 3
+  shootDelayAfterSpawn: 2
+  shootProjectilePrefab: {fileID: 0}
+  mortarArcHeight: 6
+  shootProjectileSpeed: 20
+  recoverAfterShot: 3
+  initialSpawnDelay: 3
+  canThrowerDash: 1
+  throwerDashForce: 15
+  throwerDashDuration: 0.35
+  throwerDashInterval: 2
+  ImmortalRadius: 0
+  isShooterGuard: 0
+  GuardProjectile: {fileID: 0}
+  GuardShootSpeed: 0
+  GuardShootInterval: 0
   attackSoundKey: Enemy/EyeAttack
