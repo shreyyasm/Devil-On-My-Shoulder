@@ -1860,7 +1860,9 @@ public class EnemyManager : MonoBehaviour
     }
     public void ResetParrayable()
     {
-        StartCoroutine(ResetEnemy());
+        projectile_Parried = false;
+        //if (gameObject.activeInHierarchy)
+        //    StartCoroutine(ResetEnemy());
     }
     public IEnumerator ResetEnemy()
     {

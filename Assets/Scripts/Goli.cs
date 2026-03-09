@@ -58,6 +58,8 @@ public class Goli : MonoBehaviour
     {
         if (collision.CompareTag("Player") && !collision.GetComponent<PlayerMovement>().playerKickedSomething )
         {
+            //if (collision.GetComponent<PlayerMovement>().kickAnimator[PlayerCharacterData.Instance.characterIndex - 1].GetComponent<KickAnimationEvents>().isKicking) return;
+
             Rigidbody playerRigidbody = collision.GetComponent<Rigidbody>();
             if (playerRigidbody != null)
             {
@@ -82,12 +84,13 @@ public class Goli : MonoBehaviour
         }
         if (collision.CompareTag("Blood") &&  parryable && enemyRigibody.GetComponent<EnemyManager>().projectile_Parried)
         {
+            
             Debug.Log("Hit Enemy");
             collision.GetComponent<EnemyHealth>().EnemyHit(playerDamage);
             collision.GetComponent<EnemyManager>().ResetParrayable();
             enemyRigibody = null;
             playerMovement.playerKickedSomething = false;       
-            gameObject.SetActive(false);
+            gameObject.SetActive(false); 
 
         }
 

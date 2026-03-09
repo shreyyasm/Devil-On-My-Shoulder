@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using UnityEngine.VFX;
 using static UnityEngine.EventSystems.EventTrigger;
@@ -815,9 +816,7 @@ public class PlayerMovement : MonoBehaviour
          kickAnimator[characterindex - 1].gameObject.SetActive(false);
         playerKickedSomething = false;
 
-        yield return new WaitForSeconds(1);
-        if (targetEnemy.GetComponent<EnemyManager>().projectile_Parried)
-            targetEnemy.GetComponent<EnemyManager>().ResetParrayable();
+      
     }
 
     private void TryKick()
@@ -972,7 +971,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (hits.Length == 0)
             yield return null;
-        playerKickedSomething = true;
+      
 
         float finalKickForce = baseKickForce;
 
@@ -1038,7 +1037,7 @@ public class PlayerMovement : MonoBehaviour
                 }
         
             }
-            else if(hit.gameObject.layer == 15)
+            if(hit.gameObject.layer == 15)
             {
 
                 hit.GetComponent<Goli>().enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
@@ -1046,16 +1045,51 @@ public class PlayerMovement : MonoBehaviour
                 DoTimeSlow();
 
                 targetEnemy = hit.GetComponent<Goli>().enemyRigibody.gameObject;
+                Flash(0f, 0.2f, 0.1f);
+                SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
+                LeanTween.delayedCall(0.03f, () => { SFXManager.Instance.PlaySFX("Player/KickParry", 1f); });
+                LeanTween.delayedCall(0.05f, () => { SFXManager.Instance.PlaySFX("Player/KickParry2", 1f); });
 
-              
                 Rigidbody rb = hit.GetComponent<Rigidbody>();
 
-                ShootProjectile(rb, targetEnemy.transform, 50f);
-
+                ShootProjectile(rb, targetEnemy.transform, 70f);
+                playerKickedSomething = true;
 
             }
 
         }
+    }
+
+    public Volume volume;
+
+    Coroutine flashRoutine;
+
+    public void Flash(float startWeight, float targetWeight, float duration)
+    {
+        if (flashRoutine != null)
+            StopCoroutine(flashRoutine);
+
+        flashRoutine = StartCoroutine(FlashRoutine(startWeight, targetWeight, duration));
+    }
+
+    IEnumerator FlashRoutine(float startWeight, float targetWeight, float duration)
+    {
+        float time = 0f;
+
+        volume.weight = startWeight;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+
+            float t = time / duration;
+
+            volume.weight = Mathf.Lerp(startWeight, targetWeight, t);
+
+            yield return null;
+        }
+
+        volume.weight = targetWeight;
     }
 
     public GameObject targetEnemy;
@@ -1103,7 +1137,7 @@ public class PlayerMovement : MonoBehaviour
         // Restore normal time
         Time.timeScale = 1f;
         Time.fixedDeltaTime = 0.02f;
-
+        Flash(0.2f, 0f, 0.1f);
         timeRoutine = null;
     }
     private void DoKickKnockback(Transform target, Vector3 direction, float force)
