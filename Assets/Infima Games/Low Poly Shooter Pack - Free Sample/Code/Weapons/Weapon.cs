@@ -171,7 +171,7 @@ namespace InfimaGames.LowPolyShooterPack
         private bool piercerFiring;
 
 
-        public ParticleSystem muzzleFlashNew;
+        public ParticleSystem FireFlash;
 
         public List<PlayerCharacterHands> playerCharacterHands;
 
@@ -188,7 +188,7 @@ namespace InfimaGames.LowPolyShooterPack
 
         public AudioSource audioSource;
         public ObjectPool BulletPool;
-        public Animator flash;
+        public Animator MuzzleFlash;
 
         private bool isCharging;
         private bool beamActive;
@@ -496,7 +496,7 @@ namespace InfimaGames.LowPolyShooterPack
                     StartLaserBeam(); // NEW
                     break;
             }
-            muzzleFlashNew.Play();
+            FireFlash.Play();
       
         }
 
@@ -536,7 +536,7 @@ namespace InfimaGames.LowPolyShooterPack
             }
 
 
-            flash.SetTrigger("Flash");
+            MuzzleFlash.SetTrigger("Flash");
 
             ApplyRecoil(gunType == GunType.Pistol ? pistolRecoil : automaticRecoil);
 
@@ -580,7 +580,7 @@ namespace InfimaGames.LowPolyShooterPack
             }
 
 
-            flash.SetTrigger("Flash");
+            MuzzleFlash.SetTrigger("Flash");
             ApplyRecoil(pistolRecoil);
 
             if (ammunitionCurrent == 0)
@@ -621,7 +621,7 @@ namespace InfimaGames.LowPolyShooterPack
 
             }
 
-            flash.SetTrigger("Flash");
+            MuzzleFlash.SetTrigger("Flash");
             ApplyRecoil(shotgunRecoil);
 
             if (specialGun == SpecialGuns.Heatbloom)
@@ -677,7 +677,7 @@ namespace InfimaGames.LowPolyShooterPack
             projectile.GetComponent<Rigidbody>().velocity =
                 projectile.transform.forward * projectileImpulse;
 
-            flash.SetTrigger("Flash");
+            MuzzleFlash.SetTrigger("Flash");
             ApplyRecoil(chargedBeamRecoil);
         }
 

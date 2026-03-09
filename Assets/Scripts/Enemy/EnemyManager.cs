@@ -107,6 +107,13 @@ public class EnemyManager : MonoBehaviour
     public float changePositionTime;   // Time before reposition
     public float moveRadius;           // Random move radius
 
+    [Header("Burst Shooting")]
+
+    public bool burstShooting = false;
+    public int burstCount = 3;
+    public float burstInterval = 0.1f;
+
+    private bool isBursting;
 
     [Header("Cover Settings")]
 
@@ -355,6 +362,14 @@ public class EnemyManager : MonoBehaviour
         changePositionTime = enemyStats.ChangePositionTime;
         moveRadius = enemyStats.MoveRadius;
         canShootMove = enemyStats.canShootMove;
+
+        // =====================
+        // Burst STATS
+        // =====================
+
+        burstShooting = enemyStats.burstShooting;
+        burstCount = enemyStats.burstCount;
+        burstInterval = enemyStats.burstInterval;
 
 
         // =====================
@@ -906,7 +921,7 @@ public class EnemyManager : MonoBehaviour
 
         if (shootTimer <= 0f)
         {
-            Shoot();
+            TryShoot();
             shootTimer = shootInterval;
         }
     }
@@ -918,7 +933,7 @@ public class EnemyManager : MonoBehaviour
         shootTimer -= Time.deltaTime;
         if (shootTimer <= 0f)
         {
-            Shoot();
+            TryShoot();
             shootTimer = shootInterval;
         }
 
@@ -979,7 +994,7 @@ public class EnemyManager : MonoBehaviour
                     // Check visibility
                     if (HasLineOfSight())
                     {
-                        Shoot();
+                        TryShoot();
                     }
                     else
                     {
@@ -1023,7 +1038,7 @@ public class EnemyManager : MonoBehaviour
                 shootTimer -= Time.deltaTime;
                 if (shootTimer <= 0f)
                 {
-                    Shoot();
+                    TryShoot();
                     shootTimer = shootInterval;
                 }
 
@@ -1116,6 +1131,32 @@ public class EnemyManager : MonoBehaviour
         }
 
         return false;
+    }
+    void TryShoot()
+    {
+        if (burstShooting)
+        {
+            if (!isBursting)
+                StartCoroutine(BurstShoot());
+        }
+        else
+        {
+            Shoot();
+        }
+    }
+    IEnumerator BurstShoot()
+    {
+        isBursting = true;
+
+        for (int i = 0; i < burstCount; i++)
+        {
+            Shoot();
+
+            if (i < burstCount - 1)
+                yield return new WaitForSeconds(burstInterval);
+        }
+
+        isBursting = false;
     }
     void Shoot()
     {

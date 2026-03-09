@@ -87,6 +87,14 @@ public class EnemyStats : ScriptableObject
     public float MoveRadius;
     public bool canShootMove;
 
+    [Header("Burst Shooting")]
+
+    public bool burstShooting = false;
+    public int burstCount = 3;
+    public float burstInterval = 0.1f;
+
+    private bool isBursting;
+
     [Header("Cover Settingns")]
     public float CoverTime;
     public float PeekDuration;
