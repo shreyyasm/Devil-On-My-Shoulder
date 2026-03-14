@@ -21,7 +21,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain, Spider }
     public enum CoverType { No, Yes }
     public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
@@ -454,6 +454,11 @@ public class EnemyManager : MonoBehaviour
             currentState = State.Chase;
             SetNextAttackTime();
         }
+        if(enemyType == EnemyStats.EnemyType.Spider)
+        {
+            currentState = State.Chase;
+            SetNextAttackTime();
+        }
       
         if (enemyType == EnemyStats.EnemyType.Shoot)
         {
@@ -482,15 +487,19 @@ public class EnemyManager : MonoBehaviour
 
     private void Update()
     {
-        // Get direction to player (ignore Y so it only rotates horizontally)
-        Vector3 direction = player.transform.position - transform.position;
-        direction.y = 0f;
-        if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
+        if(enemyType != EnemyStats.EnemyType.Spider)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            if (!RotateExternally)
-                transform.rotation = targetRotation;
+            // Get direction to player (ignore Y so it only rotates horizontally)
+            Vector3 direction = player.transform.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                if (!RotateExternally)
+                    transform.rotation = targetRotation;
+            }
         }
+      
 
     
         if (player == null || isBusy) return;
@@ -499,8 +508,11 @@ public class EnemyManager : MonoBehaviour
 
         switch (currentState)
         {
-            case State.Chase:
-                HandleChase();
+            case State.Chase:               
+                if (enemyType == EnemyStats.EnemyType.Spider)
+                    HandleChaseSpider();
+                else
+                    HandleChase();
                 break;
         }
         if (enemyType == EnemyStats.EnemyType.Shoot)
@@ -568,7 +580,7 @@ public class EnemyManager : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         if (!collision.gameObject.CompareTag("Player")) return;
-        if (enemyType != EnemyStats.EnemyType.Melee) return;
+        if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
         if (!isBusy) return;
 
         // 🔥 IMPORTANT: Cooldown check
@@ -595,7 +607,7 @@ public class EnemyManager : MonoBehaviour
         if (collision.gameObject.CompareTag("Player"))
         {
 
-            if (enemyType != EnemyStats.EnemyType.Melee) return;
+            if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
             if (!isBusy) return;
 
             if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
@@ -666,6 +678,43 @@ public class EnemyManager : MonoBehaviour
             }
         }
     }
+
+    void HandleChaseSpider()
+    {
+        float currentDistance = Vector3.Distance(transform.position, player.position);
+
+        if (!isBusy && Time.time >= nextAttackTime)
+        {
+            // =============================
+            // GRAB LOGIC
+            // =============================
+
+            if (currentDistance < attackRange)
+            {
+                if (canGrab && !isGrabbing)
+                {
+                    // If no one is grabbing → grab
+                    if (currentGrabber == null)
+                    {
+                        currentGrabber = this;
+                        StartCoroutine(GrabRoutine());
+                    }
+                    else
+                    {
+                        // Someone else is grabbing → fallback to melee attack
+                        StartCoroutine(AttackRoutine());
+                    }
+                }
+                else
+                {
+                    // Normal melee
+                    StartCoroutine(AttackRoutine());
+                }
+            }
+           
+        }
+
+    }
     // ================================
     // ATTACK ROUTINE
     // ================================
@@ -688,7 +737,8 @@ public class EnemyManager : MonoBehaviour
         currentState = State.Attack;
         isAttacking = true;
 
-        if (agent.enabled)
+
+        if (enemyType != EnemyStats.EnemyType.Spider && agent.enabled)
             agent.isStopped = true;
 
         if (canDash && !dashForceCancelled)
@@ -714,6 +764,7 @@ public class EnemyManager : MonoBehaviour
         isBusy = false;
         isAttacking = false;
     }
+
     void StartDash()
     {
         if (dashCoroutine != null)
@@ -836,8 +887,12 @@ public class EnemyManager : MonoBehaviour
         isGrabbing = true;
         Physics.IgnoreCollision(enemyCollider, playerCollider, true);
         // Disable NavMesh
-        agent.isStopped = true;
-        agent.enabled = false;
+        if(agent != null)
+        {
+            agent.isStopped = true;
+            agent.enabled = false;
+        }
+        
 
         Rigidbody enemyRb = GetComponent<Rigidbody>();
 

@@ -362,7 +362,111 @@ public class Projectile : MonoBehaviour {
 		}
 
 	}
-	private IEnumerator DestroyAfter () 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (specialBullets == SpecialBullets.Eliminator)
+        {
+            eliminatorHomingActive = false;
+            eliminatorTarget = null;
+        }
+
+        Vector3 hitPoint = other.ClosestPoint(transform.position);
+        Vector3 hitNormal = (transform.position - hitPoint).normalized;
+
+        if (other.gameObject.layer != 16 && specialBullets != SpecialBullets.Eliminator && specialBullets != SpecialBullets.Ricocheter)
+        {
+            Quaternion rot = Quaternion.FromToRotation(Vector3.forward, hitNormal);
+
+            if (ignorePrevRotation)
+            {
+                rot = Quaternion.identity;
+            }
+
+            Instantiate(impactPrefab, hitPoint, rot);
+            bulletPool.Release(gameObject);
+        }
+
+        if (specialBullets == SpecialBullets.Danceler && other.gameObject.layer == 16)
+        {
+            HandleMouthMelter(other.gameObject);
+            bulletPool.Release(gameObject);
+            return;
+        }
+
+        if (specialBullets == SpecialBullets.StickyVicky)
+        {
+            SpawnStickyVicky(null ,other);
+            return;
+        }
+
+        if (specialBullets == SpecialBullets.Riftsaw)
+        {
+            HandleRiftsawImpact(null, other);
+            return;
+        }
+
+        if (specialBullets == SpecialBullets.Ricocheter)
+        {
+            HandleRicochet(null, other);
+        }
+
+        if (specialBullets == SpecialBullets.YourMom)
+        {
+            HandleMortarImpact(null ,other);
+
+            Instantiate(
+                FirePrefab,
+                hitPoint,
+                Quaternion.identity
+            );
+        }
+
+        if (specialBullets == SpecialBullets.Dragunfire)
+        {
+            Instantiate(
+                FirePrefab,
+                hitPoint,
+                Quaternion.identity
+            );
+        }
+
+        if (specialBullets == SpecialBullets.Motar_Bullets)
+        {
+            HandleMortarImpact(null, other);
+        }
+
+        // Ignore collisions with other projectiles
+        if (other.GetComponent<Projectile>() != null)
+            return;
+
+        if (demoBullet)
+        {
+            if (other.gameObject.layer != 16)
+            {
+                Weapon.Instance.damageMultipler = 0;
+                bulletDamage = baseDemoDamage;
+            }
+        }
+
+        GameObject bloodSplatter;
+
+        if (other.CompareTag("Blood"))
+        {
+            bloodSplatter = bloodPool.GetObject();
+            bloodSplatter.transform.position = transform.position;
+            bloodSplatter.transform.rotation = Quaternion.LookRotation(hitNormal);
+
+            StartCoroutine(DisableSplat());
+            bulletPool.Release(gameObject);
+        }
+
+        IEnumerator DisableSplat()
+        {
+            yield return new WaitForSeconds(2f);
+            bloodPool.Release(bloodSplatter);
+        }
+    }
+    private IEnumerator DestroyAfter () 
 	{
 		//Wait for set amount of time
 		yield return new WaitForSeconds (destroyAfter);
@@ -372,29 +476,57 @@ public class Projectile : MonoBehaviour {
         bulletPool.Release(gameObject);
 
     }
-    private void HandleMortarImpact(Collision collision)
+    private void HandleMortarImpact(Collision collision = null, Collider collider = null)
     {
-        ContactPoint contact = collision.contacts[0];
+        Vector3 contactPoint;
+
+        if (collision != null)
+        {
+            ContactPoint contact = collision.contacts[0];
+            contactPoint = contact.point;
+        }
+        else
+        {
+            contactPoint = collider.ClosestPoint(transform.position);
+        }
 
         // Spawn explosion VFX
         if (mortarExplosionPrefab != null)
         {
-            GameObject explsoion = 
-            Instantiate(
-                mortarExplosionPrefab,
-                contact.point,
-                Quaternion.identity
-            );
-            explsoion.GetComponent<ExplosionSystem>().systemType = SystemType.ExplosionOnly;
+            GameObject explosion =
+                Instantiate(
+                    mortarExplosionPrefab,
+                    contactPoint,
+                    Quaternion.identity
+                );
+
+            explosion.GetComponent<ExplosionSystem>().systemType = SystemType.ExplosionOnly;
+        }
+    }
+    private void HandleRicochet(Collision collision = null, Collider collider = null)
+    {
+        Vector3 contactPoint;
+        Vector3 normal;
+        GameObject hitObject;
+
+        if (collision != null)
+        {
+            ContactPoint contact = collision.contacts[0];
+            contactPoint = contact.point;
+            normal = contact.normal;
+            hitObject = collision.gameObject;
+        }
+        else
+        {
+            contactPoint = collider.ClosestPoint(transform.position);
+            normal = (transform.position - contactPoint).normalized;
+            hitObject = collider.gameObject;
         }
 
-    }
-    private void HandleRicochet(Collision collision)
-    {
         // If hit enemy → deal damage & destroy
-        if (collision.gameObject.layer == 16)
+        if (hitObject.layer == 16)
         {
-            Damage(collision.gameObject);
+            Damage(hitObject);
             bulletPool.Release(gameObject);
             currentRicochetCount = 0;
             return;
@@ -417,11 +549,10 @@ public class Projectile : MonoBehaviour {
 
         // --- SPEED BOOST ---
         speed *= ricochetSpeedMultiplier;
-        speed = Mathf.Min(speed, maxRicochetSpeed); // safety cap
+        speed = Mathf.Min(speed, maxRicochetSpeed);
 
         // --- REFLECT DIRECTION ---
         Vector3 incomingDir = rb.velocity.normalized;
-        Vector3 normal = collision.contacts[0].normal;
         Vector3 reflectedDir = Vector3.Reflect(incomingDir, normal);
 
         // --- APPLY BOOSTED SPEED ---
@@ -434,7 +565,7 @@ public class Projectile : MonoBehaviour {
         {
             Instantiate(
                 impactPrefab,
-                collision.contacts[0].point,
+                contactPoint,
                 Quaternion.LookRotation(normal)
             );
         }
@@ -485,12 +616,29 @@ public class Projectile : MonoBehaviour {
         bulletPool.Release(gameObject);
     }
 
-    private void HandleRiftsawImpact(Collision collision)
+    private void HandleRiftsawImpact(Collision collision = null, Collider collider = null)
     {
-        // Only stick to enemies
-        if (collision.gameObject.layer == 16)
+        Vector3 contactPoint;
+        Transform target;
+        int layer;
+
+        if (collision != null)
         {
-           
+            ContactPoint contact = collision.contacts[0];
+            contactPoint = contact.point;
+            target = collision.transform;
+            layer = collision.gameObject.layer;
+        }
+        else
+        {
+            contactPoint = collider.ClosestPoint(transform.position);
+            target = collider.transform;
+            layer = collider.gameObject.layer;
+        }
+
+        // Only stick to enemies
+        if (layer == 16)
+        {
             if (rb != null)
             {
                 rb.velocity = Vector3.zero;
@@ -498,62 +646,69 @@ public class Projectile : MonoBehaviour {
             }
 
             // Stick to enemy
-            riftsawTarget = collision.transform;
+            riftsawTarget = target;
             transform.SetParent(riftsawTarget);
 
-            // Optional: offset slightly from surface
-            transform.position = collision.contacts[0].point;
+            // Snap to impact point
+            transform.position = contactPoint;
 
             riftsawActive = true;
 
             // Start behaviors
-            if(gameObject.activeSelf)
+            if (gameObject.activeSelf)
             {
                 StartCoroutine(RiftsawDamageCoroutine());
                 StartCoroutine(RiftsawLifeCoroutine());
             }
-          
         }
         else
         {
             Instantiate(
-               riftsawExplosionPrefab,
-               transform.position,
-               Quaternion.identity
-           );
-          
-            return;
+                riftsawExplosionPrefab,
+                transform.position,
+                Quaternion.identity
+            );
         }
-
-       
     }
-    private void SpawnStickyVicky(Collision collision)
+    private void SpawnStickyVicky(Collision collision = null, Collider collider = null)
     {
         if (stickyBombPrefab == null)
             return;
 
-        ContactPoint contact = collision.contacts[0];
-        Transform enemy = collision.transform;
+        Vector3 contactPoint;
+        Vector3 contactNormal;
+        Transform enemy;
 
-
+        if (collision != null)
+        {
+            ContactPoint contact = collision.contacts[0];
+            contactPoint = contact.point;
+            contactNormal = contact.normal;
+            enemy = collision.transform;
+        }
+        else
+        {
+            contactPoint = collider.ClosestPoint(transform.position);
+            contactNormal = (transform.position - contactPoint).normalized;
+            enemy = collider.transform;
+        }
 
         // Face the surface normal
-        Quaternion surfaceRotation = Quaternion.LookRotation(contact.normal);
+        Quaternion surfaceRotation = Quaternion.LookRotation(contactNormal);
 
         // Apply 90° X rotation offset
         Quaternion finalRotation = surfaceRotation * Quaternion.Euler(90f, 0f, 0f);
 
         GameObject bomb = Instantiate(
             stickyBombPrefab,
-            contact.point,
+            contactPoint,
             finalRotation
         );
 
-
-        // 🔒 Parent to enemy (THIS is the key fix)
+        // Parent to enemy
         bomb.transform.SetParent(enemy);
 
-        // Disable bomb physics (parent-driven movement)
+        // Disable bomb physics
         Rigidbody bombRb = bomb.GetComponent<Rigidbody>();
         if (bombRb != null)
         {

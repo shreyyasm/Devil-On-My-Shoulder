@@ -524,7 +524,7 @@ namespace InfimaGames.LowPolyShooterPack
 
 
             if (specialGun == SpecialGuns.Kinematic)
-            {
+            { 
                 if (Character.playerMovement.playerMoving)
                     projectile.GetComponent<Projectile>().SetDamage(decreasedDamage);
                 else
@@ -584,7 +584,11 @@ namespace InfimaGames.LowPolyShooterPack
             ApplyRecoil(pistolRecoil);
 
             if (ammunitionCurrent == 0)
+            {
                 Character.PlayReloadAnimation();
+              
+            }
+              
         }
 
         private void FireShotgun()

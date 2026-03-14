@@ -293,7 +293,7 @@ namespace InfimaGames.LowPolyShooterPack
 		private void Fire()
 		{
             equippedWeapon.Fire();
-
+            equippedWeapon.GetAnimatorHands().SetTrigger("Fire");
             //Save the shot time, so we can calculate the fire rate correctly.
             //lastShotTime = Time.time;
             //Fire the weapon! Make sure that we also pass the scope's spread multiplier if we're aiming.
@@ -311,13 +311,16 @@ namespace InfimaGames.LowPolyShooterPack
         
         public void PlayReloadAnimation()
 		{
-			#region Animation
-
-			//Get the name of the animation state to play, which depends on weapon settings, and ammunition!
-			string stateName = equippedWeapon.HasAmmunition() ? "Reload" : "Reload Empty";
-			//Play the animation state!
-			equippedWeapon.GetAnimatorHands().SetTrigger("Reload");
-			//characterAnimator.Play(stateName, layerActions, 0.0f);
+            #region Animation
+            LeanTween.delayedCall(1f, () => { equippedWeapon.GetAnimatorHands().ResetTrigger("Fire"); });
+            
+            //Get the name of the animation state to play, which depends on weapon settings, and ammunition!
+            string stateName = equippedWeapon.HasAmmunition() ? "Reload" : "Reload Empty";
+            //Play the animation state!
+            
+            equippedWeapon.GetAnimatorHands().SetTrigger("Reload");
+           
+            //characterAnimator.Play(stateName, layerActions, 0.0f);
 
             //Set.
             reloading = true;

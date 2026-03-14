@@ -50,7 +50,8 @@ public class EnemyHealth : MonoBehaviour
             shieldType = enemyStats.shieldType;
             shieldHealth = enemyStats.shieldHealth;
 
-            agent.speed = enemyStats.speed;
+            if(agent != null)
+                agent.speed = enemyStats.speed;
         }
     }
     public void TakeDamage(float amount)
@@ -135,7 +136,7 @@ public class EnemyHealth : MonoBehaviour
             Die();
 
         }
-        if (!HealthUI)
+        if (!HealthUI && spriteRenderer != null)
         {
             if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
                 spriteRenderer.color = collisionColorYellow;
@@ -151,6 +152,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bullet"))
         {
+            Debug.Log("hIT NOT TRIGGER");
             if (isInvincible)
                 return;
             health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
@@ -191,6 +193,8 @@ public class EnemyHealth : MonoBehaviour
                 Die();
             }
 
+            if (spriteRenderer == null) return;
+
             if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
                 spriteRenderer.color = collisionColorYellow;
 
@@ -202,5 +206,58 @@ public class EnemyHealth : MonoBehaviour
        
     }
 
-   
+    private void OnTriggerEnter(Collider collision)
+    {
+        if (collision.gameObject.CompareTag("Bullet"))
+        {
+            if (isInvincible)
+                return;
+            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
+            BloodPool.GetObject().transform.position = transform.position;
+            SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
+            ScoreManager.Instance.RegisterShotHit();
+            if (health <= 0)
+            {
+
+                GameObject explosion = explosionPool.GetObject();
+                explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
+
+                //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+                ImpactFrameEffect.Instance.GoBlack();
+                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+
+                SFXManager.Instance.PlaySFX("Enemy/KillSoud", 1f);
+                SFXManager.Instance.PlaySFX("Enemy/Destory", 1f);
+
+                //Instantiate(coin, transform.position, Quaternion.identity);
+
+
+                //GameObject obj = batteryLife.GetObject();
+                //obj.transform.position = transform.position;
+
+                //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
+                //Rigidbody rb = obj.GetComponent<Rigidbody>();
+                //if (rb != null)
+                //{
+                //    // Give it an upward "pop"
+                //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
+                //}
+                ScoreManager.Instance.Kills++;
+                KillStreak.Instance.KilledEnemy();
+                //EnemyPool.Release(gameObject);
+                gameObject.SetActive(false);
+                Die();
+            }
+
+            if (spriteRenderer == null) return;
+
+            if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
+                spriteRenderer.color = collisionColorYellow;
+
+            else if (health <= maxHealth / 2.5)
+                spriteRenderer.color = collisionColorRed;
+            else
+                spriteRenderer.color = Color.white;
+        }
+    }
 }
