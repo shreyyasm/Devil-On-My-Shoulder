@@ -15,8 +15,12 @@ MonoBehaviour:
   enemyType: 0
   coverType: 0
   shieldType: 0
-  deathType: 0
+  deathType: 1
   surfaceType: 0
+  AfterDeath_ExplosionPrefab: {fileID: 180128, guid: bb56edfb72e0f2848864180020d1ecda,
+    type: 3}
+  spriteHeight: 0
+  colliderHeight: 0
   health: 100
   gunHealth: 0
   shieldHealth: 0
@@ -42,6 +46,9 @@ MonoBehaviour:
   ChangePositionTime: 3
   MoveRadius: 10
   canShootMove: 0
+  burstShooting: 0
+  burstCount: 3
+  burstInterval: 0.1
   CoverTime: 0
   PeekDuration: 0
   PeekRadius: 0
@@ -60,4 +67,13 @@ MonoBehaviour:
   shootProjectileSpeed: 20
   recoverAfterShot: 3
   initialSpawnDelay: 3
+  canThrowerDash: 1
+  throwerDashForce: 15
+  throwerDashDuration: 0.35
+  throwerDashInterval: 2
+  ImmortalRadius: 0
+  isShooterGuard: 0
+  GuardProjectile: {fileID: 0}
+  GuardShootSpeed: 0
+  GuardShootInterval: 0
   attackSoundKey: Enemy/EyeAttack

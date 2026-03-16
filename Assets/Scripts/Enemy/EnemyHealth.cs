@@ -15,6 +15,7 @@ public class EnemyHealth : MonoBehaviour
 
     [Header("Shield Settings")]
     public EnemyStats.ShieldType shieldType;
+    public EnemyStats.DeathType deathType;
     public float shieldHealth;
 
     public bool isInvincible;
@@ -32,8 +33,12 @@ public class EnemyHealth : MonoBehaviour
     public ObjectPool explosionPool;
     public ObjectPool BloodPool;
     public enum ShieldType { No, Yes }
+    public enum DeathType { Simple, Explosion}
+
+    public GameObject AfterDeath_ExplosionPrefab;
 
     public System.Action OnDeath;
+    
     private void Awake()
     {
         enemyStats = enemyManager.enemyStats;
@@ -50,7 +55,10 @@ public class EnemyHealth : MonoBehaviour
             shieldType = enemyStats.shieldType;
             shieldHealth = enemyStats.shieldHealth;
 
-            if(agent != null)
+            deathType = enemyStats.deathType;
+            AfterDeath_ExplosionPrefab = enemyStats.AfterDeath_ExplosionPrefab;
+
+            if (agent != null)
                 agent.speed = enemyStats.speed;
         }
     }
@@ -88,8 +96,29 @@ public class EnemyHealth : MonoBehaviour
     }
     void Die()
     {
+        Transform explosionPoint = enemyManager.firePoint;
+        GameObject explosion = explosionPool.GetObject();
+        explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
+
+        ImpactFrameEffect.Instance.GoBlack();
+        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+
+        SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
+        SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
+
+        ScoreManager.Instance.Kills++;
+        KillStreak.Instance.KilledEnemy();
+        //EnemyPool.Release(gameObject);
+        gameObject.SetActive(false);
+
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
+
+        if(deathType == EnemyStats.DeathType.Explosion)
+        {
+            Instantiate(AfterDeath_ExplosionPrefab,explosionPoint.position, Quaternion.identity);
+        }
+
         Destroy(gameObject);
 
     }
@@ -98,43 +127,13 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isInvincible)
             return;
+
         health -= damageValue;
-
-        BloodPool.GetObject().transform.position = transform.position;
-
         ScoreManager.Instance.RegisterShotHit();
+
         if (health <= 0)
         {
-
-            GameObject explosion = explosionPool.GetObject();
-            explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
-
-            //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
-            ImpactFrameEffect.Instance.GoBlack();
-            LeanTween.delayedCall(0.2f, () =>
-            {
-                ImpactFrameEffect.Instance.GoColor();
-            }).setIgnoreTimeScale(true);
-
-
-            SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
-            SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
-   
-          
-            
-            ////SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
-            //Rigidbody rb = obj.GetComponent<Rigidbody>();
-            //if (rb != null)
-            //{
-            //    // Give it an upward "pop"
-            //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
-            //}
-            ScoreManager.Instance.Kills++;
-            KillStreak.Instance.KilledEnemy();
-            //EnemyPool.Release(gameObject);
-            gameObject.SetActive(false);
             Die();
-
         }
         if (!HealthUI && spriteRenderer != null)
         {
@@ -152,44 +151,16 @@ public class EnemyHealth : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bullet"))
         {
-            Debug.Log("hIT NOT TRIGGER");
+
             if (isInvincible)
                 return;
-            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
 
-            BloodPool.GetObject().transform.position = transform.position;
+            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
+
             if (health <= 0)
-            {
-
-                GameObject explosion = explosionPool.GetObject();
-                explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
-
-                //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
-                ImpactFrameEffect.Instance.GoBlack();
-                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
-
-                SFXManager.Instance.PlaySFX("Enemy/KillSoud", 1f);
-                SFXManager.Instance.PlaySFX("Enemy/Destory", 1f);
-
-                //Instantiate(coin, transform.position, Quaternion.identity);
-
-
-                //GameObject obj = batteryLife.GetObject();
-                //obj.transform.position = transform.position;
-
-                //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
-                //Rigidbody rb = obj.GetComponent<Rigidbody>();
-                //if (rb != null)
-                //{
-                //    // Give it an upward "pop"
-                //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
-                //}
-                ScoreManager.Instance.Kills++;
-                KillStreak.Instance.KilledEnemy();
-                //EnemyPool.Release(gameObject);
-                gameObject.SetActive(false);
+            {           
                 Die();
             }
 
@@ -218,34 +189,6 @@ public class EnemyHealth : MonoBehaviour
             ScoreManager.Instance.RegisterShotHit();
             if (health <= 0)
             {
-
-                GameObject explosion = explosionPool.GetObject();
-                explosion.transform.position = transform.position + new Vector3(0, 0.6f, 0);
-
-                //Instantiate(explosionPrefab, transform.position, Quaternion.identity);
-                ImpactFrameEffect.Instance.GoBlack();
-                LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
-
-                SFXManager.Instance.PlaySFX("Enemy/KillSoud", 1f);
-                SFXManager.Instance.PlaySFX("Enemy/Destory", 1f);
-
-                //Instantiate(coin, transform.position, Quaternion.identity);
-
-
-                //GameObject obj = batteryLife.GetObject();
-                //obj.transform.position = transform.position;
-
-                //SFXManager.Instance.PlaySFX($"Enemy/Death", 1f);
-                //Rigidbody rb = obj.GetComponent<Rigidbody>();
-                //if (rb != null)
-                //{
-                //    // Give it an upward "pop"
-                //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
-                //}
-                ScoreManager.Instance.Kills++;
-                KillStreak.Instance.KilledEnemy();
-                //EnemyPool.Release(gameObject);
-                gameObject.SetActive(false);
                 Die();
             }
 
@@ -259,5 +202,6 @@ public class EnemyHealth : MonoBehaviour
             else
                 spriteRenderer.color = Color.white;
         }
+
     }
 }

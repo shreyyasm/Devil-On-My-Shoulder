@@ -63470,7 +63470,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   maximumDistance: 500
-  ammunitionTotal: 10
+  ammunitionTotal: 6
   socket: {fileID: 219743011}
   audioClipFire: {fileID: 8300000, guid: 100bbde9ff3d0044c86fcbfceb2f7b25, type: 3}
   shotgunPellets: 3
@@ -81353,6 +81353,7 @@ MonoBehaviour:
   health: 0
   gunHealth: 0
   shieldType: 0
+  deathType: 0
   shieldHealth: 0
   isInvincible: 0
   spriteRenderer: {fileID: 919390725}
@@ -81360,6 +81361,7 @@ MonoBehaviour:
   collisionColorYellow: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   explosionPool: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
   BloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
+  AfterDeath_ExplosionPrefab: {fileID: 0}
 --- !u!114 &808397084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81444,6 +81446,9 @@ MonoBehaviour:
   GuardShootInterval: 0
   RotateExternally: 0
   attackSoundKey: 
+  spriteHeight: 0
+  colliderHeight: 0
+  sprite: {fileID: 0}
   projectile_Parried: 0
   Sender: {fileID: 808397080}
 --- !u!195 &808397085
@@ -136845,7 +136850,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
-  m_Pitch: 1.35
+  m_Pitch: 1
   Loop: 0
   Mute: 0
   Spatialize: 0
@@ -136943,14 +136948,14 @@ MonoBehaviour:
   gunType: 2
   specialGun: 0
   projectileImpulse: 300
-  roundsPerMinutes: 500
+  roundsPerMinutes: 250
   mask:
     serializedVersion: 2
     m_Bits: 1
   maximumDistance: 500
   ammunitionTotal: 2
   socket: {fileID: 1601221001}
-  audioClipFire: {fileID: 8300000, guid: 100bbde9ff3d0044c86fcbfceb2f7b25, type: 3}
+  audioClipFire: {fileID: 8300000, guid: 716358fb2fa172f42bc0f860ab313761, type: 3}
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -136979,7 +136984,7 @@ MonoBehaviour:
   spriteBody: {fileID: 21300000, guid: c11193ef801931944b04f85d2013316c, type: 3}
   audioClipHolster: {fileID: 8300000, guid: 8c4ede782a70c6e4b9e515d40d6e6e69, type: 3}
   audioClipUnholster: {fileID: 8300000, guid: 4aaa78b2722c0344cb0363a3980adf64, type: 3}
-  audioClipReload: {fileID: 8300000, guid: 7a39cbcba4b38f64483ef3a8683ce382, type: 3}
+  audioClipReload: {fileID: 8300000, guid: 18f14bdd28548584da3ac4cdaabd8d91, type: 3}
   audioClipReloadEmpty: {fileID: 8300000, guid: c565065df3907944b8b58f0d27066ba8,
     type: 3}
   audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
@@ -146501,6 +146506,7 @@ MonoBehaviour:
   health: 0
   gunHealth: 0
   shieldType: 0
+  deathType: 0
   shieldHealth: 0
   isInvincible: 0
   spriteRenderer: {fileID: 0}
@@ -146508,6 +146514,7 @@ MonoBehaviour:
   collisionColorYellow: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   explosionPool: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
   BloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
+  AfterDeath_ExplosionPrefab: {fileID: 0}
 --- !u!1 &1480130784
 GameObject:
   m_ObjectHideFlags: 0
@@ -147590,6 +147597,9 @@ MonoBehaviour:
   GuardShootInterval: 0
   RotateExternally: 0
   attackSoundKey: 
+  spriteHeight: 0
+  colliderHeight: 0
+  sprite: {fileID: 0}
   projectile_Parried: 0
   Sender: {fileID: 3433745880104686274}
 --- !u!1 &1493637827
@@ -204611,6 +204621,7 @@ MonoBehaviour:
   health: 0
   gunHealth: 0
   shieldType: 0
+  deathType: 0
   shieldHealth: 0
   isInvincible: 0
   spriteRenderer: {fileID: 931111262}
@@ -204618,6 +204629,7 @@ MonoBehaviour:
   collisionColorYellow: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   explosionPool: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
   BloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
+  AfterDeath_ExplosionPrefab: {fileID: 0}
 --- !u!114 &1868172592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204702,6 +204714,9 @@ MonoBehaviour:
   GuardShootInterval: 0
   RotateExternally: 0
   attackSoundKey: 
+  spriteHeight: 0
+  colliderHeight: 0
+  sprite: {fileID: 0}
   projectile_Parried: 0
   Sender: {fileID: 1868172588}
 --- !u!195 &1868172593
@@ -226797,7 +226812,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4026809359687036347}
   m_Father: {fileID: 430550993276955807}
   m_LocalEulerAnglesHint: {x: -1.94, y: -21.029, z: 0}
 --- !u!1 &229432929855739537
@@ -227404,7 +227420,6 @@ Transform:
   m_Children:
   - {fileID: 3006120558111575013}
   - {fileID: 229302774910896169}
-  - {fileID: 4026809359687036347}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -1.94, y: -21.029, z: 0}
 --- !u!1 &440260826658126395
@@ -257155,6 +257170,7 @@ MonoBehaviour:
   health: 0
   gunHealth: 0
   shieldType: 0
+  deathType: 0
   shieldHealth: 0
   isInvincible: 0
   spriteRenderer: {fileID: 919152526768817878}
@@ -257162,6 +257178,7 @@ MonoBehaviour:
   collisionColorYellow: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   explosionPool: {fileID: 11400000, guid: b5269c636d0a00a44b0ed369e57ab352, type: 2}
   BloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
+  AfterDeath_ExplosionPrefab: {fileID: 0}
 --- !u!1 &2622684655486391666
 GameObject:
   m_ObjectHideFlags: 0
@@ -264011,7 +264028,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &3433933172584678290
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -265206,12 +265223,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8096661785298707302}
   serializedVersion: 2
-  m_LocalRotation: {x: 9.3132246e-10, y: 0.669373, z: -0.0000000037252899, w: 0.74292654}
-  m_LocalPosition: {x: -0, y: 0.356, z: 0.18}
+  m_LocalRotation: {x: 9.3132246e-10, y: 0.669373, z: -0.0000000027939675, w: 0.7429266}
+  m_LocalPosition: {x: 0, y: 0.35600004, z: 0.17999999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 430550993276955807}
+  m_Father: {fileID: 229302774910896169}
   m_LocalEulerAnglesHint: {x: 0, y: 84.037, z: 0}
 --- !u!4 &4035686757348137540
 Transform:
@@ -265326,7 +265343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692503b5140f69443957bffa9dcb43de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyStats: {fileID: 11400000, guid: c76f95b91e36f7644b934aa23b50828e, type: 2}
+  enemyStats: {fileID: 11400000, guid: f627ee339855bbe4cbf2940c3d0af6c9, type: 2}
   enemyType: 0
   coverType: 0
   deathType: 0
@@ -265398,6 +265415,9 @@ MonoBehaviour:
   GuardShootInterval: 0
   RotateExternally: 0
   attackSoundKey: 
+  spriteHeight: 3
+  colliderHeight: 3
+  sprite: {fileID: 3209991718947634585}
   projectile_Parried: 0
   Sender: {fileID: 3433745880104686274}
 --- !u!4 &4077586171654134678

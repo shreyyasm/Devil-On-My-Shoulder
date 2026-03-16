@@ -10,7 +10,7 @@ public class EnemyStats : ScriptableObject
     public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain , Spider}
     public enum CoverType { No, Yes }
     public enum ShieldType { No, Yes }
-    public enum DeathType { Simple, Explosion, ToxicSplash }
+    public enum DeathType { Simple, Explosion}
     public enum SurfaceType { Ground, Air }
 
     [Header("Enemy Type Settings")]
@@ -19,6 +19,21 @@ public class EnemyStats : ScriptableObject
     public ShieldType shieldType;
     public DeathType deathType;
     public SurfaceType surfaceType;
+
+
+    // ================================
+    // DeathAfter STATS
+    // ================================
+    public GameObject AfterDeath_ExplosionPrefab;
+
+    // ================================
+    // Surface STATS
+    // ================================
+
+    [Header("Surface Type Settings")]
+
+    public float spriteHeight;
+    public float colliderHeight;
 
     // ================================
     // HEALTH STATS

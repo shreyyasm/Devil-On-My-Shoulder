@@ -313,30 +313,95 @@ namespace InfimaGames.LowPolyShooterPack
 		{
             #region Animation
             LeanTween.delayedCall(1f, () => { equippedWeapon.GetAnimatorHands().ResetTrigger("Fire"); });
+
+			
             
             //Get the name of the animation state to play, which depends on weapon settings, and ammunition!
             string stateName = equippedWeapon.HasAmmunition() ? "Reload" : "Reload Empty";
             //Play the animation state!
-            
-            equippedWeapon.GetAnimatorHands().SetTrigger("Reload");
-           
+
+            if (!equippedWeapon.HasAmmunition())
+            {
+                Animator anim = equippedWeapon.GetAnimatorHands();
+
+                bool hasEmpty = false;
+
+                foreach (AnimatorControllerParameter param in anim.parameters)
+                {
+                    if (param.name == "Empty" && param.type == AnimatorControllerParameterType.Bool)
+                    {
+                        hasEmpty = true;
+                        break;
+                    }
+                }
+
+                if (hasEmpty)
+                {
+                    anim.SetBool("Empty", true);
+                }
+                StartCoroutine(WaitForShootThenReload());
+            }
+            else
+            {
+                equippedWeapon.GetAnimatorHands().SetTrigger("Reload");
+                reloading = true;
+                equippedWeapon.Reload();
+                crosshairAnim.SetTrigger("Reload");
+            }
+
+
             //characterAnimator.Play(stateName, layerActions, 0.0f);
 
             //Set.
-            reloading = true;
 
-			#endregion
-			//Crosshair.instance.Tricks();
+
+            #endregion
+            //Crosshair.instance.Tricks();
             //Reload.
+
+
+        }
+        IEnumerator WaitForShootThenReload()
+        {
+            Animator anim = equippedWeapon.GetAnimatorHands();
+
+            bool hasShoot = false;
+
+            foreach (var clip in anim.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name == "shoot")
+                {
+                    hasShoot = true;
+                    break;
+                }
+            }
+
+            if (hasShoot)
+            {
+                // wait until shoot animation starts
+                while (!anim.GetCurrentAnimatorStateInfo(0).IsName("shoot"))
+                {
+                    yield return null;
+                }
+
+                // wait until shoot animation finishes
+                while (anim.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.9f)
+                {
+                    yield return null;
+                }
+            }
+
+            // reload immediately if no shoot animation OR after shoot finishes
+            anim.SetTrigger("Reload");
+            reloading = true;
             equippedWeapon.Reload();
             crosshairAnim.SetTrigger("Reload");
-  
         }
 
-		/// <summary>
-		/// Equip Weapon Coroutine.
-		/// </summary>
-		private IEnumerator Equip(int index = 0)
+        /// <summary>
+        /// Equip Weapon Coroutine.
+        /// </summary>
+        private IEnumerator Equip(int index = 0)
 		{
 			//Only if we're not holstered, holster. If we are already, we don't need to wait.
 			if(!holstered)

@@ -633,6 +633,11 @@ namespace InfimaGames.LowPolyShooterPack
                 heatbloomTimer = 0f;
                 currentHeatbloomDamage = heatbloomBaseDamage;
             }
+            if (ammunitionCurrent == 0)
+            {
+                Character.PlayReloadAnimation();
+
+            }
 
         }
 
@@ -932,6 +937,9 @@ namespace InfimaGames.LowPolyShooterPack
             ammunitionCurrent = amount != 0
                 ? Mathf.Clamp(ammunitionCurrent + amount, 0, ammunitionTotal)
                 : ammunitionTotal;
+
+            LeanTween.delayedCall(1f, () => { GetAnimatorHands().SetBool("Empty", false); });
+           
         }
 
         #endregion

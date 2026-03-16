@@ -23,7 +23,6 @@ public class EnemyManager : MonoBehaviour
     
     public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain, Spider }
     public enum CoverType { No, Yes }
-    public enum DeathType { Simple, Explosion, ToxicSplash }
     public enum SurfaceType { Ground, Air }
 
     public enum State { Idle, Wander, Chase, Attack }
@@ -240,6 +239,7 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    #region Guard Type Settings
     [Header("Guard Shooter Settings")]
     public float ImmortalRadius;
     private List<EnemyHealth> guardedEnemies = new List<EnemyHealth>();
@@ -252,6 +252,8 @@ public class EnemyManager : MonoBehaviour
     public float GuardShootInterval;
 
     private float guardShootTimer;
+
+    #endregion
 
     #region Private Variables
     // ================================
@@ -284,6 +286,20 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    #region Surface Type Settings
+    // ================================
+    // SURFACE TYPE SETTINGS
+    // ================================
+
+    [Header("Surface Type Settings")]
+
+    public float spriteHeight;
+    public float colliderHeight;
+
+    public GameObject sprite;
+
+    #endregion
+
     public bool projectile_Parried;
     private void Awake()
     {
@@ -293,6 +309,8 @@ public class EnemyManager : MonoBehaviour
         playerCollider = player.GetComponent<Collider>();
         attack3dAudioSource = GetComponent<AudioSource>();
         Target = player;
+
+
     }
 
     private void Start()
@@ -445,6 +463,9 @@ public class EnemyManager : MonoBehaviour
         attackSoundKey = enemyStats.attackSoundKey;
         #endregion
 
+        spriteHeight = enemyStats.spriteHeight;
+        colliderHeight = enemyStats.colliderHeight;
+
         // =====================
         // STATE INITIALIZATION
         // =====================
@@ -482,6 +503,33 @@ public class EnemyManager : MonoBehaviour
             hasStartedCycle = false;
         }
 
+
+        if (surfaceType == EnemyStats.SurfaceType.Air)
+        {
+            // Move sprite up
+            if (sprite != null)
+            {
+                Vector3 pos = sprite.transform.localPosition;
+                pos.y = spriteHeight;
+                sprite.transform.localPosition = pos;
+            }
+
+            // Adjust collider center
+            Collider col = GetComponent<Collider>();
+
+            if (col is CapsuleCollider capsule)
+            {
+                Vector3 center = capsule.center;
+                center.y = colliderHeight;
+                capsule.center = center;
+            }
+            else if (col is BoxCollider box)
+            {
+                Vector3 center = box.center;
+                center.y = colliderHeight;
+                box.center = center;
+            }
+        }
 
     }
 
@@ -1010,8 +1058,14 @@ public class EnemyManager : MonoBehaviour
         if (currentCover == null)
         {
             FindNearestCover();
-            return;
+            // If still no cover found → behave like moving shooter
+            if (currentCover == null)
+            {
+                HandleMovingShooter();
+                return;
+            }
         }
+
 
         switch (coverState)
         {
