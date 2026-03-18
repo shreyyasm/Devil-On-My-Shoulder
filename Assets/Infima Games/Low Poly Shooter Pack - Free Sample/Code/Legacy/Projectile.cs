@@ -10,7 +10,7 @@ using static ExplosionSystem;
 using static InfimaGames.LowPolyShooterPack.Weapon;
 using static UnityEngine.EventSystems.EventTrigger;
 using Random = UnityEngine.Random;
-
+using DamageNumbersPro;
 public class Projectile : MonoBehaviour {
     public enum SpecialBullets
     {

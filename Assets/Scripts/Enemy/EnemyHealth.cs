@@ -1,7 +1,9 @@
+using DamageNumbersPro;
 using QFSW.MOP2;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
-
+using UnityEngine.UIElements;
 public class EnemyHealth : MonoBehaviour
 {
     public EnemyManager enemyManager;
@@ -147,6 +149,7 @@ public class EnemyHealth : MonoBehaviour
         }
 
     }
+    public DamageNumber numberPrefab;
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Bullet"))
@@ -156,6 +159,10 @@ public class EnemyHealth : MonoBehaviour
                 return;
 
             health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
+
+            //Spawn and Set Number:
+            DamageNumber damageNumber = numberPrefab.Spawn(transform.position + new Vector3(1,2f,0) , collision.gameObject.GetComponent<Projectile>().Damage(gameObject), transform);
+
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
 
