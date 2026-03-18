@@ -381,6 +381,7 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void LateUpdate()
         {
+           
             // Smooth recoil return
             targetRecoil = Vector2.Lerp(
                 targetRecoil,

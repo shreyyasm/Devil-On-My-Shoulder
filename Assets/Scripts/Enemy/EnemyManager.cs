@@ -21,7 +21,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain, Spider }
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, Suicider, Spider }
     public enum CoverType { No, Yes }
     public enum SurfaceType { Ground, Air }
 
@@ -255,6 +255,17 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    #region Suicider Enemy Settings
+    // ================================
+    // SUICIDER SETTINGS
+    // ================================
+
+    [Header("Suicider Settings")]
+
+    public float detonateDistance = 2.5f;
+
+    #endregion
+
     #region Private Variables
     // ================================
     // PRIVATE VARIABLES
@@ -456,6 +467,10 @@ public class EnemyManager : MonoBehaviour
         GuardShootInterval = enemyStats.GuardShootInterval;
         #endregion
 
+        #region Suicider Enemy Settings
+        detonateDistance = enemyStats.detonateDistance;
+        #endregion
+
         #region Audio key Set
         // =====================
         // Audio KEYS
@@ -610,6 +625,11 @@ public class EnemyManager : MonoBehaviour
 
             return;
         }
+        if (enemyType == EnemyStats.EnemyType.Suicider)
+        {
+            HandleSuicider();
+        }
+
 
         if (LastHistoryRecordedTime + HistoricalPositionInterval < Time.time && isShooterTombstone)
         {
@@ -1993,6 +2013,34 @@ public class EnemyManager : MonoBehaviour
         //}
 
         //isThrowerDashing = false;
+    }
+    #endregion
+
+    #region Thrower Enemy Method
+    void HandleSuicider()
+    {
+        if (player == null)
+            return;
+
+        float distance = Vector3.Distance(transform.position, player.position);
+
+        // Chase player
+        if (agent != null && agent.enabled)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+        }
+
+        // Detonate
+        if (distance <= detonateDistance)
+        {
+            EnemyHealth enemyHealth = GetComponent<EnemyHealth>();
+
+            if (enemyHealth != null)
+                enemyHealth.Die();
+            else
+                Destroy(gameObject);
+        }
     }
     #endregion
 

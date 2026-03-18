@@ -7,7 +7,7 @@ public class EnemyStats : ScriptableObject
     // TYPE DEFINITIONS
     // ================================
 
-    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, HellRain , Spider}
+    public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, Suicider, Spider}
     public enum CoverType { No, Yes }
     public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion}
@@ -154,7 +154,11 @@ public class EnemyStats : ScriptableObject
     public bool isShooterGuard;
     public GameObject GuardProjectile;    
     public float GuardShootSpeed;         
-    public float GuardShootInterval;       
+    public float GuardShootInterval;
+
+    [Header("Suicider Settings")]
+
+    public float detonateDistance = 2.5f;
 
     [Header("Audio")]
     public string attackSoundKey;

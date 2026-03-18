@@ -94,7 +94,7 @@ public class EnemyHealth : MonoBehaviour
             Die();
         }
     }
-    void Die()
+    public void Die()
     {
         Transform explosionPoint = enemyManager.firePoint;
         GameObject explosion = explosionPool.GetObject();
