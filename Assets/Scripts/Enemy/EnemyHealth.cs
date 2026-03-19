@@ -1,4 +1,4 @@
-using DamageNumbersPro;
+﻿using DamageNumbersPro;
 using QFSW.MOP2;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -39,6 +39,7 @@ public class EnemyHealth : MonoBehaviour
 
     public GameObject AfterDeath_ExplosionPrefab;
 
+    public bool dead;
     public System.Action OnDeath;
     
     private void Awake()
@@ -64,40 +65,42 @@ public class EnemyHealth : MonoBehaviour
                 agent.speed = enemyStats.speed;
         }
     }
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, DamageInfo info)
     {
-
-        // If shield exists AND still has health
+        // Shield check
         if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
         {
             shieldHealth -= amount;
 
-            // Handle overflow damage
+            // Overflow damage goes to health
             if (shieldHealth < 0)
             {
                 float overflow = -shieldHealth;
                 shieldHealth = 0;
 
-                ApplyHealthDamage(overflow);
+                ApplyHealthDamage(overflow, info); // 🔥 pass info
             }
         }
         else
         {
-            ApplyHealthDamage(amount);
+            ApplyHealthDamage(amount, info); // 🔥 pass info
         }
     }
-    void ApplyHealthDamage(float amount)
+    void ApplyHealthDamage(float amount, DamageInfo info)
     {
         health -= amount;
 
         if (health <= 0)
         {
             health = 0;
-            Die();
+
+            // 🔥 pass ALL info to Die
+            Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
         }
     }
-    public void Die()
+    public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
+        dead = true;
         Transform explosionPoint = enemyManager.firePoint;
         GameObject explosion = explosionPool.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
@@ -109,9 +112,12 @@ public class EnemyHealth : MonoBehaviour
         SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
 
         ScoreManager.Instance.Kills++;
-        KillStreak.Instance.KilledEnemy();
         //EnemyPool.Release(gameObject);
         gameObject.SetActive(false);
+
+      
+        ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
+
 
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
@@ -121,7 +127,7 @@ public class EnemyHealth : MonoBehaviour
             Instantiate(AfterDeath_ExplosionPrefab,explosionPoint.position, Quaternion.identity);
         }
 
-        Destroy(gameObject);
+        //Destroy(gameObject);
 
     }
 
@@ -130,13 +136,33 @@ public class EnemyHealth : MonoBehaviour
         if (isInvincible)
             return;
 
-        health -= damageValue;
+        if (dead) return;
+        float damage = damageValue;
+
+        DamageInfo info = new DamageInfo();
+
+        // Apply damage with info
+        TakeDamage(damage, info);
+
+        // Spawn damage number
+        DamageNumber damageNumber = numberPrefab.Spawn(
+            transform.position + new Vector3(1, 2f, 0),
+            damage,
+            transform
+        );
+
+        SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
         ScoreManager.Instance.RegisterShotHit();
 
-        if (health <= 0)
-        {
-            Die();
-        }
+        if (spriteRenderer == null) return;
+
+        if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
+            spriteRenderer.color = collisionColorYellow;
+
+        else if (health <= maxHealth / 2.5)
+            spriteRenderer.color = collisionColorRed;
+        else
+            spriteRenderer.color = Color.white;
         if (!HealthUI && spriteRenderer != null)
         {
             if (health <= maxHealth / 1.5 && health >= maxHealth / 2.5)
@@ -154,22 +180,33 @@ public class EnemyHealth : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Bullet"))
         {
-
             if (isInvincible)
                 return;
 
-            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
+            if (dead) return;
+            float damage = collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
 
-            //Spawn and Set Number:
-            DamageNumber damageNumber = numberPrefab.Spawn(transform.position + new Vector3(1,2f,0) , collision.gameObject.GetComponent<Projectile>().Damage(gameObject), transform);
+            DamageInfo info = new DamageInfo();
+            // 🔥 Detect headshot
+            if (collision.GetContact(0).thisCollider.CompareTag("Head"))
+            {
+                damage *= 2f;
+                info.isHeadshot = true;
+                Debug.Log("HEADSHOT!");
+            }
+
+            // Apply damage with info
+            TakeDamage(damage, info);
+
+            // Spawn damage number
+            DamageNumber damageNumber = numberPrefab.Spawn(
+                transform.position + new Vector3(1, 2f, 0),
+                damage,
+                transform
+            );
 
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
-
-            if (health <= 0)
-            {           
-                Die();
-            }
 
             if (spriteRenderer == null) return;
 
@@ -181,7 +218,6 @@ public class EnemyHealth : MonoBehaviour
             else
                 spriteRenderer.color = Color.white;
         }
-       
     }
 
     private void OnTriggerEnter(Collider collision)
@@ -190,14 +226,25 @@ public class EnemyHealth : MonoBehaviour
         {
             if (isInvincible)
                 return;
-            health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
-            BloodPool.GetObject().transform.position = transform.position;
+
+            if(dead) return;
+
+            float damage = collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
+
+            DamageInfo info = new DamageInfo();
+
+            // Apply damage with info
+            TakeDamage(damage, info);
+
+            // Spawn damage number
+            DamageNumber damageNumber = numberPrefab.Spawn(
+                transform.position + new Vector3(1, 2f, 0),
+                damage,
+                transform
+            );
+
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
-            if (health <= 0)
-            {
-                Die();
-            }
 
             if (spriteRenderer == null) return;
 
@@ -211,4 +258,11 @@ public class EnemyHealth : MonoBehaviour
         }
 
     }
+}
+public struct DamageInfo
+{
+    public bool isHeadshot;
+    public bool isAirKill;
+    public bool isFinisher;
+    public bool isEnvironmental;
 }

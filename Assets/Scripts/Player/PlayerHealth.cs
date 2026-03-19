@@ -107,6 +107,8 @@ public class PlayerHealth : MonoBehaviour
         if(amount < 0)
         {
             SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
+            // Apply combo penalty automatically
+            ComboManager.Instance.ApplyDamagePenalty();
             //healthAnim.SetTrigger("HealthMinus");
             ScoreManager.Instance.hitsTakken++;
             CameraShake.Instance.Shake();

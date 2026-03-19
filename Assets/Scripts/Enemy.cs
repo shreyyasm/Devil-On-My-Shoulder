@@ -148,7 +148,7 @@ public class Enemy : MonoBehaviour
             //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
             //}
             ScoreManager.Instance.Kills++;
-            KillStreak.Instance.KilledEnemy();
+            //KillStreak.Instance.KilledEnemy();
             //EnemyPool.Release(gameObject);
             gameObject.SetActive(false);
 
@@ -201,7 +201,7 @@ public class Enemy : MonoBehaviour
                 //    rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
                 //}
                 ScoreManager.Instance.Kills++;
-                KillStreak.Instance.KilledEnemy();
+                //KillStreak.Instance.KilledEnemy();
                 //EnemyPool.Release(gameObject);
                    gameObject.SetActive(false);
 

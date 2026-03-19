@@ -2037,7 +2037,7 @@ public class EnemyManager : MonoBehaviour
             EnemyHealth enemyHealth = GetComponent<EnemyHealth>();
 
             if (enemyHealth != null)
-                enemyHealth.Die();
+                enemyHealth.Die(false, false, false,false);
             else
                 Destroy(gameObject);
         }

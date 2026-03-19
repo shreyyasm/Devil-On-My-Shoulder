@@ -1,0 +1,400 @@
+﻿using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using DG.Tweening;
+
+public class ComboManager : MonoBehaviour
+{
+    public static ComboManager Instance;
+
+    [Header("Combo State")]
+    public GameObject Parent;
+    public bool comboActive = false;
+    public int multiplier = 0;
+    public float currentXP = 0f;
+    public float requiredXP = 100f;
+
+    [Header("XP Settings")]
+    public float baseXPRequired = 100f;
+    public float growthRate = 1.2f;
+
+    [Header("XP Gain")]
+    public float basicEnemyXP = 25f;
+    public float strongEnemyXP = 50f;
+    public float bossXP = 200f;
+
+    [Header("Bonus XP")]
+    public float multiKillBonus = 20f;
+    public float bigMultiKillBonus = 50f;
+    public float environmentalBonus = 30f;
+    public float finisherBonus = 40f;
+    public float airKillBonus = 25f;
+    public float headshotBonus = 15f;
+
+    [Header("Decay")]
+    [Range(0f, 1f)]
+    public float decayPerSecond = 0.2f; // 20% per second
+
+    [Header("Damage Penalty")]
+    public float fixedDamageXPLoss = 30f;
+
+    [Header("Kill Chain")]
+    public TextMeshProUGUI enemyKilledText;
+    public float killChainResetTime = 2f;
+    private float lastChainKillTime;
+    private int multiKillCount = 0;
+
+    [Header("Kill Feed")]
+    public TextMeshProUGUI killFeedText;
+    public float killFeedDuration = 2f;
+
+    [Header("Kill Feed Timing")]
+    public float killFeedDelay = 0.25f;
+    private string delayedKillText;
+
+    [Header("UI References")]
+    public TextMeshProUGUI multiplierText;
+    public Slider xpSlider;
+    public TextMeshProUGUI comboNameText;
+
+    [Header("Tween Settings")]
+    public float multiplierPopScale = 1.5f;
+    public float multiplierPopDuration = 0.2f;
+    public float sliderAnimDuration = 0.25f;
+
+    [Header("Combo Names")]
+    public string[] comboNames = new string[]
+    {
+        "RAMPAGE","DESTRUCTION","CHAOS","ANNIHILATION","MASSACRE",
+        "BLOODBATH","GENOCIDE","OBLITERATION","APOCALYPSE","GODLIKE"
+    };
+
+    void Awake()
+    {
+        Instance = this;
+        Parent.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (!comboActive) return;
+
+        ApplyDecay();
+
+        // Kill chain reset
+        if (Time.time - lastChainKillTime > killChainResetTime)
+        {
+            multiKillCount = 0;
+            if (enemyKilledText != null)
+                enemyKilledText.text = "";
+        }
+    }
+
+    // =========================
+    // CORE
+    // =========================
+
+    public void StartCombo()
+    {
+        Parent.SetActive(true);
+        comboActive = true;
+        multiplier = 1;
+        requiredXP = CalculateXP(multiplier);
+        currentXP = requiredXP * 0.5f; // small buffer
+
+        UpdateMultiplierUI();
+        UpdateXPUI();
+        UpdateComboName();
+    }
+
+    public void AddXP(float amount, string reason = "")
+    {
+        if (!comboActive)
+            StartCombo();
+
+        currentXP += amount;
+
+        // 🔥 HANDLE OVERFLOW PROPERLY
+        while (currentXP >= requiredXP)
+        {
+            currentXP -= requiredXP; // carry extra XP forward
+            LevelUp();
+        }
+
+        if (xpSlider != null)
+        {
+            xpSlider.transform.DOKill();
+            xpSlider.transform.DOPunchScale(Vector3.one * 0.15f, 0.2f, 5, 1f);
+        }
+
+        UpdateXPUI();
+    }
+
+    void LevelUp()
+    {
+        multiplier++;
+        requiredXP = CalculateXP(multiplier);
+
+        UpdateMultiplierUI();
+        UpdateComboName();
+    }
+
+    void LevelDown()
+    {
+        multiplier--;
+
+        if (multiplier <= 0)
+        {
+            ResetCombo();
+            return;
+        }
+
+        requiredXP = CalculateXP(multiplier);
+        currentXP = requiredXP; // 🔥 FULL BAR when dropping
+
+        UpdateMultiplierUI();
+        UpdateComboName();
+    }
+
+    void ResetCombo()
+    {
+        comboActive = false;
+        multiplier = 0;
+        currentXP = 0;
+
+        if (multiplierText != null) multiplierText.text = "0x";
+        if (xpSlider != null) xpSlider.value = 0;
+        if (comboNameText != null) comboNameText.text = "";
+
+        Parent.SetActive(false);
+    }
+
+    float CalculateXP(int level)
+    {
+        return baseXPRequired * Mathf.Pow(level, growthRate);
+    }
+
+    // =========================
+    // DECAY (UPDATED)
+    // =========================
+
+    void ApplyDecay()
+    {
+        float decayAmount = requiredXP * decayPerSecond * Time.deltaTime;
+        currentXP -= decayAmount;
+
+        if (currentXP <= 0)
+        {
+            LevelDown(); // 🔥 instead of ResetCombo
+        }
+
+        UpdateXPUI();
+    }
+
+    public void ApplyDamagePenalty()
+    {
+        if (!comboActive) return;
+
+        currentXP -= fixedDamageXPLoss;
+
+        if (multiplierText != null)
+        {
+            multiplierText.transform.DOKill();
+            multiplierText.transform.DOPunchScale(Vector3.one * 0.2f, 0.25f, 6, 1f);
+        }
+
+        if (currentXP <= 0)
+        {
+            LevelDown(); // 🔥 downgrade instead of reset
+        }
+
+        UpdateXPUI();
+    }
+
+    // =========================
+    // KILL SYSTEM
+    // =========================
+
+    public void RegisterKill(
+        EnemyType type,
+        bool isEnvironmental = false,
+        bool isFinisher = false,
+        bool isAirKill = false,
+        bool isHeadshot = false
+    )
+    {
+        float xp = 0;
+
+        switch (type)
+        {
+            case EnemyType.Basic: xp += basicEnemyXP; break;
+            case EnemyType.Strong: xp += strongEnemyXP; break;
+            case EnemyType.Boss: xp += bossXP; break;
+        }
+
+        if (Time.time - lastChainKillTime <= killChainResetTime)
+            multiKillCount++;
+        else
+            multiKillCount = 1;
+
+        lastChainKillTime = Time.time;
+
+        UpdateKillChainUI();
+
+        if (multiKillCount == 2) xp += multiKillBonus;
+        else if (multiKillCount >= 3) xp += bigMultiKillBonus;
+
+        if (isEnvironmental) xp += environmentalBonus;
+        if (isFinisher) xp += finisherBonus;
+        if (isAirKill) xp += airKillBonus;
+        if (isHeadshot) xp += headshotBonus;
+
+        string killText = "";
+
+        if (isHeadshot) killText = "+HEADSHOT " + headshotBonus + "Xp";
+        else if (isAirKill) killText = "+AIR KILL";
+        else if (isFinisher) killText = "+FINISHER";
+        else if (isEnvironmental) killText = "+ENVIRONMENTAL";
+
+        ShowKillFeedDelayed(killText);
+
+        AddXP(xp, killText);
+    }
+
+    // =========================
+    // UI
+    // =========================
+
+    void UpdateMultiplierUI()
+    {
+        if (multiplierText != null)
+        {
+            multiplierText.text = multiplier + "x";
+
+            multiplierText.transform.DOKill();
+            multiplierText.transform.localScale = Vector3.one;
+
+            multiplierText.transform
+                .DOScale(multiplierPopScale, multiplierPopDuration)
+                .SetEase(Ease.OutBack)
+                .OnComplete(() =>
+                {
+                    multiplierText.transform
+                        .DOScale(1f, multiplierPopDuration)
+                        .SetEase(Ease.InBack);
+                });
+        }
+    }
+
+    void UpdateXPUI()
+    {
+        if (xpSlider != null)
+        {
+            xpSlider.maxValue = requiredXP;
+
+            DOTween.Kill(xpSlider);
+
+            DOTween.To(
+                () => xpSlider.value,
+                x => xpSlider.value = x,
+                currentXP,
+                sliderAnimDuration
+            ).SetEase(Ease.OutQuad)
+             .SetTarget(xpSlider);
+        }
+    }
+
+    void UpdateComboName()
+    {
+        if (comboNameText == null) return;
+
+        int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
+        comboNameText.text = comboNames[index];
+    }
+
+    void UpdateKillChainUI()
+    {
+        if (enemyKilledText == null) return;
+
+        enemyKilledText.text = "ENEMY KILLED " + multiKillCount + "x";
+
+        enemyKilledText.transform.DOKill();
+        enemyKilledText.transform.localScale = Vector3.one;
+
+        enemyKilledText.transform
+            .DOScale(1.4f, 0.2f)
+            .SetEase(Ease.OutBack)
+            .OnComplete(() =>
+            {
+                enemyKilledText.transform
+                    .DOScale(1f, 0.2f)
+                    .SetEase(Ease.InBack);
+            });
+    }
+
+    // =========================
+    // DELAYED FEED
+    // =========================
+
+    void ShowKillFeedDelayed(string text)
+    {
+        CancelInvoke(nameof(DelayedKillFeed));
+        delayedKillText = text;
+        Invoke(nameof(DelayedKillFeed), killFeedDelay);
+    }
+
+    void DelayedKillFeed()
+    {
+        ShowKillFeed(delayedKillText);
+    }
+
+    void ShowKillFeed(string text)
+    {
+        if (killFeedText != null)
+        {
+            killFeedText.text = text;
+
+            killFeedText.transform.DOKill();
+            killFeedText.DOKill();
+
+            killFeedText.alpha = 1f;
+            killFeedText.transform.localScale = Vector3.zero;
+
+            killFeedText.transform
+                .DOScale(1.3f, 0.15f)
+                .SetEase(Ease.OutBack)
+                .OnComplete(() =>
+                {
+                    killFeedText.transform
+                        .DOScale(1f, 0.1f)
+                        .SetEase(Ease.InBack);
+                });
+
+            Vector3 startPos = killFeedText.transform.localPosition;
+            killFeedText.transform.localPosition = startPos - new Vector3(0, 20f, 0);
+
+            killFeedText.transform
+                .DOLocalMoveY(startPos.y, 0.3f)
+                .SetEase(Ease.OutQuad);
+
+            killFeedText.DOFade(0f, 0.5f)
+                .SetDelay(killFeedDuration - 0.5f);
+
+            CancelInvoke(nameof(ClearKillFeed));
+            Invoke(nameof(ClearKillFeed), killFeedDuration);
+        }
+    }
+
+    void ClearKillFeed()
+    {
+        if (killFeedText != null)
+            killFeedText.text = "";
+    }
+}
+
+public enum EnemyType
+{
+    Basic,
+    Strong,
+    Boss
+}

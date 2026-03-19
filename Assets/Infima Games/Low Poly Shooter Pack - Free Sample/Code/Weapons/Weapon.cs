@@ -60,6 +60,7 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private int ammunitionTotal = 10;
         [SerializeField] private Transform socket;
         [SerializeField] private AudioClip audioClipFire;
+        public float reloadAnimationTime = 1f;
 
         [Header("Shotgun Settings")]
         [SerializeField] private int shotgunPellets = 8;
@@ -467,8 +468,18 @@ namespace InfimaGames.LowPolyShooterPack
             yield return new WaitForSeconds(0.4f);
             FillAmmunition(ammunitionTotal);
 
-            yield return new WaitForSeconds(1f);
-            characterBehaviour.AnimationEndedReload();
+            if(reloadAnimationTime > 1)
+            {
+                yield return new WaitForSeconds(reloadAnimationTime - 1.5f);
+                characterBehaviour.AnimationEndedReload();
+            }
+            else
+            {
+
+                yield return new WaitForSeconds(1f);
+                characterBehaviour.AnimationEndedReload();
+            }
+                
         }
 
         public override void Fire(float spreadMultiplier = 1.0f)
@@ -939,7 +950,7 @@ namespace InfimaGames.LowPolyShooterPack
                 ? Mathf.Clamp(ammunitionCurrent + amount, 0, ammunitionTotal)
                 : ammunitionTotal;
 
-            LeanTween.delayedCall(1f, () => { GetAnimatorHands().SetBool("Empty", false); });
+            LeanTween.delayedCall(reloadAnimationTime, () => { GetAnimatorHands().SetBool("Empty", false); GetAnimatorHands().ResetTrigger("Reload"); });
            
         }
 
