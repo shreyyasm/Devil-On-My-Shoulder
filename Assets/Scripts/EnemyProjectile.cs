@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Goli : MonoBehaviour
+public class EnemyProjectile : MonoBehaviour
 {
     [Header("References")]
     public Transform flame; // Reference to the flame GameObject
@@ -81,6 +81,7 @@ public class Goli : MonoBehaviour
         {
             //bullet.Release(gameObject);
             //Destroy(gameObject);
+            bullet.Release(gameObject);
         }
         if (collision.CompareTag("Blood") &&  parryable && enemyRigibody.GetComponent<EnemyManager>().projectile_Parried)
         {
@@ -89,8 +90,8 @@ public class Goli : MonoBehaviour
             collision.GetComponent<EnemyHealth>().EnemyHit(playerDamage);
             collision.GetComponent<EnemyManager>().ResetParrayable();
             enemyRigibody = null;
-            playerMovement.playerKickedSomething = false;       
-            gameObject.SetActive(false); 
+            playerMovement.playerKickedSomething = false;
+            bullet.Release(gameObject);
 
         }
 

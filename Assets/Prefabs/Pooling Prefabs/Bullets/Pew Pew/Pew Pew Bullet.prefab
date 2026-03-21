@@ -1294,8 +1294,8 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 0.88235295, g: 0.3103448, b: 0, a: 0}
-        key1: {r: 0.6117647, g: 0.17720082, b: 0, a: 1}
+        key0: {r: 1, g: 1, b: 1, a: 0}
+        key1: {r: 1, g: 1, b: 1, a: 1}
         key2: {r: 0, g: 0, b: 0, a: 1}
         key3: {r: 0, g: 0, b: 0, a: 1}
         key4: {r: 0, g: 0, b: 0, a: 0}
@@ -1319,7 +1319,7 @@ ParticleSystem:
         atime6: 0
         atime7: 0
         m_Mode: 0
-        m_ColorSpace: -1
+        m_ColorSpace: 0
         m_NumColorKeys: 2
         m_NumAlphaKeys: 5
       minGradient:
@@ -4845,7 +4845,7 @@ GameObject:
   - component: {fileID: 1325683847841756134}
   - component: {fileID: 3327074639461502091}
   m_Layer: 18
-  m_Name: Mangler Bullet
+  m_Name: Pew Pew Bullet
   m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9741,11 +9741,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ff3ea705a4a7244a59eef82e75c660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BulletImpactPool: {fileID: 11400000, guid: 44203efadb1ae58408d3faa54bb8916e, type: 2}
+  BulletImpactPool: {fileID: 11400000, guid: bc2b5f291d431344db6aae476f88d2d9, type: 2}
   specialBullets: 0
   destroyAfter: 3
   bloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
-  bulletPool: {fileID: 11400000, guid: 207e16675b7acc74ab5fe1b28c958d91, type: 2}
+  bulletPool: {fileID: 11400000, guid: 4652bccb44dbde1489c988182640ad24, type: 2}
   bulletDamage: 40
   mortarExplosionPool: {fileID: 0}
   maxRicochetCount: 5
@@ -11266,8 +11266,8 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 0.85882354, g: 0.44421905, b: 0, a: 1}
-        key1: {r: 0.85882354, g: 0.44421905, b: 0, a: 1}
+        key0: {r: 1, g: 1, b: 1, a: 1}
+        key1: {r: 1, g: 1, b: 1, a: 1}
         key2: {r: 0, g: 0, b: 0, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
@@ -11291,7 +11291,7 @@ ParticleSystem:
         atime6: 0
         atime7: 0
         m_Mode: 0
-        m_ColorSpace: -1
+        m_ColorSpace: 0
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
       minGradient:
@@ -20147,7 +20147,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 75cb9bfa09fd26f4ba359e03ff66c992, type: 2}
+  - {fileID: 2100000, guid: 3e49e4848170c5148a0100893077bde6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

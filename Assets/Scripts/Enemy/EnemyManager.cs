@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using QFSW.MOP2;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -98,7 +99,7 @@ public class EnemyManager : MonoBehaviour
     [Header("Shoot Enemy Settings")]
 
     public Transform firePoint;
-    public GameObject projectilePrefab;
+    public ObjectPool projectilePrefab;
     public float shootSpeed;
     public float shootInterval;
 
@@ -150,7 +151,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     [Header("Tombstone Settings")]
-    public GameObject spawnEnemyPrefab;
+    public ObjectPool spawnEnemyPrefab;
     public float spawnInterval = 3f;
     public int spawnLimit = 5;
     public bool useSpawnLimit = true;
@@ -247,7 +248,7 @@ public class EnemyManager : MonoBehaviour
     [Header("Guard-Shooter Settings")]
     public bool isShooterGuard;
 
-    public GameObject GuardProjectile;     
+    public ObjectPool GuardProjectile;     
     public float GuardShootSpeed;          
     public float GuardShootInterval;
 
@@ -1297,11 +1298,7 @@ public class EnemyManager : MonoBehaviour
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
 
-        GameObject proj = Instantiate(
-            projectilePrefab,
-            firePoint.position,
-            Quaternion.LookRotation(direction)
-        );
+        GameObject proj = projectilePrefab.GetObject(firePoint.position, Quaternion.LookRotation(direction));
 
         Rigidbody rb = proj.GetComponent<Rigidbody>();
 
@@ -1372,11 +1369,11 @@ public class EnemyManager : MonoBehaviour
             transform.forward * 1.5f +
             Vector3.up * 0.5f;
 
-        GameObject newEnemy = Instantiate(
-            spawnEnemyPrefab,
-            spawnPos,
-            Quaternion.identity
-        );
+        GameObject newEnemy =
+            spawnEnemyPrefab.GetObject(spawnPos,
+            Quaternion.identity);
+            
+
 
         // Small pop effect
         Rigidbody rb = newEnemy.GetComponent<Rigidbody>();
@@ -1415,11 +1412,9 @@ public class EnemyManager : MonoBehaviour
                 direction * 1.5f +
                 Vector3.up * 0.5f;
 
-            GameObject enemy = Instantiate(
-                spawnEnemyPrefab,
-                spawnPos,
-                Quaternion.identity
-            );
+            GameObject enemy = 
+                spawnEnemyPrefab.GetObject(spawnPos, Quaternion.identity);
+
 
             StartCoroutine(LaunchSpawnedEnemy(enemy, direction));
         }
@@ -1535,7 +1530,7 @@ public class EnemyManager : MonoBehaviour
                 if (canSeeTarget && hit.transform.root == Target.root)
                 {
                     LastAttackTime = Time.time;
-                    AttackProjectile.GetComponent<Goli>().enemyRigibody = GetComponent<Rigidbody>();
+                    AttackProjectile.GetComponent<EnemyProjectile>().enemyRigibody = GetComponent<Rigidbody>();
                     AttackProjectile.transform.SetParent(transform, true);
                     AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
 
@@ -1869,11 +1864,10 @@ public class EnemyManager : MonoBehaviour
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
 
-        GameObject proj = Instantiate(
-            enemyStats.GuardProjectile,
-            firePoint.position,
-            Quaternion.LookRotation(direction)
-        );
+        GameObject proj =
+            GuardProjectile.GetObject(firePoint.position,
+            Quaternion.LookRotation(direction));
+
 
         Rigidbody rb = proj.GetComponent<Rigidbody>();
 

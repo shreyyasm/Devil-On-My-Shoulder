@@ -17,6 +17,7 @@ MonoBehaviour:
   shieldType: 0
   deathType: 0
   surfaceType: 1
+  AfterDeath_ExplosionPrefab: {fileID: 0}
   spriteHeight: 2.5
   colliderHeight: 2.5
   health: 100
@@ -38,8 +39,7 @@ MonoBehaviour:
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
-  projectilePrefab: {fileID: 7978933150496085672, guid: 1245c33789663e6439d0caedbd64aac8,
-    type: 3}
+  projectilePrefab: {fileID: 11400000, guid: 63e6160ba35bcda4a8c154ccf8ff49a4, type: 2}
   ShootSpeed: 20
   ShootInterval: 2
   ChangePositionTime: 3
@@ -75,4 +75,5 @@ MonoBehaviour:
   GuardProjectile: {fileID: 0}
   GuardShootSpeed: 0
   GuardShootInterval: 0
+  detonateDistance: 2.5
   attackSoundKey: 

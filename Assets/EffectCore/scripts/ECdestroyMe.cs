@@ -8,21 +8,16 @@ public class ECdestroyMe : MonoBehaviour{
     public float deathtimer = 10;
 	public ObjectPool ImpactPool;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update ()
+    private void OnEnable()
     {
-        timer += Time.deltaTime;
+        StartCoroutine(DisableImpact());
+    }
 
-        if(timer >= deathtimer)
-        {
-			//Destroy(gameObject);
-			ImpactPool.Release(gameObject);
-        }
-	
-	}
+  
+	IEnumerator DisableImpact()
+	{
+		yield return new WaitForSeconds(deathtimer);
+        ImpactPool.Release(gameObject);
+    }
 }
+

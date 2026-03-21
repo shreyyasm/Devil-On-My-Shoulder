@@ -17,6 +17,9 @@ MonoBehaviour:
   shieldType: 0
   deathType: 0
   surfaceType: 0
+  AfterDeath_ExplosionPrefab: {fileID: 0}
+  spriteHeight: 0
+  colliderHeight: 0
   health: 100
   gunHealth: 0
   shieldHealth: 0
@@ -36,19 +39,21 @@ MonoBehaviour:
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 11400000, guid: 63e6160ba35bcda4a8c154ccf8ff49a4, type: 2}
   ShootSpeed: 1
   ShootInterval: 2
   ChangePositionTime: 3
   MoveRadius: 10
   canShootMove: 0
+  burstShooting: 0
+  burstCount: 3
+  burstInterval: 0.1
   CoverTime: 0
   PeekDuration: 0
   PeekRadius: 0
   CoverSearchRadius: 0
   VisionHeight: 0
-  spawnEnemyPrefab: {fileID: 6376187513628523530, guid: ffc25974a77310f49ab1da42675591d2,
-    type: 3}
+  spawnEnemyPrefab: {fileID: 11400000, guid: e1c6cfa60c0416242ae61d3eb75a7be2, type: 2}
   spawnInterval: 5
   spawnLimit: 5
   useSpawnLimit: 0
@@ -56,8 +61,8 @@ MonoBehaviour:
   repositionInterval: 5
   spawnBatchCount: 3
   shootDelayAfterSpawn: 8
-  shootProjectilePrefab: {fileID: 7978933150496085672, guid: 1245c33789663e6439d0caedbd64aac8,
-    type: 3}
+  shootProjectilePrefab: {fileID: 11400000, guid: 63e6160ba35bcda4a8c154ccf8ff49a4,
+    type: 2}
   mortarArcHeight: 2
   shootProjectileSpeed: 60
   recoverAfterShot: 10
@@ -71,4 +76,5 @@ MonoBehaviour:
   GuardProjectile: {fileID: 0}
   GuardShootSpeed: 0
   GuardShootInterval: 0
+  detonateDistance: 2.5
   attackSoundKey: Enemy/EyeAttack

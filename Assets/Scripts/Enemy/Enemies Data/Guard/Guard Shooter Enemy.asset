@@ -17,6 +17,9 @@ MonoBehaviour:
   shieldType: 0
   deathType: 0
   surfaceType: 0
+  AfterDeath_ExplosionPrefab: {fileID: 0}
+  spriteHeight: 0
+  colliderHeight: 0
   health: 100
   gunHealth: 0
   shieldHealth: 0
@@ -42,6 +45,9 @@ MonoBehaviour:
   ChangePositionTime: 3
   MoveRadius: 10
   canShootMove: 0
+  burstShooting: 0
+  burstCount: 3
+  burstInterval: 0.1
   CoverTime: 0
   PeekDuration: 0
   PeekRadius: 0
@@ -61,10 +67,14 @@ MonoBehaviour:
   shootProjectileSpeed: 20
   recoverAfterShot: 3
   initialSpawnDelay: 3
+  canThrowerDash: 1
+  throwerDashForce: 15
+  throwerDashDuration: 0.35
+  throwerDashInterval: 2
   ImmortalRadius: 10
   isShooterGuard: 1
-  GuardProjectile: {fileID: 7978933150496085672, guid: 1245c33789663e6439d0caedbd64aac8,
-    type: 3}
+  GuardProjectile: {fileID: 11400000, guid: 63e6160ba35bcda4a8c154ccf8ff49a4, type: 2}
   GuardShootSpeed: 600
   GuardShootInterval: 5
+  detonateDistance: 2.5
   attackSoundKey: Enemy/EyeAttack

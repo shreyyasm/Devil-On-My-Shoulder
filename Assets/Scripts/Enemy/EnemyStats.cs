@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using QFSW.MOP2;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "EnemyStats", menuName = "FPS/Enemy Stats")]
 public class EnemyStats : ScriptableObject
@@ -24,7 +25,7 @@ public class EnemyStats : ScriptableObject
     // ================================
     // DeathAfter STATS
     // ================================
-    public GameObject AfterDeath_ExplosionPrefab;
+    public ObjectPool AfterDeath_ExplosionPrefab;
 
     // ================================
     // Surface STATS
@@ -95,7 +96,7 @@ public class EnemyStats : ScriptableObject
     // ================================
 
     [Header("Shooting Stats")]
-    public GameObject projectilePrefab;
+    public ObjectPool projectilePrefab;
     public float ShootSpeed;
     public float ShootInterval;
     public float ChangePositionTime;
@@ -119,7 +120,7 @@ public class EnemyStats : ScriptableObject
 
 
     [Header("Tombstone Settings")]
-    public GameObject spawnEnemyPrefab;
+    public ObjectPool spawnEnemyPrefab;
     public float spawnInterval = 3f;
     public int spawnLimit = 5;
     public bool useSpawnLimit;
@@ -131,7 +132,7 @@ public class EnemyStats : ScriptableObject
     public int spawnBatchCount = 3;
 
     public float shootDelayAfterSpawn = 2f;
-    public GameObject shootProjectilePrefab;
+    public ObjectPool shootProjectilePrefab;
     public float mortarArcHeight = 6f;
     public float shootProjectileSpeed = 20f;
 
@@ -152,7 +153,7 @@ public class EnemyStats : ScriptableObject
 
     [Header("Guard-Shooter Settings")]
     public bool isShooterGuard;
-    public GameObject GuardProjectile;    
+    public ObjectPool GuardProjectile;    
     public float GuardShootSpeed;         
     public float GuardShootInterval;
 

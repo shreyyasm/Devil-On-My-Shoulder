@@ -1040,11 +1040,11 @@ public class PlayerMovement : MonoBehaviour
             if(hit.gameObject.layer == 15)
             {
 
-                hit.GetComponent<Goli>().enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
-                hit.GetComponent<Goli>().enemyRigibody.GetComponent<EnemyManager>().StopEnemy();
+                hit.GetComponent<EnemyProjectile>().enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
+                hit.GetComponent<EnemyProjectile>().enemyRigibody.GetComponent<EnemyManager>().StopEnemy();
                 DoTimeSlow();
 
-                targetEnemy = hit.GetComponent<Goli>().enemyRigibody.gameObject;
+                targetEnemy = hit.GetComponent<EnemyProjectile>().enemyRigibody.gameObject;
                 Flash(0f, 0.2f, 0.1f);
                 SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
                 LeanTween.delayedCall(0.03f, () => { SFXManager.Instance.PlaySFX("Player/KickParry", 1f); });

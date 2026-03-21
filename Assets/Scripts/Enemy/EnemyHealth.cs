@@ -37,7 +37,7 @@ public class EnemyHealth : MonoBehaviour
     public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion}
 
-    public GameObject AfterDeath_ExplosionPrefab;
+    public ObjectPool AfterDeath_ExplosionPrefab;
 
     public bool dead;
     public System.Action OnDeath;
@@ -124,7 +124,7 @@ public class EnemyHealth : MonoBehaviour
 
         if(deathType == EnemyStats.DeathType.Explosion)
         {
-            Instantiate(AfterDeath_ExplosionPrefab,explosionPoint.position, Quaternion.identity);
+            AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);           
         }
 
         //Destroy(gameObject);
