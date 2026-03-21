@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 public class ComboManager : MonoBehaviour
 {
@@ -87,6 +88,10 @@ public class ComboManager : MonoBehaviour
             multiKillCount = 0;
             if (enemyKilledText != null)
                 enemyKilledText.text = "";
+        }
+        if(Input.GetMouseButtonDown(2))
+        {
+            SceneManager.LoadScene(4);
         }
     }
 
@@ -353,7 +358,7 @@ public class ComboManager : MonoBehaviour
         if (killFeedText != null)
         {
             killFeedText.text = text;
-
+             
             killFeedText.transform.DOKill();
             killFeedText.DOKill();
 

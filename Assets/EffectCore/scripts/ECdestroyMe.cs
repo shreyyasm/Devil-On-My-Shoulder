@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
+using QFSW.MOP2;
 
 public class ECdestroyMe : MonoBehaviour{
 
     float timer;
     public float deathtimer = 10;
-
+	public ObjectPool ImpactPool;
 
 	// Use this for initialization
 	void Start () {
@@ -19,7 +20,8 @@ public class ECdestroyMe : MonoBehaviour{
 
         if(timer >= deathtimer)
         {
-            Destroy(gameObject);
+			//Destroy(gameObject);
+			ImpactPool.Release(gameObject);
         }
 	
 	}

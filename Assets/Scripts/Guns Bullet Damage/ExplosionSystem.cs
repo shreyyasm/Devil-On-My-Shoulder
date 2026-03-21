@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using QFSW.MOP2;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using static Projectile;
@@ -12,6 +13,7 @@ public class ExplosionSystem : MonoBehaviour
        KnockbackOnly
 
     }
+    public ObjectPool pool;
     [Header("Special Bullets")]
     [SerializeField] public SystemType systemType;
 
@@ -37,8 +39,7 @@ public class ExplosionSystem : MonoBehaviour
 
     public GameObject explosionPrefab;
 
-
-    private void Start()
+    private void OnEnable()
     {
         if (systemType == SystemType.Default)
         {
@@ -50,7 +51,14 @@ public class ExplosionSystem : MonoBehaviour
             explosionPrefab.SetActive(true);
         }
 
-        Destroy(gameObject, lifeTime);
+
+        StartCoroutine(DisableExplosion());
+    }
+
+    IEnumerator DisableExplosion()
+    {
+        yield return new WaitForSeconds(lifeTime);
+        pool.Release(gameObject);
     }
     private void OnTriggerEnter(Collider other)
     {

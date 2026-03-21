@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using QFSW.MOP2;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class ConfettiStun : MonoBehaviour
 {
+    public ObjectPool giggleSmilePrefab;
     private float stunDuration;
 
     private NavMeshAgent agent;
@@ -34,16 +36,13 @@ public class ConfettiStun : MonoBehaviour
 
         StartCoroutine(StunTimer());
     }
-    public GameObject giggleSmilePrefab;
+   
     private IEnumerator StunTimer()
     {
         yield return new WaitForSeconds(0.2f);
-        Instantiate(
-              giggleSmilePrefab,
-             enemy.transform.position + Vector3.up * 2.8f,
-             Quaternion.identity
-         );
-
+        giggleSmilePrefab.GetObject(enemy.transform.position + Vector3.up * 2.8f,
+             Quaternion.identity);
+       
         yield return new WaitForSeconds(stunDuration);
 
         // 🔄 Re-enable movement

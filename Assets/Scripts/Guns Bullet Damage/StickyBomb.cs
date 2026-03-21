@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using QFSW.MOP2;
+using UnityEngine;
 
 public class StickyBomb : MonoBehaviour
 {
     [Header("Explosion")]
-    [SerializeField] private GameObject explosionPrefab;
+    [SerializeField] private ObjectPool explosionPrefabPool;
     [SerializeField] private float detonateTime = 5f;
 
     [Header("Blinking Light")]
@@ -16,8 +17,9 @@ public class StickyBomb : MonoBehaviour
     private bool isStuck;
 
     private float blinkTimer;
+    public ObjectPool pool;
 
-    private void Start()
+    private void OnEnable()
     {
         timer = detonateTime;
 
@@ -27,7 +29,7 @@ public class StickyBomb : MonoBehaviour
             bombLight.enabled = true;
         }
     }
-
+    
     private void Update()
     {
         if (!isStuck)
@@ -97,15 +99,13 @@ public class StickyBomb : MonoBehaviour
 
     private void Detonate()
     {
-        if (explosionPrefab != null)
+        if (explosionPrefabPool != null)
         {
-            Instantiate(
-                explosionPrefab,
-                transform.position,
-                Quaternion.identity
-            );
+            explosionPrefabPool.GetObject(transform.position,
+                Quaternion.identity);
+         
         }
 
-        Destroy(gameObject);
+        pool.Release(gameObject);
     }
 }

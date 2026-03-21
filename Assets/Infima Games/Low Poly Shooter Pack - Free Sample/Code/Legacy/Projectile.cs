@@ -1,4 +1,5 @@
-﻿using InfimaGames.LowPolyShooterPack;
+﻿using DamageNumbersPro;
+using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System;
 using System.Collections;
@@ -8,9 +9,9 @@ using UnityEngine.ProBuilder;
 using UnityEngine.UIElements;
 using static ExplosionSystem;
 using static InfimaGames.LowPolyShooterPack.Weapon;
+using static UnityEditor.PlayerSettings;
 using static UnityEngine.EventSystems.EventTrigger;
 using Random = UnityEngine.Random;
-using DamageNumbersPro;
 public class Projectile : MonoBehaviour {
     public enum SpecialBullets
     {
@@ -28,6 +29,7 @@ public class Projectile : MonoBehaviour {
         Eliminator
 
     }
+    public ObjectPool BulletImpactPool;
 
     [Header("Special Bullets")]
     [SerializeField] private SpecialBullets specialBullets;
@@ -42,7 +44,7 @@ public class Projectile : MonoBehaviour {
     public float bulletDamage = 10f;
 
     [Header("Mortar Bullet Settings")]
-    [SerializeField] private GameObject mortarExplosionPrefab;
+    [SerializeField] private ObjectPool mortarExplosionPool;
 
     [Header("Ricocheter Bullet Settings")]
     [SerializeField] private int maxRicochetCount = 1;
@@ -56,30 +58,30 @@ public class Projectile : MonoBehaviour {
 	public float baseDemoDamage = 10f;
 	public float multiplerDemoDamage = 10f;
 
-    public GameObject impactPrefab;
+    
     public bool ignorePrevRotation = false;
 
     [Header("Your Mom Bullet Settings")]
-    [SerializeField] private GameObject FirePrefab;
+    [SerializeField] private ObjectPool FirePrefabPool;
 
     [Header("Riftsaw Bullet Settings")]
     [SerializeField] private float riftsawRotateSpeed = 360f;
     [SerializeField] private float riftsawDamageInterval = 1f;
     [SerializeField] private float riftsawDamagePerTick = 8f;
     [SerializeField] private float riftsawLifeTime = 4f;
-    [SerializeField] private GameObject riftsawExplosionPrefab;
+    [SerializeField] private ObjectPool riftsawExplosionPrefabPool;
 
     [Header("Cryo Shattergun Settings")]
     [SerializeField] private float cryoFreezeDuration = 5f;
     [SerializeField] private Color cryoFreezeColor = new Color(0.4f, 0.8f, 1f);
 
     [Header("Giggle Blaster Settings")]
-    [SerializeField] private GameObject giggleConfettiPrefab;
-    [SerializeField] private GameObject giggleSmilePrefab;
+    [SerializeField] private ObjectPool giggleConfettiPrefabPool;
+    [SerializeField] private ObjectPool giggleSmilePrefabPool;
     [SerializeField] private float giggleStunDuration = 3f;
 
     [Header("StickyVicky Settings")]
-    [SerializeField] private GameObject stickyBombPrefab;
+    [SerializeField] private ObjectPool stickyBombPrefabPool;
     [SerializeField] private float stickyBombAttachForce = 1000f;
 
     [Header("Danceler Settings")]
@@ -177,13 +179,11 @@ public class Projectile : MonoBehaviour {
         if (specialBullets == SpecialBullets.GiggleBlaster && enemy != null)
         {
             // Spawn confetti
-            if (giggleConfettiPrefab != null)
+            if (giggleConfettiPrefabPool != null)
             {
-                Instantiate(
-                    giggleConfettiPrefab,
-                    enemy.transform.position + Vector3.up * 2.5f,
-                    Quaternion.identity
-                );
+                giggleConfettiPrefabPool.GetObject(enemy.transform.position + Vector3.up * 2.5f,
+                    Quaternion.identity);
+             
             }
 
             // 🔁 RESET stun if already present
@@ -196,7 +196,7 @@ public class Projectile : MonoBehaviour {
             // ✅ Add fresh stun
             ConfettiStun stun = enemy.AddComponent<ConfettiStun>();
             stun.Initialize(giggleStunDuration);
-            stun.giggleSmilePrefab = giggleSmilePrefab;
+            stun.giggleSmilePrefab = giggleSmilePrefabPool;
         }
 
 
@@ -267,7 +267,8 @@ public class Projectile : MonoBehaviour {
                 rot = Quaternion.Euler(0, 0, 0);
             }
             Vector3 pos = contact.point;
-            Instantiate(impactPrefab, pos, rot);
+            BulletImpactPool.GetObject(pos, rot);
+            //Instantiate(impactPrefab, pos, rot);
             bulletPool.Release(gameObject);
         }
 
@@ -303,21 +304,16 @@ public class Projectile : MonoBehaviour {
             HandleMortarImpact(collision);
             ContactPoint contact = collision.contacts[0];
 
-            Instantiate(
-               FirePrefab,
-                contact.point,
-                Quaternion.identity
-            );
+            FirePrefabPool.GetObject(contact.point,
+                Quaternion.identity);
+           
         }
         if (specialBullets == SpecialBullets.Dragunfire)
         {
             ContactPoint contact = collision.contacts[0];
 
-            Instantiate(
-               FirePrefab,
-                contact.point,
-                Quaternion.identity
-            );
+            FirePrefabPool.GetObject(contact.point,
+                Quaternion.identity);
         }
         if (specialBullets == SpecialBullets.Motar_Bullets)
         {
@@ -382,7 +378,8 @@ public class Projectile : MonoBehaviour {
                 rot = Quaternion.identity;
             }
 
-            Instantiate(impactPrefab, hitPoint, rot);
+            BulletImpactPool.GetObject(hitPoint, rot);
+            //Instantiate(impactPool, hitPoint, rot);
             bulletPool.Release(gameObject);
         }
 
@@ -414,20 +411,15 @@ public class Projectile : MonoBehaviour {
         {
             HandleMortarImpact(null ,other);
 
-            Instantiate(
-                FirePrefab,
-                hitPoint,
-                Quaternion.identity
-            );
+            FirePrefabPool.GetObject(hitPoint,
+                Quaternion.identity);
         }
 
         if (specialBullets == SpecialBullets.Dragunfire)
         {
-            Instantiate(
-                FirePrefab,
-                hitPoint,
-                Quaternion.identity
-            );
+            FirePrefabPool.GetObject(hitPoint,
+              Quaternion.identity);
+         
         }
 
         if (specialBullets == SpecialBullets.Motar_Bullets)
@@ -491,15 +483,11 @@ public class Projectile : MonoBehaviour {
         }
 
         // Spawn explosion VFX
-        if (mortarExplosionPrefab != null)
+        if (mortarExplosionPool != null)
         {
-            GameObject explosion =
-                Instantiate(
-                    mortarExplosionPrefab,
-                    contactPoint,
-                    Quaternion.identity
-                );
-
+            GameObject explosion = mortarExplosionPool.GetObject(contactPoint,
+                    Quaternion.identity);
+               
             explosion.GetComponent<ExplosionSystem>().systemType = SystemType.ExplosionOnly;
         }
     }
@@ -561,13 +549,15 @@ public class Projectile : MonoBehaviour {
         currentRicochetCount++;
 
         // Impact VFX
-        if (impactPrefab != null)
+        if (BulletImpactPool != null)
         {
-            Instantiate(
-                impactPrefab,
-                contactPoint,
-                Quaternion.LookRotation(normal)
-            );
+            BulletImpactPool.GetObject(contactPoint,
+                Quaternion.LookRotation(normal));
+            //Instantiate(
+            //    impactPool,
+            //    contactPoint,
+            //    Quaternion.LookRotation(normal)
+            //);
         }
 
         Debug.Log($"Bounce {currentRicochetCount} | Speed: {speed}");
@@ -589,13 +579,11 @@ public class Projectile : MonoBehaviour {
     {
         yield return new WaitForSeconds(riftsawLifeTime);
 
-        if (riftsawExplosionPrefab != null)
+        if (riftsawExplosionPrefabPool != null)
         {
-            Instantiate(
-                riftsawExplosionPrefab,
-                transform.position,
-                Quaternion.identity
-            );
+       
+            riftsawExplosionPrefabPool.GetObject(transform.position,
+                Quaternion.identity);
         }
 
         CleanupRiftsaw();
@@ -663,16 +651,14 @@ public class Projectile : MonoBehaviour {
         }
         else
         {
-            Instantiate(
-                riftsawExplosionPrefab,
-                transform.position,
-                Quaternion.identity
-            );
+      
+            riftsawExplosionPrefabPool.GetObject(transform.position,
+                Quaternion.identity);
         }
     }
     private void SpawnStickyVicky(Collision collision = null, Collider collider = null)
     {
-        if (stickyBombPrefab == null)
+        if (stickyBombPrefabPool == null)
             return;
 
         Vector3 contactPoint;
@@ -699,11 +685,9 @@ public class Projectile : MonoBehaviour {
         // Apply 90° X rotation offset
         Quaternion finalRotation = surfaceRotation * Quaternion.Euler(90f, 0f, 0f);
 
-        GameObject bomb = Instantiate(
-            stickyBombPrefab,
-            contactPoint,
-            finalRotation
-        );
+        GameObject bomb = 
+            stickyBombPrefabPool.GetObject(contactPoint,
+            finalRotation);
 
         // Parent to enemy
         bomb.transform.SetParent(enemy);

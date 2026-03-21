@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using QFSW.MOP2;
 
 // Cartoon FX  - (c) 2015 Jean Moreno
 
@@ -10,6 +11,7 @@ using System.Collections;
 [RequireComponent(typeof(ParticleSystem))]
 public class CFX_AutoDestructShuriken : MonoBehaviour
 {
+	public ObjectPool pool;
 	// If true, deactivate the object instead of destroying it
 	public bool OnlyDeactivate;
 	
@@ -32,7 +34,7 @@ public class CFX_AutoDestructShuriken : MonoBehaviour
 					#if UNITY_3_5
 						this.gameObject.SetActiveRecursively(false);
 					#else
-						this.gameObject.SetActive(false);
+						pool.Release(gameObject);
 					#endif
 				}
 				else

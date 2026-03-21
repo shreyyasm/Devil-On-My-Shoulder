@@ -53,6 +53,7 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private SpecialGuns specialGun;
 
         [Header("Firing")]
+        public ObjectPool BulletPool;
         [SerializeField] private float projectileImpulse = 400.0f;
         [SerializeField] private int roundsPerMinutes = 200;
         [SerializeField] private LayerMask mask;
@@ -188,7 +189,7 @@ namespace InfimaGames.LowPolyShooterPack
         private Transform playerCamera;
 
         public AudioSource audioSource;
-        public ObjectPool BulletPool;
+       
         public Animator MuzzleFlash;
 
         private bool isCharging;

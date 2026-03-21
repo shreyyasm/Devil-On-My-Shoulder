@@ -1,20 +1,28 @@
+using QFSW.MOP2;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class FireDamageTrigger : MonoBehaviour
 {
+    public ObjectPool pool;
     [Header("Damage")]
     public float damagePerTick = 5f;
     public float damageInterval = 1f;
 
+    public float lifeTime = 8f;
+
     private PlayerMovement player;
-    private void Awake()
+    private void OnEnable()
     {
         player = FindAnyObjectByType<PlayerMovement>();
+
+        StartCoroutine(DisableExplosion());
     }
-    private void Start()
+    IEnumerator DisableExplosion()
     {
-        Destroy(gameObject,8);
+        yield return new WaitForSeconds(lifeTime);
+        pool.Release(gameObject);
     }
     // Tracks enemies and their timers
     private Dictionary<GameObject, float> damageTimers = new Dictionary<GameObject, float>();
