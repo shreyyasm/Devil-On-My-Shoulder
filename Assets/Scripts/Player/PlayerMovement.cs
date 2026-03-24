@@ -992,12 +992,17 @@ public class PlayerMovement : MonoBehaviour
             
             if(hit.gameObject.layer == 16)
             {
-                if (hit.GetComponent<EnemyManager>().isGrabbing)
-                    hit.GetComponent<EnemyManager>().EndGrab();
+               if(hit.GetComponent<EnemyManager>() != null)
+                {
+                    if (hit.GetComponent<EnemyManager>().isGrabbing)
+                        hit.GetComponent<EnemyManager>().EndGrab();
 
-                if (hit.GetComponent<EnemyManager>().canDash)
-                    hit.GetComponent<EnemyManager>().StopDashImmediate();
+                    if (hit.GetComponent<EnemyManager>().canDash)
+                        hit.GetComponent<EnemyManager>().StopDashImmediate();
 
+                }
+
+                Debug.Log("Hit");
                 Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
 
                 DoTimeSlow();
@@ -1013,7 +1018,7 @@ public class PlayerMovement : MonoBehaviour
                 LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
                 // Optional: damage call if present
 
-                EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
+                EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
                 StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
 
                 //Impact VFX

@@ -314,8 +314,13 @@ namespace InfimaGames.LowPolyShooterPack
             #region Animation
             LeanTween.delayedCall(1f, () => { equippedWeapon.GetAnimatorHands().ResetTrigger("Fire"); });
 
-			
-            
+            Animator anim2 = equippedWeapon.GetAnimatorHands();
+
+            if (HasAnimatorBool(anim2, "Shooting"))
+            {
+                anim2.SetBool("Shooting", false);
+            }
+
             //Get the name of the animation state to play, which depends on weapon settings, and ammunition!
             string stateName = equippedWeapon.HasAmmunition() ? "Reload" : "Reload Empty";
             //Play the animation state!
@@ -633,7 +638,16 @@ namespace InfimaGames.LowPolyShooterPack
 		/// Fire.
 		/// </summary>\
 		public CameraShake cameraShake;
-		public void OnTryFire(InputAction.CallbackContext context)
+        bool HasAnimatorBool(Animator anim, string paramName)
+        {
+            foreach (AnimatorControllerParameter param in anim.parameters)
+            {
+                if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
+                    return true;
+            }
+            return false;
+        }
+        public void OnTryFire(InputAction.CallbackContext context)
 		{
 			ScoreManager scoreManager = ScoreManager.Instance;
 			if (scoreManager == null) return;
@@ -650,7 +664,13 @@ namespace InfimaGames.LowPolyShooterPack
 				case {phase: InputActionPhase.Started}:
 					//Hold.
 					holdingButtonFire = true;
-					break;
+                    Animator anim = equippedWeapon.GetAnimatorHands();
+
+                    if (HasAnimatorBool(anim, "Shooting"))
+                    {
+                        anim.SetBool("Shooting", true);
+                    }
+                    break;
 				//Performed.
 				case {phase: InputActionPhase.Performed}:
 					//Ignore if we're not allowed to actually fire.
@@ -678,14 +698,25 @@ namespace InfimaGames.LowPolyShooterPack
 					{
                         // FireEmpty();
                         PlayReloadAnimation();
-
+                       
+                     
                     }
 						
 					break;
 				//Canceled.
 				case {phase: InputActionPhase.Canceled}:
+
+
 					//Stop Hold.
 					holdingButtonFire = false;
+
+
+                    Animator anim3 = equippedWeapon.GetAnimatorHands();
+
+                    if (HasAnimatorBool(anim3, "Shooting"))
+                    {
+                        anim3.SetBool("Shooting", false);
+                    }
                     equippedWeapon.ReleaseChargedShot();
 					if(equippedWeapon.IsLaserBeam())
 						equippedWeapon.StopBeam();

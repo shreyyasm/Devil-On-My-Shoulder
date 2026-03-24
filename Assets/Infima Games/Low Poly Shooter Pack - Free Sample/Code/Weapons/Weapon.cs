@@ -509,7 +509,8 @@ namespace InfimaGames.LowPolyShooterPack
                     StartLaserBeam(); // NEW
                     break;
             }
-            FireFlash.Play();
+            if(FireFlash != null)
+                FireFlash.Play();
       
         }
 
@@ -865,6 +866,14 @@ namespace InfimaGames.LowPolyShooterPack
             laserOverheated = true;
             beamActive = false;
             laserUseTimer = 0f;
+            Animator anim2 = GetAnimatorHands();
+
+            if (HasAnimatorBool(anim2, "Shooting"))
+            {
+                anim2.SetBool("Shooting", false);
+            }
+
+            GetAnimatorHands().SetTrigger("Reload");
             ResetWeaponVibration();
 
             if (beamRenderer)
@@ -878,7 +887,15 @@ namespace InfimaGames.LowPolyShooterPack
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
         }
-
+        bool HasAnimatorBool(Animator anim, string paramName)
+        {
+            foreach (AnimatorControllerParameter param in anim.parameters)
+            {
+                if (param.name == paramName && param.type == AnimatorControllerParameterType.Bool)
+                    return true;
+            }
+            return false;
+        }
         public override void StopBeam()
         {
             ResetRayGunState();

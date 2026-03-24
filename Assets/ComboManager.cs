@@ -158,7 +158,7 @@ public class ComboManager : MonoBehaviour
         currentXP = requiredXP; // 🔥 FULL BAR when dropping
 
         UpdateMultiplierUI();
-        UpdateComboName();
+
     }
 
     void ResetCombo()
@@ -315,8 +315,54 @@ public class ComboManager : MonoBehaviour
 
         int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
         comboNameText.text = comboNames[index];
-    }
 
+        RectTransform rect = comboNameText.rectTransform;
+
+        rect.DOKill();
+
+        // 🔥 Set start position
+        if (comboNameStart != null)
+            rect.anchoredPosition = comboNameStart.anchoredPosition;
+
+        rect.localScale = Vector3.zero;
+        rect.localRotation = Quaternion.Euler(0, 0, Random.Range(-10f, 10f));
+
+        Sequence seq = DOTween.Sequence();
+
+        // 🔥 POP IN
+        seq.Append(
+            rect.DOScale(1.5f, 0.15f)
+            .SetEase(Ease.OutBack)
+        );
+
+        // 🔥 WAIT (NEW)
+        seq.AppendInterval(comboNameWaitBeforeMove);
+
+        // 🔥 MOVE TO TARGET
+        if (comboNameTarget != null)
+        {
+            seq.Append(
+                rect.DOAnchorPos(comboNameTarget.anchoredPosition, comboMoveDuration)
+                .SetEase(Ease.OutCubic)
+            );
+
+            seq.Join(
+                rect.DORotate(Vector3.zero, comboMoveDuration)
+                .SetEase(Ease.OutCubic)
+            );
+        }
+
+        // 🔥 SNAP BACK SCALE
+        seq.Append(
+            rect.DOScale(1f, 0.15f)
+            .SetEase(Ease.InBack)
+        );
+
+        // 🔥 OPTIONAL punch at end (feels great)
+        seq.Append(
+            rect.DOPunchScale(Vector3.one * 0.2f, 0.2f, 5, 1f)
+        );
+    }
     void UpdateKillChainUI()
     {
         if (enemyKilledText == null) return;
@@ -395,6 +441,14 @@ public class ComboManager : MonoBehaviour
         if (killFeedText != null)
             killFeedText.text = "";
     }
+
+    [Header("Combo Name Animation")]
+    public RectTransform comboNameStart;
+    public RectTransform comboNameTarget;
+    public float comboMoveDuration = 0.4f;
+
+    [Header("Combo Name Timing")]
+    public float comboNameWaitBeforeMove = 0.25f;
 }
 
 public enum EnemyType
