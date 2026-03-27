@@ -824,7 +824,7 @@ public class PlayerMovement : MonoBehaviour
         if (!canKick) return;
         kickAnimator[characterindex - 1].gameObject.SetActive(true);
         kickAnimator[characterindex - 1].SetTrigger("Kick");
-
+        StartCoroutine(Dash());
         StartCoroutine(KickDelay());
         if(!cameraLocked)
             StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f, 100,0.24f)); // time in seconds

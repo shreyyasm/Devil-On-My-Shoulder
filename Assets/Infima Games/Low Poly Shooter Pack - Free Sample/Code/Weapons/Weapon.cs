@@ -174,6 +174,7 @@ namespace InfimaGames.LowPolyShooterPack
 
 
         public ParticleSystem FireFlash;
+        public ParticleSystem FireSmoke;
 
         public List<PlayerCharacterHands> playerCharacterHands;
 
@@ -511,7 +512,10 @@ namespace InfimaGames.LowPolyShooterPack
             }
             if(FireFlash != null)
                 FireFlash.Play();
-      
+
+            if (FireSmoke != null)
+                FireSmoke.Play();
+
         }
 
         private void FireSingle()
