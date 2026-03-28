@@ -111,9 +111,17 @@ public class IKStepManager : MonoBehaviour {
         nextSwitchTime = maxStepTime;
     }
 
-    private void LateUpdate() {
-        if (stepMode == StepMode.AlternatingTetrapodGait) AlternatingTetrapodGait();
-        else QueueStepMode();
+    public int updateEveryNFrames = 2;
+
+    private void LateUpdate()
+    {
+        if ((Time.frameCount + gameObject.GetInstanceID()) % updateEveryNFrames != 0)
+            return;
+
+        if (stepMode == StepMode.AlternatingTetrapodGait)
+            AlternatingTetrapodGait();
+        else
+            QueueStepMode();
     }
 
     private void QueueStepMode() {

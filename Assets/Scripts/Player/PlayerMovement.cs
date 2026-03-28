@@ -287,7 +287,13 @@ public class PlayerMovement : MonoBehaviour
             standHeightY = rootGameobject.transform.position.y;
         }
 
-     
+        if (itemPressed)
+        {
+            UseOrThrowItem();
+            itemPressed = false;
+        }
+
+
     }
     private Quaternion baseRotation;
     void LateUpdate()
@@ -1301,4 +1307,120 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
+    [Header("Item System")]
+    public GameObject currentItem;
+    public Transform itemHoldPoint;
+
+    [Header("Throw Settings")]
+    public float throwForce = 15f;
+    public float throwUpwardForce = 5f;
+    public float throwCooldown = 0.5f;
+    public float throwDistance = 30f;
+
+    private bool canThrow = true;
+
+    private bool itemPressed;
+
+    public void OnItem(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+            itemPressed = true;
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        PlayerItem item = collision.gameObject.GetComponent<PlayerItem>();
+
+        if (item != null)
+        {
+            if (currentItem == null)
+            {
+                EquipItem(item);
+            }
+            else
+            {
+                // already holding → destroy new item
+                Destroy(collision.gameObject);
+            }
+        }
+    }
+    void EquipItem(PlayerItem item)
+    {
+        currentItem = item.gameObject;
+        Physics.IgnoreCollision(item.col, GetComponent<Collider>(), true);
+        // Parent to hold point
+        item.transform.SetParent(itemHoldPoint);
+        item.transform.localPosition = Vector3.zero;
+        item.transform.localRotation = Quaternion.identity;
+
+        // Disable physics
+        item.rb.velocity = Vector3.zero;
+        item.rb.angularVelocity = Vector3.zero;
+        item.rb.isKinematic = true;
+
+        // Disable collision ONLY
+        item.col.enabled = false;
+
+    }
+    void UseOrThrowItem()
+    {
+        if (currentItem == null || !canThrow) return;
+
+        PlayerItem item = currentItem.GetComponent<PlayerItem>();
+
+        if (item.throwable)
+        {
+            ThrowItem(item);
+        }
+        else
+        {
+            item.transform.SetParent(null); // 🔥 UNPARENT
+            item.col.enabled = true;
+
+            item.OnUse(this);
+
+            currentItem = null;
+        }
+    }
+    void ThrowItem(PlayerItem item)
+    {
+        canThrow = false;
+
+        // 🔥 UNPARENT
+        item.transform.SetParent(null);
+
+        Rigidbody rb = item.rb;
+
+        item.transform.position = itemHoldPoint.position + itemHoldPoint.forward * 0.5f;
+
+        // Enable physics
+        rb.isKinematic = false;
+        item.col.enabled = true;
+
+        // 🔥 RE-ENABLE COLLISION WITH PLAYER
+        Physics.IgnoreCollision(item.col, GetComponent<Collider>(), false);
+
+        // 🎯 Aim
+        Ray ray = playerCameraMain.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        RaycastHit hit;
+
+        Vector3 targetPoint = Physics.Raycast(ray, out hit, throwDistance)
+            ? hit.point
+            : ray.GetPoint(throwDistance);
+
+        Vector3 direction = (targetPoint - item.transform.position);
+
+        Vector3 force = direction.normalized * throwForce;
+        force.y += throwUpwardForce;
+
+        rb.velocity = force;
+        rb.angularVelocity = UnityEngine.Random.insideUnitSphere * 5f;
+
+        currentItem = null;
+
+        Invoke(nameof(ResetThrow), throwCooldown);
+    }
+    void ResetThrow()
+    {
+        canThrow = true;
+    }
 }

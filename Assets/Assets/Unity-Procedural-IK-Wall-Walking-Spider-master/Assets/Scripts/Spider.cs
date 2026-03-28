@@ -143,8 +143,11 @@ public class Spider : MonoBehaviour {
         bodyCentroid = body.transform.position + getScale() * bodyOffsetHeight * transform.up;
         bodyDefaultCentroid = transform.InverseTransformPoint(bodyCentroid);
     }
-
+    public int bodyUpdateSkip = 2;
     void FixedUpdate() {
+
+        if ((Time.frameCount + gameObject.GetInstanceID()) % bodyUpdateSkip != 0)
+            return;
         //** Ground Check **//
         grdInfo = GroundCheck();
 
@@ -308,7 +311,8 @@ public class Spider : MonoBehaviour {
         // Calculate the centroid of legs position
         Vector3 newCentroid = Vector3.zero;
         float k = 0;
-        for (int i = 0; i < legs.Length; i++) {
+        for (int i = 0; i < legs.Length; i += 2)
+        {
             newCentroid += legs[i].getEndEffector().position;
             k++;
         }
