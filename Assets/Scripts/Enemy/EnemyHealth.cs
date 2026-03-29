@@ -112,6 +112,12 @@ public class EnemyHealth : MonoBehaviour
         SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
 
         ScoreManager.Instance.Kills++;
+
+
+        // Spawn damage number
+        DamageNumber killText = KillTextPrefab.Spawn(transform.position + new Vector3(0,2.5f,0),"Killed",transform);
+
+        Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
         gameObject.SetActive(false);
 
@@ -145,7 +151,7 @@ public class EnemyHealth : MonoBehaviour
         TakeDamage(damage, info);
 
         // Spawn damage number
-        DamageNumber damageNumber = numberPrefab.Spawn(
+        DamageNumber damageNumber = DamageNumberPrefab.Spawn(
             transform.position + new Vector3(1, 2f, 0),
             damage,
             transform
@@ -175,7 +181,8 @@ public class EnemyHealth : MonoBehaviour
         }
 
     }
-    public DamageNumber numberPrefab;
+    public DamageNumber DamageNumberPrefab;
+    public DamageNumber KillTextPrefab;
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Bullet"))
@@ -199,7 +206,7 @@ public class EnemyHealth : MonoBehaviour
             TakeDamage(damage, info);
 
             // Spawn damage number
-            DamageNumber damageNumber = numberPrefab.Spawn(
+            DamageNumber damageNumber = DamageNumberPrefab.Spawn(
                 transform.position + new Vector3(1, 2f, 0),
                 damage,
                 transform
@@ -237,7 +244,7 @@ public class EnemyHealth : MonoBehaviour
             TakeDamage(damage, info);
 
             // Spawn damage number
-            DamageNumber damageNumber = numberPrefab.Spawn(
+            DamageNumber damageNumber = DamageNumberPrefab.Spawn(
                 transform.position + new Vector3(1, 2f, 0),
                 damage,
                 transform

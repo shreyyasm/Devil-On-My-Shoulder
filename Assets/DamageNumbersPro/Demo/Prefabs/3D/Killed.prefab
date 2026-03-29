@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 4888194837565303189}
   - component: {fileID: 6458874769798569857}
   m_Layer: 0
-  m_Name: mera
+  m_Name: Killed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -132,7 +132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   permanent: 0
-  lifetime: 1
+  lifetime: 3
   unscaledTime: 0
   enable3DGame: 1
   faceCameraView: 1
@@ -164,7 +164,7 @@ MonoBehaviour:
     horizontal: 0
     vertical: 0
     characterSpacing: 0
-    size: 0
+    size: 10
   digitSettings:
     decimals: 0
     decimalChar: .
@@ -216,7 +216,7 @@ MonoBehaviour:
     characterSpacing: 0
     size: 0
   enableTopText: 0
-  topText: 
+  topText: Killed
   topTextSettings:
     bold: 0
     italic: 0
@@ -230,7 +230,7 @@ MonoBehaviour:
     horizontal: 0
     vertical: 0
     characterSpacing: 0
-    size: 0
+    size: 3
   enableBottomText: 0
   bottomText: 
   bottomTextSettings:
@@ -662,7 +662,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 123
+  m_text: <size=+10>123</size>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 3496d222079e2814f8cefb3e5909ed6c, type: 2}
   m_sharedMaterial: {fileID: 3032379161097541576, guid: 3496d222079e2814f8cefb3e5909ed6c,
@@ -672,8 +672,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

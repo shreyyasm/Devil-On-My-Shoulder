@@ -312,6 +312,8 @@ public class EnemyManager : MonoBehaviour
 
     #endregion
 
+    public bool kickOn;
+
     public bool projectile_Parried;
     private void Awake()
     {
@@ -551,7 +553,7 @@ public class EnemyManager : MonoBehaviour
 
     private void Update()
     {
-        if(enemyType != EnemyStats.EnemyType.Spider)
+        if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
         {
             // Get direction to player (ignore Y so it only rotates horizontally)
             Vector3 direction = player.transform.position - transform.position;

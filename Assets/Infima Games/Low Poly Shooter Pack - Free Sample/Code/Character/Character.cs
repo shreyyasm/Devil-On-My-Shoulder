@@ -293,7 +293,19 @@ namespace InfimaGames.LowPolyShooterPack
 		private void Fire()
 		{
             equippedWeapon.Fire();
-            equippedWeapon.GetAnimatorHands().SetTrigger("Fire");
+            var animator = equippedWeapon.GetAnimatorHands();
+
+            if (animator != null)
+            {
+                foreach (var param in animator.parameters)
+                {
+                    if (param.type == AnimatorControllerParameterType.Trigger && param.name == "Fire")
+                    {
+                        animator.SetTrigger("Fire");
+                        break;
+                    }
+                }
+            }
             //Save the shot time, so we can calculate the fire rate correctly.
             //lastShotTime = Time.time;
             //Fire the weapon! Make sure that we also pass the scope's spread multiplier if we're aiming.

@@ -37,10 +37,20 @@ public class ExplosionSystem : MonoBehaviour
     [Header("Lifetime")]
     [SerializeField] private float lifeTime = 2f;
 
+    [SerializeField] private float detonateDelay = 1.5f;
+
+    private float timer;
+    public bool isArmed = false;
+
     public GameObject explosionPrefab;
+    public ParticleSystem explosionParticle;
 
     private void OnEnable()
     {
+
+        timer = 0f;
+        isArmed = false;
+
         if (systemType == SystemType.Default)
         {
             explosionPrefab.SetActive(true);
@@ -54,33 +64,60 @@ public class ExplosionSystem : MonoBehaviour
 
         StartCoroutine(DisableExplosion());
     }
+    private void Update()
+    {
+        if (isArmed) return;
+
+        timer += Time.deltaTime;
+
+        if (timer >= detonateDelay)
+        {
+            isArmed = true;
+            explosionParticle.Play();
+            // Optional debug
+            // Debug.Log("Grenade Armed!");
+        }
+    }
 
     IEnumerator DisableExplosion()
     {
         yield return new WaitForSeconds(lifeTime);
         pool.Release(gameObject);
     }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (!isArmed) return;
+
+        if (collision.gameObject.layer != 16)
+            return;
+
+        HandleExplosion(collision.gameObject, collision.collider);
+    }
     private void OnTriggerEnter(Collider other)
     {
+        if (!isArmed) return;
+
         if (other.gameObject.layer != 16)
             return;
 
+        HandleExplosion(other.gameObject, other);
+    }
+
+    private void HandleExplosion(GameObject target, Collider col)
+    {
         if (systemType == SystemType.Default)
         {
-            DoExplosionDamge(other);
-            DoKnockback(other.gameObject);
+            DoExplosionDamge(col);
+            DoKnockback(target);
         }
-
-        if (systemType == SystemType.ExplosionOnly)
+        else if (systemType == SystemType.ExplosionOnly)
         {
-            DoExplosionDamge(other);
+            DoExplosionDamge(col);
         }
-
-        if (systemType == SystemType.KnockbackOnly)
+        else if (systemType == SystemType.KnockbackOnly)
         {
-            DoKnockback(other.gameObject);
+            DoKnockback(target);
         }
-
     }
     public void DoExplosionDamge(Collider other)
     {

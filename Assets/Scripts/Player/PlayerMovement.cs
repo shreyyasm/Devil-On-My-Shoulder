@@ -828,9 +828,10 @@ public class PlayerMovement : MonoBehaviour
     private void TryKick()
     {
         if (!canKick) return;
+
         kickAnimator[characterindex - 1].gameObject.SetActive(true);
         kickAnimator[characterindex - 1].SetTrigger("Kick");
-        StartCoroutine(Dash());
+        //StartCoroutine(Dash());
         StartCoroutine(KickDelay());
         if(!cameraLocked)
             StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f, 100,0.24f)); // time in seconds
@@ -962,7 +963,7 @@ public class PlayerMovement : MonoBehaviour
     IEnumerator KickDelay()
     {
         
-        yield return new WaitForSeconds(0.3f);
+        
 
         canKick = false;
         SFXManager.Instance.PlaySFX("Player/Kick", 0.6f);
@@ -995,10 +996,11 @@ public class PlayerMovement : MonoBehaviour
         
         foreach (Collider hit in hits)
         {
-            
-            if(hit.gameObject.layer == 16)
+            hit.GetComponent<EnemyManager>().kickOn = true;
+            if (hit.gameObject.layer == 16)
             {
-               if(hit.GetComponent<EnemyManager>() != null)
+                yield return new WaitForSeconds(0.15f);
+                if (hit.GetComponent<EnemyManager>() != null)
                 {
                     if (hit.GetComponent<EnemyManager>().isGrabbing)
                         hit.GetComponent<EnemyManager>().EndGrab();
@@ -1008,11 +1010,12 @@ public class PlayerMovement : MonoBehaviour
 
                 }
 
-                Debug.Log("Hit");
+               
                 Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
 
                 DoTimeSlow();
 
+               
                 // 🔥 APPLY NAVMESH KNOCKBACK
                 DoKickKnockback(hit.transform, kickDir, finalKickForce);
 
@@ -1044,33 +1047,32 @@ public class PlayerMovement : MonoBehaviour
                     enemy.EnemyHit(15f, true); // tweakable
                     HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
                     hitstop.DoShake();
+                    hit.GetComponent<EnemyManager>().kickOn = false;
 
                 }
         
             }
-            if(hit.gameObject.layer == 15)
-            {
-
-                hit.GetComponent<EnemyProjectile>().enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
-                hit.GetComponent<EnemyProjectile>().enemyRigibody.GetComponent<EnemyManager>().StopEnemy();
-                DoTimeSlow();
-
-                targetEnemy = hit.GetComponent<EnemyProjectile>().enemyRigibody.gameObject;
-                Flash(0f, 0.2f, 0.1f);
-                SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
-                LeanTween.delayedCall(0.03f, () => { SFXManager.Instance.PlaySFX("Player/KickParry", 1f); });
-                LeanTween.delayedCall(0.05f, () => { SFXManager.Instance.PlaySFX("Player/KickParry2", 1f); });
-
-                Rigidbody rb = hit.GetComponent<Rigidbody>();
-
-                ShootProjectile(rb, targetEnemy.transform, 70f);
-                playerKickedSomething = true;
-
-            }
-
+            
         }
     }
+    public void ParryProjectiles(EnemyProjectile hit)
+    {
+        Debug.Log("Projectile Parryed");
+        hit.enemyRigibody.GetComponent<EnemyManager>().projectile_Parried = true;
+        hit.enemyRigibody.GetComponent<EnemyManager>().StopEnemy();
+        DoTimeSlow();
 
+        targetEnemy = hit.enemyRigibody.gameObject;
+        Flash(0f, 0.2f, 0.1f);
+        SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
+        LeanTween.delayedCall(0.03f, () => { SFXManager.Instance.PlaySFX("Player/KickParry", 1f); });
+        LeanTween.delayedCall(0.05f, () => { SFXManager.Instance.PlaySFX("Player/KickParry2", 1f); });
+
+        Rigidbody rb = hit.GetComponent<Rigidbody>();
+
+        ShootProjectile(rb, targetEnemy.transform, 70f);
+        playerKickedSomething = true;
+    }
     public Volume volume;
 
     Coroutine flashRoutine;
@@ -1304,6 +1306,14 @@ public class PlayerMovement : MonoBehaviour
         projectile.angularVelocity = Vector3.zero;
 
         projectile.velocity = direction * speed;
+
+       
+        var homing = projectile.GetComponent<EnemyProjectile>();
+        if (homing != null)
+        {
+            homing.eliminatorTarget = target;
+            homing.eliminatorSpeed = speed;
+        }
     }
 
 
@@ -1341,6 +1351,11 @@ public class PlayerMovement : MonoBehaviour
                 // already holding → destroy new item
                 Destroy(collision.gameObject);
             }
+        }
+        if(isDashing && collision.gameObject.CompareTag("Blood"))
+        {
+            TryKick();
+           
         }
     }
     void EquipItem(PlayerItem item)

@@ -50,13 +50,10 @@ MeshRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -4316245157388792597, guid: 3d2ad912ef2b822468ba9755e509025b, type: 2}
+  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -140,7 +137,7 @@ MonoBehaviour:
   enable3DGame: 1
   faceCameraView: 1
   lookAtCamera: 0
-  renderThroughWalls: 1
+  renderThroughWalls: 0
   consistentScreenSize: 1
   distanceScalingSettings:
     baseDistance: 15
@@ -201,7 +198,7 @@ MonoBehaviour:
     horizontal: 0
     vertical: 0
     characterSpacing: 0
-    size: 0
+    size: 1
   enableRightText: 0
   rightText: 
   rightTextSettings:
@@ -561,7 +558,7 @@ MonoBehaviour:
   enablePooling: 0
   poolSize: 50
   disableOnSceneLoad: 1
-  editorLastFont: 
+  editorLastFont: ShonenPunk custom bold SDF3D
   position: {x: 0, y: 0, z: 0}
 --- !u!210 &1871610829092223643
 SortingGroup:
@@ -625,13 +622,10 @@ MeshRenderer:
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -4316245157388792597, guid: 3d2ad912ef2b822468ba9755e509025b, type: 2}
+  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -678,7 +672,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5894454014517814593
 RectTransform:
   m_ObjectHideFlags: 0
@@ -715,13 +709,10 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -4316245157388792597, guid: 3d2ad912ef2b822468ba9755e509025b, type: 2}
+  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -763,18 +754,18 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Destruction
+  m_text: <size=+1>Destruction</size>
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3d2ad912ef2b822468ba9755e509025b, type: 2}
-  m_sharedMaterial: {fileID: -4316245157388792597, guid: 3d2ad912ef2b822468ba9755e509025b,
+  m_fontAsset: {fileID: 11400000, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
+  m_sharedMaterial: {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -807,17 +798,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 0
+  m_enableWordWrapping: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
   m_isCullingEnabled: 0
