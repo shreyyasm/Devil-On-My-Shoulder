@@ -78,6 +78,10 @@ public class ComboManager : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            SceneManager.LoadScene(4);
+        }
         if (!comboActive) return;
 
         ApplyDecay();
@@ -89,10 +93,7 @@ public class ComboManager : MonoBehaviour
             if (enemyKilledText != null)
                 enemyKilledText.text = "";
         }
-        if(Input.GetMouseButtonDown(2))
-        {
-            SceneManager.LoadScene(4);
-        }
+       
     }
 
     // =========================

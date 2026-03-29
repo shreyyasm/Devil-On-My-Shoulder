@@ -330,6 +330,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 HandleDashOrSlide();
             }
+            if(!HasMovementInput() && readyToDash)
+            {
+                TryKick();
+            }
 
             // ❌ ALWAYS consume the input
             slidePressed = false;
@@ -474,7 +478,7 @@ public class PlayerMovement : MonoBehaviour
         if (jumpTilt != Vector3.zero)
         {
             cameralerpRoutine = StartCoroutine(
-                LerpCameraRotation(jumpTilt, 0.5f, 80f, 0f)
+                LerpCameraRotation(jumpTilt, 0.8f, 80f, 0f)
             );
         }
         else
@@ -614,9 +618,22 @@ public class PlayerMovement : MonoBehaviour
                 Time.deltaTime * swaySmooth
             );
     }
-
+    
     private void HandleDashOrSlide()
     {
+        Vector3 origin = transform.position + Vector3.up * 1.0f;
+        Vector3 direction = transform.forward;
+
+
+        Debug.DrawRay(origin, direction, Color.red);
+
+        if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 10f, enemyLayer))
+        {
+            TryKick();
+            Debug.Log("EnemyClose");
+            return;
+        }
+
         if (!grounded)
         {
             // AIR → always dash
@@ -627,6 +644,7 @@ public class PlayerMovement : MonoBehaviour
         // GROUNDED
         if (IsForwardInput())
         {
+
             slideRoutine = StartCoroutine(Slide()); // forward = slide
         }
         else
@@ -1357,7 +1375,10 @@ public class PlayerMovement : MonoBehaviour
             TryKick();
            
         }
+     
+   
     }
+  
     void EquipItem(PlayerItem item)
     {
         currentItem = item.gameObject;
