@@ -14,6 +14,7 @@ using UnityEngine.Rendering;
 using UnityEngine.UI;
 using UnityEngine.VFX;
 using static UnityEngine.EventSystems.EventTrigger;
+using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour 
 {
@@ -260,6 +261,9 @@ public class PlayerMovement : MonoBehaviour
         MyInput();
         CameraTiltSway();
         HandleFootsteps();
+        
+     //   if(Input.GetKeyDown()
+     //ew2edd2
 
         if (kickPressed)
         {
@@ -627,7 +631,7 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.DrawRay(origin, direction, Color.red);
 
-        if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 10f, enemyLayer))
+        if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 2f, enemyLayer))
         {
             TryKick();
             Debug.Log("EnemyClose");
@@ -1047,7 +1051,7 @@ public class PlayerMovement : MonoBehaviour
 
                 EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
                 StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
-
+                
                 //Impact VFX
                 Vector3 hitPoint = enemy.transform.position + new Vector3(0, 0.55f, 0);
 
@@ -1333,7 +1337,10 @@ public class PlayerMovement : MonoBehaviour
             homing.eliminatorSpeed = speed;
         }
     }
+    [SerializeField] private List<PlayerItem> availableItems;
 
+    private PlayerItem currentItemPrefab; // 🔥 store prefab only
+    private PlayerItem spawnedItem;       // actual instance (only when needed)
 
     [Header("Item System")]
     public GameObject currentItem;
@@ -1356,52 +1363,40 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnCollisionEnter(Collision collision)
     {
-        PlayerItem item = collision.gameObject.GetComponent<PlayerItem>();
-
-        if (item != null)
-        {
-            if (currentItem == null)
-            {
-                EquipItem(item);
-            }
-            else
-            {
-                // already holding → destroy new item
-                Destroy(collision.gameObject);
-            }
-        }
+     
         if(isDashing && collision.gameObject.CompareTag("Blood"))
         {
-            TryKick();
-           
+            TryKick();   
         }
-     
-   
+
     }
-  
-    void EquipItem(PlayerItem item)
+    public void GetRandomItem()
     {
-        currentItem = item.gameObject;
-        Physics.IgnoreCollision(item.col, GetComponent<Collider>(), true);
-        // Parent to hold point
-        item.transform.SetParent(itemHoldPoint);
-        item.transform.localPosition = Vector3.zero;
-        item.transform.localRotation = Quaternion.identity;
+        if (availableItems == null || availableItems.Count == 0)
+            return;
 
-        // Disable physics
-        item.rb.velocity = Vector3.zero;
-        item.rb.angularVelocity = Vector3.zero;
-        item.rb.isKinematic = true;
+        int index = Random.Range(0, availableItems.Count);
 
-        // Disable collision ONLY
-        item.col.enabled = false;
+        currentItemPrefab = availableItems[index];
 
+        Debug.Log("Picked item: " + currentItemPrefab.name);
+    }
+   
+    PlayerItem SpawnItem()
+    {
+        if (currentItemPrefab == null) return null;
+
+        spawnedItem = Instantiate(currentItemPrefab, itemHoldPoint.position, itemHoldPoint.rotation);
+
+        return spawnedItem;
     }
     void UseOrThrowItem()
     {
-        if (currentItem == null || !canThrow) return;
+        if (currentItemPrefab == null || !canThrow) return;
 
-        PlayerItem item = currentItem.GetComponent<PlayerItem>();
+        PlayerItem item = SpawnItem();
+
+        if (item == null) return;
 
         if (item.throwable)
         {
@@ -1409,33 +1404,24 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            item.transform.SetParent(null); // 🔥 UNPARENT
-            item.col.enabled = true;
-
             item.OnUse(this);
-
-            currentItem = null;
         }
+
+        currentItemPrefab = null; // clear after use
     }
     void ThrowItem(PlayerItem item)
     {
         canThrow = false;
 
-        // 🔥 UNPARENT
-        item.transform.SetParent(null);
-
         Rigidbody rb = item.rb;
 
         item.transform.position = itemHoldPoint.position + itemHoldPoint.forward * 0.5f;
 
-        // Enable physics
         rb.isKinematic = false;
         item.col.enabled = true;
 
-        // 🔥 RE-ENABLE COLLISION WITH PLAYER
         Physics.IgnoreCollision(item.col, GetComponent<Collider>(), false);
 
-        // 🎯 Aim
         Ray ray = playerCameraMain.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
 
@@ -1450,8 +1436,6 @@ public class PlayerMovement : MonoBehaviour
 
         rb.velocity = force;
         rb.angularVelocity = UnityEngine.Random.insideUnitSphere * 5f;
-
-        currentItem = null;
 
         Invoke(nameof(ResetThrow), throwCooldown);
     }
