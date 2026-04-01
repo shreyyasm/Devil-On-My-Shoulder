@@ -129,10 +129,19 @@ public class ComboManager : MonoBehaviour
 
         if (xpSlider != null)
         {
-            xpSlider.transform.DOKill();
-            xpSlider.transform.DOPunchScale(Vector3.one * 0.15f, 0.2f, 5, 1f);
-        }
+            Transform t = xpSlider.transform;
 
+            t.DOKill();
+
+            t.localScale = Vector3.one;
+
+            t.DOScale(1.15f, 0.1f)
+             .SetEase(Ease.OutQuad)
+             .OnComplete(() =>
+             {
+                 t.DOScale(1f, 0.1f).SetEase(Ease.InQuad);
+             });
+        }
         UpdateXPUI();
     }
 
@@ -140,6 +149,7 @@ public class ComboManager : MonoBehaviour
     {
         multiplier++;
         requiredXP = CalculateXP(multiplier);
+
 
         UpdateMultiplierUI();
         UpdateComboName();
@@ -314,19 +324,19 @@ public class ComboManager : MonoBehaviour
     {
         if (comboNameText == null) return;
 
-        int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
-        comboNameText.text = comboNames[index];
+        //int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
+        comboNameText.text = comboNames[multiplier-1];
 
         RectTransform rect = comboNameText.rectTransform;
 
         rect.DOKill();
 
-        // 🔥 Set start position
-        if (comboNameStart != null)
-            rect.anchoredPosition = comboNameStart.anchoredPosition;
+        //// 🔥 Set start position
+        //if (comboNameStart != null)
+        //    rect.anchoredPosition = comboNameStart.anchoredPosition;
 
-        rect.localScale = Vector3.zero;
-        rect.localRotation = Quaternion.Euler(0, 0, Random.Range(-10f, 10f));
+        //rect.localScale = Vector3.zero;
+        //rect.localRotation = Quaternion.Euler(0, 0, Random.Range(-10f, 10f));
 
         Sequence seq = DOTween.Sequence();
 
@@ -336,22 +346,22 @@ public class ComboManager : MonoBehaviour
             .SetEase(Ease.OutBack)
         );
 
-        // 🔥 WAIT (NEW)
-        seq.AppendInterval(comboNameWaitBeforeMove);
+        //// 🔥 WAIT (NEW)
+        //seq.AppendInterval(comboNameWaitBeforeMove);
 
-        // 🔥 MOVE TO TARGET
-        if (comboNameTarget != null)
-        {
-            seq.Append(
-                rect.DOAnchorPos(comboNameTarget.anchoredPosition, comboMoveDuration)
-                .SetEase(Ease.OutCubic)
-            );
+        //// 🔥 MOVE TO TARGET
+        //if (comboNameTarget != null)
+        //{
+        //    seq.Append(
+        //        rect.DOAnchorPos(comboNameTarget.anchoredPosition, comboMoveDuration)
+        //        .SetEase(Ease.OutCubic)
+        //    );
 
-            seq.Join(
-                rect.DORotate(Vector3.zero, comboMoveDuration)
-                .SetEase(Ease.OutCubic)
-            );
-        }
+        //    seq.Join(
+        //        rect.DORotate(Vector3.zero, comboMoveDuration)
+        //        .SetEase(Ease.OutCubic)
+        //    );
+        //}
 
         // 🔥 SNAP BACK SCALE
         seq.Append(

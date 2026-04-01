@@ -398,8 +398,10 @@ public class CharacterAbilities : MonoBehaviour
     }
     private IEnumerator Ability1FireLoop()
     {
+        yield return new WaitForSeconds(1f);
         while (abilityActive)
         {
+          
             UpdateFireRate();     // 🔥 UPDATE BASED ON TIMER
             FireAbility1Shot();
 
@@ -453,6 +455,14 @@ public class CharacterAbilities : MonoBehaviour
         Transform socket = fireLeft ? SocketPointLeft : SocketPointRight;
         Animator flash = fireLeft ? flashLeft : flashRight;
 
+        if(fireLeft)
+        {
+            leftGun.GetComponent<Animator>().SetTrigger("Fire");
+        }
+        else
+        {
+            rightGun.GetComponent<Animator>().SetTrigger("Fire");
+        }
         if (gun == null || socket == null) return;
 
         Vector3 dir;

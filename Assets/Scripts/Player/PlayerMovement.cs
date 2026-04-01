@@ -65,6 +65,7 @@ public class PlayerMovement : MonoBehaviour
     public float dashCooldown = 1f;
     public float dashHeight = 0.5f; // target height when sliding
     public bool isDashing = false;
+    public bool isSliding = false;
     public bool readyToDash = true;
 
     //Slide
@@ -89,6 +90,9 @@ public class PlayerMovement : MonoBehaviour
     public float airKickMultiplier = 1.4f;
     public float velocityKickMultiplier = 0.05f;
     public float kickUpwardForce = 2.5f;
+
+    [SerializeField] private float detectionRadius = 3f;
+    [SerializeField] private float viewAngle = 60f;
 
 
     public List<Transform> legKickPoint; // empty object near foot
@@ -261,15 +265,17 @@ public class PlayerMovement : MonoBehaviour
         MyInput();
         CameraTiltSway();
         HandleFootsteps();
-        
-     //   if(Input.GetKeyDown()
-     //ew2edd2
 
-        if (kickPressed)
+        if (Input.GetKeyDown(KeyCode.T))
         {
-            TryKick();
-            kickPressed = false;
+            GetRandomItem();
         }
+
+        //if (kickPressed)
+        //{
+        //    TryKick();
+        //    kickPressed = false;
+        //}
 
         // Smoothly adjust height
         Vector3 scale = transform.localScale;
@@ -622,20 +628,27 @@ public class PlayerMovement : MonoBehaviour
                 Time.deltaTime * swaySmooth
             );
     }
-    
+   
+
     private void HandleDashOrSlide()
     {
-        Vector3 origin = transform.position + Vector3.up * 1.0f;
-        Vector3 direction = transform.forward;
+        Vector3 origin = transform.position + Vector3.up * 1f;
 
+        Collider[] hits = Physics.OverlapSphere(origin, detectionRadius, enemyLayer);
 
-        Debug.DrawRay(origin, direction, Color.red);
-
-        if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, 2f, enemyLayer))
+        foreach (var hit in hits)
         {
-            TryKick();
-            Debug.Log("EnemyClose");
-            return;
+            Vector3 dirToTarget = (hit.transform.position - origin).normalized;
+
+            float angle = Vector3.Angle(transform.forward, dirToTarget);
+
+            if (angle <= viewAngle * 0.5f)
+            {
+                // 🔥 Enemy inside vision cone
+                TryKick();
+                Debug.Log("Enemy in vision");
+                return;
+            }
         }
 
         if (!grounded)
@@ -656,6 +669,21 @@ public class PlayerMovement : MonoBehaviour
             StartCoroutine(Dash()); // left/right/back = dash
         }
     }
+    void OnDrawGizmos()
+    {
+        Vector3 origin = transform.position + Vector3.up * 1f;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(origin, detectionRadius);
+
+        Vector3 left = Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
+        Vector3 right = Quaternion.Euler(0, viewAngle / 2, 0) * transform.forward;
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(origin, origin + left * detectionRadius);
+        Gizmos.DrawLine(origin, origin + right * detectionRadius);
+    }
+
     [SerializeField] private float slideDownY = 1.4f;
     [SerializeField] private float slideUpY = 1.8f;
     [SerializeField] private float heightLerpSpeed = 10f;
@@ -681,6 +709,7 @@ public class PlayerMovement : MonoBehaviour
         cameralerpRoutine = StartCoroutine(LerpCameraRotation(new Vector3(0f, 0f, 8f), 0.8f, 100,0)); // time in seconds
 
         isDashing = true;
+        isSliding = true;
         readyToDash = false;
 
         audioSource.PlayOneShot(slideSFX, 0.8f);
@@ -750,6 +779,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         isDashing = false;
+        isSliding = false;
         slideCancelled = false;
         //cameraLocked = false;
         kickAnimator[characterindex - 1].gameObject.SetActive(false);
@@ -1364,7 +1394,7 @@ public class PlayerMovement : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
      
-        if(isDashing && collision.gameObject.CompareTag("Blood"))
+        if(isSliding && collision.gameObject.CompareTag("Blood"))
         {
             TryKick();   
         }
