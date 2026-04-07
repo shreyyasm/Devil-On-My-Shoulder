@@ -18,7 +18,7 @@ public class PlayerItem : MonoBehaviour
         Debug.Log("Item Used!");
 
         // 👉 Add custom logic here (heal, buff, etc.)
-        Destroy(gameObject);
+       // Destroy(gameObject);
     }
 
 

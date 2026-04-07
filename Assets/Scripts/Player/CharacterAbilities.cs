@@ -64,6 +64,10 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private Animator flashRight;
     [SerializeField] private Transform SocketPointLeft;
     [SerializeField] private Transform SocketPointRight;
+    public ParticleSystem leftGunFlash;
+    public ParticleSystem rightGunFlash;
+    public ParticleSystem leftGunSmoke;
+    public ParticleSystem rightGunSmoke;
     [SerializeField] private LayerMask enemyLayer;
 
     public ObjectPool BulletPool;
@@ -386,19 +390,21 @@ public class CharacterAbilities : MonoBehaviour
 
     private void StartAbility1()
     {
-        if (leftGun != null) leftGun.gameObject.SetActive(true);
+        LeanTween.delayedCall(0.3f, () => { if (leftGun != null) leftGun.gameObject.SetActive(true); });
+       
         if (rightGun != null) rightGun.gameObject.SetActive(true);
 
         currentFireInterval = startFireInterval; // RESET fire rate
         ability1Routine = StartCoroutine(Ability1FireLoop());
 
         TargetIconCanvas.SetActive(true);
-        SetTargetFOV(85f, 10f);
+      
 
     }
     private IEnumerator Ability1FireLoop()
     {
         yield return new WaitForSeconds(1f);
+        SetTargetFOV(120f, 5f);
         while (abilityActive)
         {
           
@@ -458,10 +464,14 @@ public class CharacterAbilities : MonoBehaviour
         if(fireLeft)
         {
             leftGun.GetComponent<Animator>().SetTrigger("Fire");
+            leftGunFlash.Play();
+            leftGunSmoke.Play();
         }
         else
         {
             rightGun.GetComponent<Animator>().SetTrigger("Fire");
+            rightGunFlash.Play();
+            rightGunSmoke.Play();
         }
         if (gun == null || socket == null) return;
 

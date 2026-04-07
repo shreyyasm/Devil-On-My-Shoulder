@@ -38,6 +38,7 @@ public class PlayerMovement : MonoBehaviour
     private float threshold = 0.01f;
     public float maxSlopeAngle = 35f;
     public bool playerMoving;
+    public float itemUseMovementSpeed = 1f;
 
     [Header("Momentum Settings")]
     public float airAcceleration = 2500f;
@@ -414,8 +415,8 @@ public class PlayerMovement : MonoBehaviour
         if (grounded && crouching) multiplierV = 0f;
 
         //Apply forces to move player
-        rb.AddForce(orientation.transform.forward * y * moveSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier );
+        rb.AddForce(orientation.transform.forward * y * moveSpeed* itemUseMovementSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier * multiplierV);
+        rb.AddForce(orientation.transform.right * x * moveSpeed * itemUseMovementSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier );
 
       
     }

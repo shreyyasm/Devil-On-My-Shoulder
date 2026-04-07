@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7648944555508587904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3044446128861331567}
+  - component: {fileID: 2232386919154783505}
+  - component: {fileID: 8018081699951793132}
+  m_Layer: 0
+  m_Name: Gatolaid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3044446128861331567
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7648944555508587904}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9.542787, y: 14.749845, z: -4.7839894}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2232386919154783505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7648944555508587904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48a109c80a72ff44e87bc66c530ddf4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  throwable: 0
+  rb: {fileID: 0}
+  col: {fileID: 0}
+--- !u!114 &8018081699951793132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7648944555508587904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec4b67d0f6232be4c872a7f273ce1f7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemType: 3
+  pool: {fileID: 0}
+  fuseTime: 2
+  radius: 5
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  explosionPrefabParticle: {fileID: 0}
+  Fireprefab: {fileID: 0}
+  effectTime: 10
+  movementSpeedModifer: 15
+  systemType: 0
+  damage: 40
+  knockbackForce: 6
+  upwardForce: 4
+  gravity: 30
+  maxAirTime: 1.2
+  slideDuration: 0.4
+  slideDamping: 8
+  groundCheckDistance: 2.5
+  groundCheckRadius: 0.35
+  mesh: {fileID: 0}
