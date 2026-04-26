@@ -104,7 +104,7 @@ public class PauseMenu : MonoBehaviour
     // --- Optional buttons you can hook from the UI ---
 
     // Called by a "Resume" button
-    public void OnResumeButton() => Resume();
+    //public void OnResumeButton() => Resume();
 
     // Called by a "Restart" button
     public void MainMenu()
