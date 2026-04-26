@@ -184,7 +184,7 @@ MonoBehaviour:
     suffixDecimalChar: .
     suffixHideZeros: 0
   enableLeftText: 1
-  leftText: Destruction
+  leftText: KILLED
   leftTextSettings:
     bold: 0
     italic: 0
@@ -555,9 +555,9 @@ MonoBehaviour:
     radius: 3
     pushOffset: 1
   updateDelay: 0.0125
-  enablePooling: 0
+  enablePooling: 1
   poolSize: 50
-  disableOnSceneLoad: 1
+  disableOnSceneLoad: 0
   editorLastFont: ShonenPunk custom bold SDF3D
   position: {x: 0, y: 0, z: 0}
 --- !u!210 &1871610829092223643
@@ -666,6 +666,8 @@ GameObject:
   - component: {fileID: 5894454014517814593}
   - component: {fileID: 6633367671953984045}
   - component: {fileID: 2045752079848393165}
+  - component: {fileID: 6762684648103619100}
+  - component: {fileID: 6053188355990711606}
   m_Layer: 0
   m_Name: TMP
   m_TagString: Untagged
@@ -754,7 +756,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <size=+1>Destruction</size>
+  m_text: <size=+1>KILLED</size>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
   m_sharedMaterial: {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef,
@@ -827,3 +829,55 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 6633367671953984045}
   m_maskType: 0
+--- !u!114 &6762684648103619100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8436148683553181852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:14d331003c904ca4b96ed006018d5d20
+    m_TableEntryReference:
+      m_KeyId: 133950406823936
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 1
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2045752079848393165}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &6053188355990711606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8436148683553181852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47776700a0e3bc94d9791fb58574c953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -3,6 +3,7 @@ using QFSW.MOP2;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Localization.Settings;
 using UnityEngine.UIElements;
 public class EnemyHealth : MonoBehaviour
 {
@@ -115,7 +116,18 @@ public class EnemyHealth : MonoBehaviour
 
 
         // Spawn damage number
-        DamageNumber killText = KillTextPrefab.Spawn(transform.position + new Vector3(0,2.5f,0),"Killed",transform);
+        string localizedKilled =
+        UnityEngine.Localization.Settings.LocalizationSettings
+        .StringDatabase
+        .GetLocalizedString("Kill Meter", "KilledText");
+
+        DamageNumber killText = KillTextPrefab.Spawn(
+            transform.position + new Vector3(0, 2.5f, 0),
+            localizedKilled,
+            transform
+        );
+
+        killText.UpdateText();
 
         Debug.Log("Killed");
         //EnemyPool.Release(gameObject);

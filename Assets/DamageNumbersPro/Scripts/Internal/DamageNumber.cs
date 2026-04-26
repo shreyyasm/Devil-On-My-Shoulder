@@ -1916,7 +1916,7 @@ namespace DamageNumbersPro
             }
 
             // Disable TMP
-            textMeshPro.gameObject.SetActive(false);
+            //textMeshPro.gameObject.SetActive(false);
         }
 
         string ProcessIntegers(string integers, out bool shortened)

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using DG.Tweening;
 using TMPro;
-using DG.Tweening;
+using UnityEngine;
+using UnityEngine.Localization.Components;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class ComboManager : MonoBehaviour
 {
@@ -267,10 +268,48 @@ public class ComboManager : MonoBehaviour
 
         string killText = "";
 
-        if (isHeadshot) killText = "+HEADSHOT " + headshotBonus + "Xp";
-        else if (isAirKill) killText = "+AIR KILL";
-        else if (isFinisher) killText = "+FINISHER";
-        else if (isEnvironmental) killText = "+ENVIRONMENTAL";
+        LocalizeStringEvent loc = killFeedText.GetComponent<LocalizeStringEvent>();
+
+        if (isHeadshot)
+        {
+            loc.StringReference.SetReference("Kill Meter", "HEADSHOT");
+            loc.StringReference.Arguments = new object[] { headshotBonus };
+            loc.RefreshString();
+
+            killText = UnityEngine.Localization.Settings.LocalizationSettings
+                .StringDatabase
+                .GetLocalizedString("Kill Meter", "HEADSHOT", new object[] { headshotBonus });
+        }
+        else if (isAirKill)
+        {
+            loc.StringReference.SetReference("Kill Meter", "AIR_KILL");
+            loc.StringReference.Arguments = null;
+            loc.RefreshString();
+
+            killText = UnityEngine.Localization.Settings.LocalizationSettings
+                .StringDatabase
+                .GetLocalizedString("Kill Meter", "AIR_KILL");
+        }
+        else if (isFinisher)
+        {
+            loc.StringReference.SetReference("Kill Meter", "FINISHER");
+            loc.StringReference.Arguments = null;
+            loc.RefreshString();
+
+            killText = UnityEngine.Localization.Settings.LocalizationSettings
+                .StringDatabase
+                .GetLocalizedString("Kill Meter", "FINISHER");
+        }
+        else if (isEnvironmental)
+        {
+            loc.StringReference.SetReference("Kill Meter", "ENVIRONMENTAL");
+            loc.StringReference.Arguments = null;
+            loc.RefreshString();
+
+            killText = UnityEngine.Localization.Settings.LocalizationSettings
+                .StringDatabase
+                .GetLocalizedString("Kill Meter", "ENVIRONMENTAL");
+        }
 
         ShowKillFeedDelayed(killText);
 
@@ -325,7 +364,14 @@ public class ComboManager : MonoBehaviour
         if (comboNameText == null) return;
 
         //int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
-        comboNameText.text = comboNames[multiplier-1];
+        // Replace your old line with this:
+
+        LocalizeStringEvent loc =  comboNameText.GetComponent<LocalizeStringEvent>();
+
+        string key = "Combo_" + (multiplier - 1);
+
+        loc.StringReference.SetReference("Kill Meter", key);
+        loc.RefreshString();
 
         RectTransform rect = comboNameText.rectTransform;
 
@@ -378,7 +424,15 @@ public class ComboManager : MonoBehaviour
     {
         if (enemyKilledText == null) return;
 
-        enemyKilledText.text = "ENEMY KILLED " + multiKillCount + "x";
+        LocalizeStringEvent loc =
+ enemyKilledText.GetComponent<LocalizeStringEvent>();
+
+        loc.StringReference.Arguments = new object[]
+        {
+    multiKillCount
+        };
+
+        loc.RefreshString();
 
         enemyKilledText.transform.DOKill();
         enemyKilledText.transform.localScale = Vector3.one;
