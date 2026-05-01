@@ -9,12 +9,42 @@ using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 using static UnityEngine.GraphicsBuffer;
 
 
 
 public class CharacterAbilities : MonoBehaviour
 {
+    [Header("Kill Meter System")]
+    [SerializeField] private float maxKillValue = 100f;
+    [SerializeField] private float currentKillValue = 0f;
+    [SerializeField] private Slider AbilitySlider;
+    [SerializeField] private Image sliderFill;
+
+    [SerializeField] private Image[] finisherBoxes; // size = 3 (30,60,90)
+
+    [SerializeField] private float sliderSmoothSpeed = 8f;
+
+    [SerializeField] private float breatheSpeed = 8f;
+    [SerializeField] private float breatheAmount = 0.5f;
+
+
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color glowColor = new Color(1f, 0.2f, 0.2f); // red glow
+
+    [SerializeField] private float boxGlowSpeed = 6f;
+    [SerializeField] private float barGlowSpeed = 14f; // 🔥 faster for full
+
+    private bool abilityReady;
+
+    private float targetSliderValue;
+    private bool canFinisherGlow;
+    private bool isFullBreathe;
+
+    // Finisher cost (you can tweak per enemy later)
+    [SerializeField] private float finisherCost = 30f;
+
     public enum AbilityType
     {
         Ability1,
@@ -184,6 +214,7 @@ public class CharacterAbilities : MonoBehaviour
         {
             Debug.LogError("Motion Blur not found in Volume Profile!");
         }
+        AbilitySlider.maxValue = maxKillValue;
     }
 
     private void Start()
@@ -209,12 +240,23 @@ public class CharacterAbilities : MonoBehaviour
             rightGun.gameObject.SetActive(false);
         }
         TargetIconCanvas.SetActive(false);
+
+        // Force UI to white
+        for (int i = 0; i < finisherBoxes.Length; i++)
+        {
+            finisherBoxes[i].color = normalColor;
+        }
+
+        sliderFill.color = normalColor;
     }
 
     private void Update()
     {
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
+        UpdateKillUI();
+        if (Input.GetKeyDown(KeyCode.M))
+            AddKillValue(20);
 
         if (!fovTransitionActive)
             return;
@@ -232,8 +274,8 @@ public class CharacterAbilities : MonoBehaviour
             playerCam.fieldOfView = targetFOV;
             fovTransitionActive = false;
         }
-        
-        
+
+       
 
     }
     private void LateUpdate()
@@ -264,8 +306,90 @@ public class CharacterAbilities : MonoBehaviour
         playerCamera.localRotation = baseCameraRotation * recoilRotation;
     }
 
+    public void AddKillValue(float amount)
+    {
+        currentKillValue += amount;
+        currentKillValue = Mathf.Clamp(currentKillValue, 0f, maxKillValue);
 
+        targetSliderValue = currentKillValue;
 
+        CheckStates();
+    }
+
+    private void TryFinisher()
+    {
+        if (currentKillValue >= finisherCost)
+        {
+            currentKillValue -= finisherCost;
+            targetSliderValue = currentKillValue;
+
+            PerformFinisher();
+            CheckStates();
+        }
+    }
+    private void CheckStates()
+    {
+        abilityReady = currentKillValue >= maxKillValue;
+    }
+    private void UpdateKillUI()
+    {
+        // -------- SMOOTH SLIDER --------
+        AbilitySlider.value = Mathf.Lerp(
+            AbilitySlider.value,
+            targetSliderValue,
+            Time.deltaTime * sliderSmoothSpeed
+        );
+
+        float[] thresholds = { 30f, 60f, 90f };
+
+        // -------- FULL ABILITY (FAST GLOW) --------
+        if (abilityReady)
+        {
+            float t = (Mathf.Sin(Time.time * barGlowSpeed) + 1f) * 0.5f;
+
+            sliderFill.color = Color.Lerp(
+                normalColor,
+                glowColor,
+                t * 0.7f
+            );
+
+            // turn OFF boxes
+            for (int i = 0; i < finisherBoxes.Length; i++)
+            {
+                finisherBoxes[i].color = normalColor;
+            }
+
+            return;
+        }
+
+        // -------- NORMAL BAR --------
+        sliderFill.color = normalColor;
+
+        // -------- FINISHER BOXES --------
+        for (int i = 0; i < finisherBoxes.Length; i++)
+        {
+            if (currentKillValue >= thresholds[i] && currentKillValue >= 30f)
+            {
+                float t = (Mathf.Sin(Time.time * boxGlowSpeed) + 1f) * 0.5f;
+
+                finisherBoxes[i].color = Color.Lerp(
+                    normalColor,
+                    glowColor,
+                    t
+                );
+            }
+            else
+            {
+                finisherBoxes[i].color = normalColor;
+            }
+        }
+    }
+    private void PerformFinisher()
+    {
+        Debug.Log("Finisher performed");
+        // TODO: implement finisher logic later
+    }
+  
     // ================= INPUT =================
     public void OnAbility(InputAction.CallbackContext context)
     {
@@ -308,7 +432,20 @@ public class CharacterAbilities : MonoBehaviour
             abilityPressed = false;
 
             if (!abilityActive && !recharging)
-                ActivateAbility();
+            {
+                // 🔥 Ability requires FULL meter
+                if (currentKillValue >= maxKillValue)
+                {
+                    currentKillValue = 0f; // consume all
+                    targetSliderValue = currentKillValue;
+                    ActivateAbility();
+                }
+                else
+                {
+                    // 🔥 Try finisher instead
+                    TryFinisher();
+                }
+            }
         }
 
         // ACTIVE: duration ↓
@@ -335,6 +472,7 @@ public class CharacterAbilities : MonoBehaviour
 
     private void ActivateAbility()
     {
+       
         abilityActive = true;
         recharging = false;
         abilityTimer = abilityDuration;
