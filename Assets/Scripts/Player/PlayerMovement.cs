@@ -193,7 +193,8 @@ public class PlayerMovement : MonoBehaviour
         if (playerCam != null)
             initialCamRot = playerCameraMain.transform.localEulerAngles;
 
-        
+        originalRootLocalPos = rootGameobject.transform.localPosition;
+        rootVisualY = rootGameobject.transform.localPosition.y;
     }
 
     private void ApplyCharacterData()
@@ -692,22 +693,33 @@ public class PlayerMovement : MonoBehaviour
     private bool cameraLocked;
     private float standHeightY;
     private float tempHeight;
+
+
+    [SerializeField] private CapsuleCollider capsule;
+
+    [SerializeField] private float standingHeight = 1.8f;
+    [SerializeField] private float slidingHeight = 1.0f;
+
+    [SerializeField] private float heightLerpDuration = 0.15f;
+
+    private Vector3 originalRootLocalPos;
+    private float rootVisualY;
+    private float rootVelocityY;
+
     private IEnumerator Slide()
     {
         kickAnimator[characterindex - 1].gameObject.SetActive(true);
+
         Transform root = rootGameobject.transform;
 
-        float startY = standHeightY;
-        tempHeight = standHeightY;
-
-
-        // define EXACT targets
-        float downY = startY - slideDownY; // slide down amount
-        float upY = startY;        // return EXACTLY here
-
-
         cameraLocked = true;
-        cameralerpRoutine = StartCoroutine(LerpCameraRotation(new Vector3(0f, 0f, 8f), 0.8f, 100,0)); // time in seconds
+
+        if (cameralerpRoutine != null)
+            StopCoroutine(cameralerpRoutine);
+
+        cameralerpRoutine = StartCoroutine(
+            LerpCameraRotation(new Vector3(0f, 0f, 8f), 0.8f, 100, 0)
+        );
 
         isDashing = true;
         isSliding = true;
@@ -717,39 +729,48 @@ public class PlayerMovement : MonoBehaviour
         speedline.SetActive(true);
         kickAnimator[characterindex - 1].SetTrigger("Slide");
 
+        // -------- SLIDE DOWN --------
+        float t = 0f;
+        float startHeight = capsule.height;
 
-        while (Mathf.Abs(root.position.y - downY) > 0.01f)
+        while (t < 1f)
         {
-            float newY = Mathf.Lerp(
-                root.position.y,
-                downY,
-                Time.deltaTime * heightLerpSpeed
+            t += Time.deltaTime / heightLerpDuration;
+
+            float newHeight = Mathf.Lerp(startHeight, slidingHeight, t);
+
+            capsule.height = newHeight;
+            capsule.center = new Vector3(0, newHeight / 2f, 0);
+
+            float targetY = newHeight / 2f;
+
+            rootVisualY = Mathf.SmoothDamp(
+                rootVisualY,
+                targetY,
+                ref rootVelocityY,
+                0.08f
             );
 
-            root.position = new Vector3(
-                root.position.x,
-                newY,
-                root.position.z
+            root.localPosition = new Vector3(
+                originalRootLocalPos.x,
+                rootVisualY,
+                originalRootLocalPos.z
             );
 
             yield return null;
         }
 
-        // Always slide in player's forward direction
+        // -------- SLIDE MOVEMENT --------
         Vector3 inputDir = orientation.forward;
-        inputDir.y = 0f; // prevent upward/downward tilt
+        inputDir.y = 0f;
         inputDir.Normalize();
 
         float timer = 0f;
 
-        // -------- SLIDE MOVEMENT --------
         while (timer < dashDuration)
         {
             Vector3 vel = inputDir * dashForce * characterAbilities.GetSlideSpeedModifier();
-
-            // preserve vertical velocity (gravity / jumping)
             vel.y = rb.velocity.y;
-
             rb.velocity = vel;
 
             timer += Time.deltaTime;
@@ -759,35 +780,70 @@ public class PlayerMovement : MonoBehaviour
         speedline.SetActive(false);
         rb.velocity *= 1.1f;
 
-        // -------- SLIDE UP (Y ONLY) --------
-        while (Mathf.Abs(root.position.y - upY) > 0.01f)
+        // -------- SLIDE UP --------
+        t = 0f;
+        startHeight = capsule.height;
+
+        while (t < 1f)
         {
-            float newY = Mathf.Lerp(
-                root.position.y,
-                upY,
-                Time.deltaTime * heightLerpSpeed
+            t += Time.deltaTime / heightLerpDuration;
+
+            float newHeight = Mathf.Lerp(startHeight, standingHeight, t);
+
+            capsule.height = newHeight;
+            capsule.center = new Vector3(0, newHeight / 2f, 0);
+
+            float targetY = newHeight / 2f;
+
+            rootVisualY = Mathf.SmoothDamp(
+                rootVisualY,
+                targetY,
+                ref rootVelocityY,
+                0.08f
             );
 
-            root.position = new Vector3(
-                root.position.x,
-                newY,
-                root.position.z
+            root.localPosition = new Vector3(
+                originalRootLocalPos.x,
+                rootVisualY,
+                originalRootLocalPos.z
             );
 
             yield return null;
         }
 
+        // -------- FINAL SMOOTH SETTLE (no snap) --------
+        while (Mathf.Abs(rootVisualY - originalRootLocalPos.y) > 0.001f)
+        {
+            rootVisualY = Mathf.SmoothDamp(
+                rootVisualY,
+                originalRootLocalPos.y,
+                ref rootVelocityY,
+                0.08f
+            );
 
+            root.localPosition = new Vector3(
+                originalRootLocalPos.x,
+                rootVisualY,
+                originalRootLocalPos.z
+            );
 
+            yield return null;
+        }
+
+        // -------- HARD FINAL (tiny correction only) --------
+        capsule.height = standingHeight;
+        capsule.center = new Vector3(0, standingHeight / 2f, 0);
+        root.localPosition = originalRootLocalPos;
+
+        // -------- RESET --------
         isDashing = false;
         isSliding = false;
         slideCancelled = false;
-        //cameraLocked = false;
+
         kickAnimator[characterindex - 1].gameObject.SetActive(false);
+
         yield return new WaitForSeconds(dashCooldown);
         readyToDash = true;
-       
-
     }
     private Coroutine slideRoutine;
     private Coroutine cameralerpRoutine;
