@@ -16,6 +16,7 @@ using static UnityEngine.GraphicsBuffer;
 
 public class CharacterAbilities : MonoBehaviour
 {
+    public static CharacterAbilities instance;
     [Header("Kill Meter System")]
     [SerializeField] private float maxKillValue = 100f;
     [SerializeField] private float currentKillValue = 0f;
@@ -35,6 +36,8 @@ public class CharacterAbilities : MonoBehaviour
 
     [SerializeField] private float boxGlowSpeed = 6f;
     [SerializeField] private float barGlowSpeed = 14f; // 🔥 faster for full
+
+
 
     private bool abilityReady;
 
@@ -202,6 +205,7 @@ public class CharacterAbilities : MonoBehaviour
 
     private void Awake()
     {
+        instance = this;
         ResolveAbilityData();
         if (postProcessVolume == null)
         {
@@ -255,8 +259,8 @@ public class CharacterAbilities : MonoBehaviour
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
         UpdateKillUI();
-        if (Input.GetKeyDown(KeyCode.M))
-            AddKillValue(20);
+        //if (Input.GetKeyDown(KeyCode.M))
+        //    AddKillValue(20);
 
         if (!fovTransitionActive)
             return;

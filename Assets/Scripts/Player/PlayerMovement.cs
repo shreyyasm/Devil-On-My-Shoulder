@@ -1106,6 +1106,7 @@ public class PlayerMovement : MonoBehaviour
         foreach (Collider hit in hits)
         {
             hit.GetComponent<EnemyManager>().kickOn = true;
+            hit.GetComponent<EnemyManager>().animator.SetBool("Kicked",true);
             if (hit.gameObject.layer == 16)
             {
                 yield return new WaitForSeconds(0.15f);
@@ -1157,6 +1158,8 @@ public class PlayerMovement : MonoBehaviour
                     HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
                     hitstop.DoShake();
                     hit.GetComponent<EnemyManager>().kickOn = false;
+                    LeanTween.delayedCall(1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
+                    
 
                 }
         
