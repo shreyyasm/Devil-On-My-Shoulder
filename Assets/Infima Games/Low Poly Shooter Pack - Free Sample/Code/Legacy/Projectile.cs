@@ -1,4 +1,5 @@
-﻿using DamageNumbersPro;
+﻿using Biostart.Impact;
+using DamageNumbersPro;
 using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System;
@@ -12,6 +13,7 @@ using static InfimaGames.LowPolyShooterPack.Weapon;
 using static UnityEditor.PlayerSettings;
 using static UnityEngine.EventSystems.EventTrigger;
 using Random = UnityEngine.Random;
+
 public class Projectile : MonoBehaviour {
     public enum SpecialBullets
     {
@@ -342,16 +344,29 @@ public class Projectile : MonoBehaviour {
 		//If bullet collides with "Blood" tag
 		if (collision.transform.tag == "Blood") 
 		{
-			bloodSplatter =  bloodPool.GetObject();
-			bloodSplatter.transform.position = transform.position;
-			bloodSplatter.transform.rotation = Quaternion.LookRotation(collision.contacts[0].normal);
+			//bloodSplatter =  bloodPool.GetObject();
+			//bloodSplatter.transform.position = transform.position;
+			//bloodSplatter.transform.rotation = Quaternion.LookRotation(collision.contacts[0].normal);
 
-			StartCoroutine(DisableSplat());
+			//StartCoroutine(DisableSplat());
             bulletPool.Release(gameObject);
+            // Impact effect
+            // Impact effect
+            ImpactEffect impact = collision.collider.GetComponent<ImpactEffect>();
+
+            if (impact != null)
+            {
+                // Spawn Blood Effect
+                impact.SpawnBloodEffect(
+                    collision.contacts[0].point,
+                    collision.contacts[0].normal
+                );
+            }
+
             //Destroy bullet object
             //Destroy(gameObject);
         }
-		IEnumerator DisableSplat()
+        IEnumerator DisableSplat()
         {
 			yield return new WaitForSeconds(2f);
 			bloodPool.Release(bloodSplatter);

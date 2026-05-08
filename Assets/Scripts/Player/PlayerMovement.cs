@@ -355,10 +355,28 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
+    private bool isKnocked = false;
+    public bool finisherActive = false;
+    public void ApplyKnockback(Vector3 force, float duration)
+    {
+        StartCoroutine(KnockbackRoutine(force, duration));
+    }
 
+    private IEnumerator KnockbackRoutine(Vector3 force, float duration)
+    {
+        isKnocked = true;
 
+        rb.velocity = Vector3.zero;
+        rb.AddForce(force, ForceMode.Impulse);
 
+        yield return new WaitForSeconds(duration);
+
+        isKnocked = false;
+    }
     private void Movement() {
+
+        if (isKnocked) return;
+        if (finisherActive) return;
         //If holding jump && ready to jump, then jump
         if (readyToJump && jumping) Jump();
         if (isDashing) return;
@@ -1167,6 +1185,7 @@ public class PlayerMovement : MonoBehaviour
             
         }
     }
+
     public void ParryProjectiles(EnemyProjectile hit)
     {
         Debug.Log("Projectile Parryed");

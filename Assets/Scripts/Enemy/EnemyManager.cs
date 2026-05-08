@@ -315,6 +315,7 @@ public class EnemyManager : MonoBehaviour
     public bool kickOn;
 
     public bool projectile_Parried;
+    private EnemyHealth enemyHealth;
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -322,6 +323,7 @@ public class EnemyManager : MonoBehaviour
         enemyCollider = GetComponent<Collider>();
         playerCollider = player.GetComponent<Collider>();
         attack3dAudioSource = GetComponent<AudioSource>();
+        enemyHealth = GetComponent<EnemyHealth>();
         Target = player;
 
 
@@ -553,6 +555,8 @@ public class EnemyManager : MonoBehaviour
 
     private void Update()
     {
+        if (enemyHealth.dead) return;
+        if(enemyHealth.finisherActive) return;
         //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
         //{
         //    // Get direction to player (ignore Y so it only rotates horizontally)
@@ -677,23 +681,21 @@ public class EnemyManager : MonoBehaviour
         //if (!isBusy) return;
 
         // 🔥 IMPORTANT: Cooldown check
-        if (Time.time < nextAttackTime) return;
+        //if (Time.time < nextAttackTime) return;
 
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
 
-        // -------- 🔥 KNOCKBACK --------
-        Rigidbody playerRb = collision.gameObject.GetComponent<Rigidbody>();
+        PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
 
-        if (playerRb != null)
+        if (pm != null)
         {
-            Vector3 knockDir = (collision.transform.position - transform.position).normalized;
-            knockDir.y = 0f; // keep it horizontal
+            Vector3 dir = (collision.transform.position - transform.position).normalized;
+            dir.y = 0f;
 
-            Vector3 force = knockDir * knockbackForce + Vector3.up * knockbackUpward;
+            Vector3 force = dir * 20f + Vector3.up * 2f;
 
-            playerRb.velocity = Vector3.zero; // optional: remove existing motion
-            playerRb.AddForce(force, ForceMode.Impulse);
+            pm.ApplyKnockback(force, 0.25f);
         }
 
         Debug.Log("Melee Damage: " + damage);

@@ -4,6 +4,7 @@ using System.Buffers.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -44,6 +45,14 @@ public class CharacterAbilities : MonoBehaviour
     private float targetSliderValue;
     private bool canFinisherGlow;
     private bool isFullBreathe;
+
+    [SerializeField] private float finisherRange = 6f;
+    [SerializeField] private float finisherAngle = 60f;
+    [SerializeField] private float finisherMoveSpeed = 25f;
+    public GameObject finisherCamera;
+    public GameObject mainCameraTexture;
+
+    private bool isFinishing = false;
 
     // Finisher cost (you can tweak per enemy later)
     [SerializeField] private float finisherCost = 30f;
@@ -86,6 +95,7 @@ public class CharacterAbilities : MonoBehaviour
 
     private float targetFOV;
     private bool fovTransitionActive;
+    private PlayerMovement playerMovement;
 
     #region Ability1_Fields
     // ================= ABILITY 1 : DEVIL DUAL GUNS =================
@@ -224,7 +234,7 @@ public class CharacterAbilities : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-
+        playerMovement = GetComponent<PlayerMovement>();
        
         if (playerCam == null)
             playerCam = GetComponentInChildren<Camera>();
@@ -256,6 +266,11 @@ public class CharacterAbilities : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            PerformFinisher();
+        }
+
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
         UpdateKillUI();
@@ -279,8 +294,7 @@ public class CharacterAbilities : MonoBehaviour
             fovTransitionActive = false;
         }
 
-       
-
+      
     }
     private void LateUpdate()
     {
@@ -331,6 +345,7 @@ public class CharacterAbilities : MonoBehaviour
             CheckStates();
         }
     }
+  
     private void CheckStates()
     {
         abilityReady = currentKillValue >= maxKillValue;
@@ -388,12 +403,166 @@ public class CharacterAbilities : MonoBehaviour
             }
         }
     }
+
     private void PerformFinisher()
     {
         Debug.Log("Finisher performed");
+        if (isFinishing) return;
+
+        Transform target = FindFinisherTarget();
+
+        if (target != null)
+        {
+            StartCoroutine(FinisherRoutine(target));
+            // TODO: enable finisher camera here
+            finisherCamera.SetActive(true);
+            mainCameraTexture.SetActive(false);
+            GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
+            
+        }
         // TODO: implement finisher logic later
     }
-  
+    private EnemyHealth enemyHealthTemp;
+    Transform FindFinisherTarget()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, finisherRange, enemyLayer);
+
+        Transform bestTarget = null;
+        float closestDist = Mathf.Infinity;
+
+        foreach (var hit in hits)
+        {
+            Vector3 dir = (hit.transform.position - transform.position).normalized;
+
+            float angle = Vector3.Angle(transform.forward, dir);
+
+            if (angle <= finisherAngle * 0.5f)
+            {
+                float dist = Vector3.Distance(transform.position, hit.transform.position);
+
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    bestTarget = hit.transform;
+                    hit.GetComponentInParent<EnemyHealth>().FinisherActive();
+                    enemyHealthTemp = hit.GetComponentInParent<EnemyHealth>();
+                }
+            }
+        }
+
+        return bestTarget;
+    }
+   
+    IEnumerator FinisherRoutine(Transform target)
+    {
+       
+        isFinishing = true;
+        playerMovement.finisherActive = true;
+        // 🔥 disable movement system
+   
+        rb.velocity = Vector3.zero;
+
+
+
+        Vector3 velocity = Vector3.zero;
+
+        while (Vector3.Distance(transform.position, target.position) > 2f)
+        {
+            Vector3 targetPos = target.position;
+            targetPos.y = transform.position.y;
+
+            // Smooth movement
+            transform.position = Vector3.SmoothDamp(
+                transform.position,
+                targetPos,
+                ref velocity,
+                0.05f // smooth time (lower = snappier)
+            );
+
+            // Direction
+            Vector3 dir = (targetPos - transform.position).normalized;
+
+            if (dir != Vector3.zero)
+            {
+                Quaternion rot = Quaternion.LookRotation(dir);
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    rot,
+                    Time.deltaTime * 10f
+                );
+            }
+
+            yield return null;
+        }
+
+        enemyHealthTemp.FinisherAnimation();
+        finisherCamera.GetComponent<Animator>().SetTrigger("FinisherCamera");
+        rb.velocity = Vector3.zero;
+
+       SFXManager.Instance.PlaySFX("Finisher/Jockey", 1f);
+      
+        // 🔥 reached enemy
+        
+
+        // TODO:
+        // play animation
+        // damage enemy
+        // camera stuff
+
+        yield return new WaitForSeconds(1.8f);
+
+        // restore control
+        finisherCamera.SetActive(false);
+        mainCameraTexture.SetActive(true);
+        playerMovement.finisherActive = false;
+        isFinishing = false;
+        GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
+        LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
+
+     
+        Debug.Log("FInisher End");
+    }
+
+    private void OnDrawGizmos()
+    {
+
+        Vector3 origin = transform.position;
+
+        // 🔵 Draw detection radius
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(origin, finisherRange);
+
+        // 🔵 Draw cone edges
+        Vector3 left = Quaternion.Euler(0, -finisherAngle / 2f, 0) * transform.forward;
+        Vector3 right = Quaternion.Euler(0, finisherAngle / 2f, 0) * transform.forward;
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(origin, origin + left * finisherRange);
+        Gizmos.DrawLine(origin, origin + right * finisherRange);
+
+        // 🔥 Draw detected enemies
+        Collider[] hits = Physics.OverlapSphere(origin, finisherRange, enemyLayer);
+
+        foreach (var hit in hits)
+        {
+            Vector3 dir = (hit.transform.position - origin).normalized;
+            float angle = Vector3.Angle(transform.forward, dir);
+
+            if (angle <= finisherAngle * 0.5f)
+            {
+                // ✅ VALID target (inside cone)
+                Gizmos.color = Color.green;
+            }
+            else
+            {
+                // ❌ Outside cone
+                Gizmos.color = Color.red;
+            }
+
+            Gizmos.DrawLine(origin, hit.transform.position);
+            Gizmos.DrawSphere(hit.transform.position, 0.2f);
+        }
+    }
     // ================= INPUT =================
     public void OnAbility(InputAction.CallbackContext context)
     {
@@ -1214,28 +1383,28 @@ public class CharacterAbilities : MonoBehaviour
         yield return new WaitForSeconds(abilityDuration);
         StopAbility4();
     }
-    private void OnDrawGizmos()
-    {
-        // 🔵 Detection Sphere
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, 8f);
+    //private void OnDrawGizmos()
+    //{
+    //    // 🔵 Detection Sphere
+    //    Gizmos.color = Color.blue;
+    //    Gizmos.DrawWireSphere(transform.position, 8f);
 
-        if (!roomDetected)
-            return;
+    //    if (!roomDetected)
+    //        return;
 
-        // 🟢 Selected Room Bounds
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(
-            detectedRoomBounds.center,
-            detectedRoomBounds.size
-        );
+    //    // 🟢 Selected Room Bounds
+    //    Gizmos.color = Color.green;
+    //    Gizmos.DrawWireCube(
+    //        detectedRoomBounds.center,
+    //        detectedRoomBounds.size
+    //    );
 
-        // 🟡 Enemy Freeze Box (same as OverlapBox)
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireCube(
-            detectedRoomBounds.center,
-            detectedRoomBounds.size
-        );
-    }
+    //    // 🟡 Enemy Freeze Box (same as OverlapBox) 
+    //    Gizmos.color = Color.yellow;
+    //    Gizmos.DrawWireCube(
+    //        detectedRoomBounds.center,
+    //        detectedRoomBounds.size
+    //    );
+    //}
     #endregion
 }

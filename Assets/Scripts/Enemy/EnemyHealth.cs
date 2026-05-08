@@ -41,6 +41,7 @@ public class EnemyHealth : MonoBehaviour
     public ObjectPool AfterDeath_ExplosionPrefab;
 
     public bool dead;
+    public bool finisherActive;
     public System.Action OnDeath;
     
     private void Awake()
@@ -97,6 +98,7 @@ public class EnemyHealth : MonoBehaviour
 
             // 🔥 pass ALL info to Die
             Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
+
         }
     }
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
@@ -132,11 +134,11 @@ public class EnemyHealth : MonoBehaviour
 
         Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
-        gameObject.SetActive(false);
+       
 
       
         ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
-
+      
 
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
@@ -145,11 +147,34 @@ public class EnemyHealth : MonoBehaviour
         {
             AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);           
         }
-
+        if (isHeadshot)
+        {
+            enemyManager.animator.SetBool("Headshot", true);
+            agent.isStopped = true;
+            agent.ResetPath();                 // 🔥 removes path completely
+            agent.velocity = Vector3.zero;
+            LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
+        }    
+        else
+        {
+            gameObject.SetActive(false);
+        }
         //Destroy(gameObject);
 
     }
-
+    public void FinisherActive()
+    {
+        finisherActive = true;
+        agent.isStopped = true;
+        agent.ResetPath();                 // 🔥 removes path completely
+        agent.velocity = Vector3.zero;
+        enemyManager.enabled = false;
+       
+    }
+    public void FinisherAnimation()
+    {
+        enemyManager.animator.SetBool("Finisher", true);
+    }
     public void EnemyHit(float damageValue, bool HealthUI = false)
     {
         if (isInvincible)

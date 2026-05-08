@@ -91,6 +91,7 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void LateUpdate()
         {
+            if (playerMovement.finisherActive) return;
             gamepadConnected = IsGamepadConnected();
 
             sensitivity.x = SettingsManager.MouseSensitivity;

@@ -24,4 +24,11 @@ public class JockyBat : MonoBehaviour
     {
         WeaponPrefab.SetActive(false);
     }
+    public  void ScreenEffect()
+    {
+        ImpactFrameEffect.Instance.GoBlack();
+        LeanTween.delayedCall(0.1f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        CameraShakeFinisher.Instance.Shake(0.05f, 0.02f);
+
+    }
 }
