@@ -101,6 +101,7 @@ namespace Biostart.Character
                 if (bloodProjector != null)
                 {
                     bloodProjector.AttachBloodProjector(hit.point, hit.normal, hit.collider);
+                   
                 }
 
             }

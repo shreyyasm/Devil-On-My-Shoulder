@@ -327,6 +327,8 @@ public class PlayerMovement : MonoBehaviour
     public PlayerHealth playerHealth;
     private void MyInput()
     {
+        if (finisherActive) return;
+
         if (mainOpen) return;
         y = moveInput.y;
 
@@ -442,6 +444,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Jump()
     {
+        if (finisherActive) return;
         if (!grounded || !readyToJump)
             return;
 

@@ -5,6 +5,12 @@ using UnityEngine;
 public class JockyBat : MonoBehaviour
 {
     public GameObject WeaponPrefab;
+
+    public ParticleSystem PunchBlood;
+    public ParticleSystem KnifeBlood;
+    public ParticleSystem KickBlood;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -26,9 +32,59 @@ public class JockyBat : MonoBehaviour
     }
     public  void ScreenEffect()
     {
-        ImpactFrameEffect.Instance.GoBlack();
-        LeanTween.delayedCall(0.1f, () => { ImpactFrameEffect.Instance.GoColor(); });
-        CameraShakeFinisher.Instance.Shake(0.05f, 0.02f);
+        //ImpactFrameEffect.Instance.GoBlack();
+        //LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        //CameraShakeFinisher.Instance.Shake(0.05f, 0.02f);
 
+    }
+
+    public void SpawnBloodPunch()
+    {
+        PunchBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+    }
+    public void SpawnBloodKnife()
+    {
+       KnifeBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+    }
+    public void SpawnBloodKick()
+    {
+        KickBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+    }
+    [Header("Time Slow Settings")]
+    [SerializeField] private float slowTimeScale = 0.15f;
+    [SerializeField] private float slowDuration = 1f;
+
+    private Coroutine timeRoutine;
+    public void DoTimeSlow()
+    {
+        if (timeRoutine != null)
+            StopCoroutine(timeRoutine);
+
+        timeRoutine = StartCoroutine(TimeSlowCoroutine());
+    }
+
+    private IEnumerator TimeSlowCoroutine()
+    {
+        // Apply slow motion
+        Time.timeScale = slowTimeScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+
+        // IMPORTANT: use unscaled time
+        yield return new WaitForSecondsRealtime(slowDuration);
+
+        // Restore normal time
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+        //Flash(0.2f, 0f, 0.1f);
+        timeRoutine = null;
     }
 }

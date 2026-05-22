@@ -1,4 +1,5 @@
-﻿using Biostart.Impact;
+﻿using Biostart.Blood;
+using Biostart.Impact;
 using DamageNumbersPro;
 using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
@@ -344,25 +345,44 @@ public class Projectile : MonoBehaviour {
 		//If bullet collides with "Blood" tag
 		if (collision.transform.tag == "Blood") 
 		{
-			//bloodSplatter =  bloodPool.GetObject();
-			//bloodSplatter.transform.position = transform.position;
-			//bloodSplatter.transform.rotation = Quaternion.LookRotation(collision.contacts[0].normal);
+            //bloodSplatter =  bloodPool.GetObject();
+            //bloodSplatter.transform.position = transform.position;
+            //bloodSplatter.transform.rotation = Quaternion.LookRotation(collision.contacts[0].normal);
 
-			//StartCoroutine(DisableSplat());
-            bulletPool.Release(gameObject);
+            //StartCoroutine(DisableSplat());
+
             // Impact effect
             // Impact effect
-            ImpactEffect impact = collision.collider.GetComponent<ImpactEffect>();
+            // 🔥 REAL contact data (same quality as raycast)
+            ContactPoint contact = collision.contacts[0];
+
+            Vector3 hitPoint = contact.point;
+            Vector3 hitNormal = contact.normal;
+
+            // -------- IMPACT EFFECT --------
+            ImpactEffect impact =
+                collision.collider.GetComponent<ImpactEffect>();
 
             if (impact != null)
             {
-                // Spawn Blood Effect
-                impact.SpawnBloodEffect(
-                    collision.contacts[0].point,
-                    collision.contacts[0].normal
+                impact.SpawnBloodEffect(hitPoint, hitNormal);
+            }
+
+            // -------- BLOOD PROJECTOR --------
+            BloodProjector bloodProjector =
+                collision.collider.GetComponent<BloodProjector>();
+
+            if (bloodProjector != null)
+            {
+                bloodProjector.AttachBloodProjector(
+                    hitPoint,
+                    hitNormal,
+                    collision.collider
                 );
             }
 
+
+            bulletPool.Release(gameObject);
             //Destroy bullet object
             //Destroy(gameObject);
         }
@@ -459,11 +479,53 @@ public class Projectile : MonoBehaviour {
 
         if (other.CompareTag("Blood"))
         {
-            bloodSplatter = bloodPool.GetObject();
-            bloodSplatter.transform.position = transform.position;
-            bloodSplatter.transform.rotation = Quaternion.LookRotation(hitNormal);
+            //bloodSplatter = bloodPool.GetObject();
+            //bloodSplatter.transform.position = transform.position;
+            //bloodSplatter.transform.rotation = Quaternion.LookRotation(hitNormal);
 
-            StartCoroutine(DisableSplat());
+            //StartCoroutine(DisableSplat());
+
+            // Approximate hit point
+
+
+            // -------- Impact Effect --------
+            // 🔥 Bullet direction
+            Vector3 dir = rb.velocity.normalized;
+
+            // 🔥 Raycast forward to get REAL surface normal
+            if (Physics.Raycast(
+                transform.position - dir * 0.2f,
+                dir,
+                out RaycastHit hit,
+                1f))
+            {
+                // -------- IMPACT EFFECT --------
+                ImpactEffect impact =
+                    hit.collider.GetComponent<ImpactEffect>();
+
+                if (impact != null)
+                {
+                    impact.SpawnBloodEffect(
+                        hit.point,
+                        hit.normal
+                    );
+                }
+
+                // -------- BLOOD PROJECTOR --------
+                BloodProjector bloodProjector =
+                    hit.collider.GetComponent<BloodProjector>();
+
+                if (bloodProjector != null)
+                {
+                    bloodProjector.AttachBloodProjector(
+                        hit.point,
+                        hit.normal,
+                        hit.collider
+                    );
+                }
+            }
+
+
             bulletPool.Release(gameObject);
         }
 

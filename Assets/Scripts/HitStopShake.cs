@@ -8,6 +8,8 @@ public class HitstopShake : MonoBehaviour
     [SerializeField] private float shakeSpeed = 40f;     // Oscillation speed
     [SerializeField] private float shakeDuration = 0.15f;
 
+   
+
     private Vector3 originalLocalPos;
     private Coroutine shakeRoutine;
 
@@ -56,4 +58,5 @@ public class HitstopShake : MonoBehaviour
         transform.localPosition = originalLocalPos;
         shakeRoutine = null;
     }
+  
 }

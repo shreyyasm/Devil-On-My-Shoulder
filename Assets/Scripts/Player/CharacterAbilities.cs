@@ -509,7 +509,7 @@ public class CharacterAbilities : MonoBehaviour
         // damage enemy
         // camera stuff
 
-        yield return new WaitForSeconds(1.8f);
+        yield return new WaitForSeconds(1.2f);
 
         // restore control
         finisherCamera.SetActive(false);

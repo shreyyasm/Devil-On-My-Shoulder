@@ -18,7 +18,7 @@ namespace Biostart.Blood
                 Vector3 hitPosition = contact.point;
                 Vector3 hitNormal = contact.normal;
                 AttachBloodProjector(hitPosition, hitNormal, collision.collider);
-                Debug.Log("lode ka asset");
+              
             }
         }
 
@@ -29,7 +29,7 @@ namespace Biostart.Blood
                 Vector3 hitPosition = other.ClosestPointOnBounds(transform.position);
                 Vector3 hitNormal = other.transform.forward;
                 AttachBloodProjector(hitPosition, hitNormal, other);
-                Debug.Log("lode ka asset");
+               
             }
         }
 
@@ -37,21 +37,41 @@ namespace Biostart.Blood
         {
             if (bloodProjectorPrefab != null)
             {
-                Vector3 correctedPosition = position + normal * zOffset;
-                GameObject projector = Instantiate(bloodProjectorPrefab, correctedPosition, Quaternion.LookRotation(normal));
+                
+                //Vector3 correctedPosition = position + normal * zOffset;
+                //GameObject projector = Instantiate(bloodProjectorPrefab, correctedPosition, Quaternion.LookRotation(normal));
+
+                Vector3 correctedPosition =
+    position - normal * zOffset;
+
+                Quaternion rotation =
+                    Quaternion.LookRotation(
+                        normal,
+                        Vector3.up
+                    );
+
+                GameObject projector =
+                    Instantiate(
+                        bloodProjectorPrefab,
+                        correctedPosition,
+                        rotation
+                    );
+
 
                 // Попытка найти SkinnedMeshRenderer или кость в объекте
                 Transform parentTransform = FindSkinnedMeshOrBone(hitObject.transform);
                 if (parentTransform != null)
                 {
-                    projector.transform.SetParent(parentTransform);
+                    projector.transform.SetParent(parentTransform, true);
+                    projector.transform.localScale = Vector3.one;
                 }
                 else
                 {
+                    
                     projector.transform.SetParent(hitObject.transform);
                 }
 
-
+               
                 // Уничтожаем проектор через указанное время
                 Destroy(projector, destroyTime);
             }
@@ -61,15 +81,26 @@ namespace Biostart.Blood
             }
         }
 
-
         private Transform FindSkinnedMeshOrBone(Transform objTransform)
         {
-            SkinnedMeshRenderer skinnedMesh = objTransform.GetComponentInChildren<SkinnedMeshRenderer>();
-            if (skinnedMesh != null)
+            foreach (Transform child in objTransform.GetComponentsInChildren<Transform>())
             {
-                return skinnedMesh.rootBone != null ? skinnedMesh.rootBone : skinnedMesh.transform;
+                if (child.CompareTag("MeshRenderer"))
+                {
+                    return child;
+                }
             }
+
             return objTransform;
         }
+        //private Transform FindSkinnedMeshOrBone(Transform objTransform)
+        //{
+        //    SkinnedMeshRenderer skinnedMesh = objTransform.GetComponentInChildren<SkinnedMeshRenderer>();
+        //    if (skinnedMesh != null)
+        //    {
+        //        return skinnedMesh.rootBone != null ? skinnedMesh.rootBone : skinnedMesh.transform;
+        //    }
+        //    return objTransform;
+        //}
     }
 }

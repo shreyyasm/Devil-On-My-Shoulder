@@ -661,7 +661,8 @@ namespace InfimaGames.LowPolyShooterPack
         }
         public void OnTryFire(InputAction.CallbackContext context)
 		{
-			ScoreManager scoreManager = ScoreManager.Instance;
+            if (playerMovement.finisherActive) return;
+            ScoreManager scoreManager = ScoreManager.Instance;
 			if (scoreManager == null) return;
 
             if (ScoreManager.Instance.isChoosing) return;
