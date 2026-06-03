@@ -15,6 +15,9 @@ public class EnemyManager : MonoBehaviour
 
     [Header("Stats Reference")]
     public EnemyStats enemyStats;
+    
+    public Transform finisherTarget;
+    public GameObject finisherIndicator;
 
 
     // ================================
@@ -274,6 +277,7 @@ public class EnemyManager : MonoBehaviour
 
     private NavMeshAgent agent;
     private Transform player;
+    private PlayerMovement playerMovement;
     private State currentState;
 
     private float nextAttackTime;
@@ -320,6 +324,7 @@ public class EnemyManager : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        playerMovement = player.GetComponent<PlayerMovement>();
         enemyCollider = GetComponent<Collider>();
         playerCollider = player.GetComponent<Collider>();
         attack3dAudioSource = GetComponent<AudioSource>();
@@ -556,23 +561,34 @@ public class EnemyManager : MonoBehaviour
     private void Update()
     {
         if (enemyHealth.dead) return;
-        if(enemyHealth.finisherActive) return;
-        //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
-        //{
-        //    // Get direction to player (ignore Y so it only rotates horizontally)
-        //    Vector3 direction = player.transform.position - transform.position;
-        //    direction.y = 0f;
-        //    if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
-        //    {
-        //        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        //        if (!RotateExternally)
-        //            transform.rotation = targetRotation;
-        //    }
-        //}
-      
+        if (enemyHealth.finisherActive) return;
 
-    
-        if (player == null || isBusy) return;
+        if (playerMovement.finisherActive)
+        {
+            agent.enabled = false;
+            animator.SetFloat("Movement", 0);
+            return;
+        }
+        else
+        {
+            agent.enabled = true;
+        }
+            //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
+            //{
+            //    // Get direction to player (ignore Y so it only rotates horizontally)
+            //    Vector3 direction = player.transform.position - transform.position;
+            //    direction.y = 0f;
+            //    if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
+            //    {
+            //        Quaternion targetRotation = Quaternion.LookRotation(direction);
+            //        if (!RotateExternally)
+            //            transform.rotation = targetRotation;
+            //    }
+            //}
+
+
+
+            if (player == null || isBusy) return;
 
         float distance = Vector3.Distance(transform.position, player.position);
 

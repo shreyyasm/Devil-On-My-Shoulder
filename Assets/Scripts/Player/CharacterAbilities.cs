@@ -47,10 +47,13 @@ public class CharacterAbilities : MonoBehaviour
     private bool isFullBreathe;
 
     [SerializeField] private float finisherRange = 6f;
-    [SerializeField] private float finisherAngle = 60f;
-    [SerializeField] private float finisherMoveSpeed = 25f;
+    [SerializeField] private float finisherMoveSpeed = 25f; 
+    [SerializeField] float horizontalAngle = 60f;
+    [SerializeField] float verticalAngle = 30f;
+    public Transform rootCamera;
     public GameObject finisherCamera;
     public GameObject mainCameraTexture;
+    public Transform finisherPosition;
 
     private bool isFinishing = false;
 
@@ -263,10 +266,13 @@ public class CharacterAbilities : MonoBehaviour
 
         sliderFill.color = normalColor;
     }
-
+    private EnemyManager lastIndicatorEnemy;
+    Transform target;
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.X))
+        
+
+        if (Input.GetKeyDown(KeyCode.X) && !playerMovement.isDashing && playerMovement.grounded)
         {
             PerformFinisher();
         }
@@ -277,8 +283,31 @@ public class CharacterAbilities : MonoBehaviour
         //if (Input.GetKeyDown(KeyCode.M))
         //    AddKillValue(20);
 
-        if (!fovTransitionActive)
-            return;
+        target = FindFinisherTarget();
+
+        if (target != null && !playerMovement.isDashing && playerMovement.grounded)         
+        {
+            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+
+            if (enemyManager != lastIndicatorEnemy)
+            {
+                if (lastIndicatorEnemy != null)
+                    lastIndicatorEnemy.finisherIndicator.SetActive(false);
+
+                lastIndicatorEnemy = enemyManager;
+            }
+
+            if (lastIndicatorEnemy != null)
+                lastIndicatorEnemy.finisherIndicator.SetActive(true);
+        }
+        else
+        {
+            if (lastIndicatorEnemy != null)
+            {
+                lastIndicatorEnemy.finisherIndicator.SetActive(false);
+                lastIndicatorEnemy = null;
+            }
+        }
 
         if (!fovTransitionActive) return;
 
@@ -294,7 +323,8 @@ public class CharacterAbilities : MonoBehaviour
             fovTransitionActive = false;
         }
 
-      
+       
+
     }
     private void LateUpdate()
     {
@@ -406,16 +436,26 @@ public class CharacterAbilities : MonoBehaviour
 
     private void PerformFinisher()
     {
+
         Debug.Log("Finisher performed");
         if (isFinishing) return;
 
         Transform target = FindFinisherTarget();
+        EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
+
+        enemyHealthTemp = enemyHealth;
+        enemyHealth.FinisherActive();
 
         if (target != null)
         {
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
+            finisherCamera.transform.rotation = Quaternion.identity;
+            rootCamera.GetComponent<CameraLook>().enabled = false;
+         
+          
+
             mainCameraTexture.SetActive(false);
             GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
             
@@ -423,43 +463,84 @@ public class CharacterAbilities : MonoBehaviour
         // TODO: implement finisher logic later
     }
     private EnemyHealth enemyHealthTemp;
+    public Transform enemyTargetTemp;
     Transform FindFinisherTarget()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, finisherRange, enemyLayer);
+        if (playerMovement.isDashing && !playerMovement.grounded)
+            return null;
+
+        Transform cam = Camera.main.transform;
+
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            finisherRange,
+            enemyLayer
+        );
 
         Transform bestTarget = null;
         float closestDist = Mathf.Infinity;
 
         foreach (var hit in hits)
         {
-            Vector3 dir = (hit.transform.position - transform.position).normalized;
+            // Aim at enemy chest instead of feet
+            Vector3 targetPos =
+            hit.GetComponentInParent<EnemyManager>().finisherTarget.position;
 
-            float angle = Vector3.Angle(transform.forward, dir);
+            // Range check from player
+            float dist = Vector3.Distance(
+                transform.position,
+                targetPos
+            );
 
-            if (angle <= finisherAngle * 0.5f)
+            float currentHorizontalAngle = horizontalAngle;
+            float currentVerticalAngle = verticalAngle;
+
+            // Relax the vision cone when enemy is very close
+            if (dist <= 1.5f)
             {
-                float dist = Vector3.Distance(transform.position, hit.transform.position);
+                currentHorizontalAngle *= 2f;
+                currentVerticalAngle *= 2f;
+            }
 
+            Vector3 dir = (targetPos - cam.position).normalized;
+
+            // Convert to camera local space
+            Vector3 localDir = cam.InverseTransformDirection(dir);
+
+            // Horizontal angle (left/right)
+            float horizontalAngleToTarget =
+                Mathf.Abs(Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg);
+
+            // Vertical angle (up/down)
+            float verticalAngleToTarget =
+                Mathf.Abs(Mathf.Atan2(localDir.y, localDir.z) * Mathf.Rad2Deg);
+
+            bool insideHorizontal =
+     horizontalAngleToTarget <= currentHorizontalAngle * 0.5f;
+
+            bool insideVertical =
+                verticalAngleToTarget <= currentVerticalAngle * 0.5f;
+
+            if (insideHorizontal && insideVertical)
+            {
                 if (dist < closestDist)
                 {
                     closestDist = dist;
                     bestTarget = hit.transform;
-                    hit.GetComponentInParent<EnemyHealth>().FinisherActive();
-                    enemyHealthTemp = hit.GetComponentInParent<EnemyHealth>();
                 }
             }
         }
 
         return bestTarget;
     }
-   
     IEnumerator FinisherRoutine(Transform target)
     {
        
         isFinishing = true;
         playerMovement.finisherActive = true;
+        playerMovement.CancelSlideImmediately();
         // 🔥 disable movement system
-   
+
         rb.velocity = Vector3.zero;
 
 
@@ -491,9 +572,19 @@ public class CharacterAbilities : MonoBehaviour
                     Time.deltaTime * 10f
                 );
             }
-
+            enemyHealthTemp.transform.LookAt(Camera.main.transform);
             yield return null;
         }
+      
+        //target.position = finisherPosition.position;
+        //target.LookAt(finisherCamera.transform);
+
+
+        // Reached enemy, but wait until player is grounded
+        //while (!playerMovement.grounded)
+        //{
+        //    yield return null;
+        //}
 
         enemyHealthTemp.FinisherAnimation();
         finisherCamera.GetComponent<Animator>().SetTrigger("FinisherCamera");
@@ -512,6 +603,7 @@ public class CharacterAbilities : MonoBehaviour
         yield return new WaitForSeconds(1.2f);
 
         // restore control
+        rootCamera.GetComponent<CameraLook>().enabled = true;
         finisherCamera.SetActive(false);
         mainCameraTexture.SetActive(true);
         playerMovement.finisherActive = false;
@@ -525,42 +617,90 @@ public class CharacterAbilities : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-
         Vector3 origin = transform.position;
 
-        // 🔵 Draw detection radius
+        // Detection radius
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(origin, finisherRange);
 
-        // 🔵 Draw cone edges
-        Vector3 left = Quaternion.Euler(0, -finisherAngle / 2f, 0) * transform.forward;
-        Vector3 right = Quaternion.Euler(0, finisherAngle / 2f, 0) * transform.forward;
+        Camera cam = Camera.main;
+
+        if (cam == null)
+            return;
+
+        Transform camTransform = cam.transform;
+
+        // Horizontal FOV lines
+        Vector3 left =
+            Quaternion.AngleAxis(-horizontalAngle * 0.5f, camTransform.up)
+            * camTransform.forward;
+
+        Vector3 right =
+            Quaternion.AngleAxis(horizontalAngle * 0.5f, camTransform.up)
+            * camTransform.forward;
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(origin, origin + left * finisherRange);
-        Gizmos.DrawLine(origin, origin + right * finisherRange);
+        Gizmos.DrawLine(camTransform.position, camTransform.position + left * finisherRange);
+        Gizmos.DrawLine(camTransform.position, camTransform.position + right * finisherRange);
 
-        // 🔥 Draw detected enemies
-        Collider[] hits = Physics.OverlapSphere(origin, finisherRange, enemyLayer);
+        // Vertical FOV lines
+        Vector3 up =
+            Quaternion.AngleAxis(-verticalAngle * 0.5f, camTransform.right)
+            * camTransform.forward;
+
+        Vector3 down =
+            Quaternion.AngleAxis(verticalAngle * 0.5f, camTransform.right)
+            * camTransform.forward;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(camTransform.position, camTransform.position + up * finisherRange);
+        Gizmos.DrawLine(camTransform.position, camTransform.position + down * finisherRange);
+
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            finisherRange,
+            enemyLayer
+        );
 
         foreach (var hit in hits)
         {
-            Vector3 dir = (hit.transform.position - origin).normalized;
-            float angle = Vector3.Angle(transform.forward, dir);
+            Vector3 targetPos = hit.bounds.center;
 
-            if (angle <= finisherAngle * 0.5f)
+            float dist = Vector3.Distance(
+                camTransform.position,
+                targetPos
+            );
+
+            bool validTarget = false;
+
+            // Auto-accept close enemies
+            if (dist < 1.5f)
             {
-                // ✅ VALID target (inside cone)
-                Gizmos.color = Color.green;
+                validTarget = true;
             }
             else
             {
-                // ❌ Outside cone
-                Gizmos.color = Color.red;
+                Vector3 worldDir =
+                    (targetPos - camTransform.position).normalized;
+
+                Vector3 localDir =
+                    camTransform.InverseTransformDirection(worldDir);
+
+                float horizontal =
+                    Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg;
+
+                float vertical =
+                    Mathf.Atan2(localDir.y, localDir.z) * Mathf.Rad2Deg;
+
+                validTarget =
+                    Mathf.Abs(horizontal) <= horizontalAngle * 0.5f &&
+                    Mathf.Abs(vertical) <= verticalAngle * 0.5f;
             }
 
-            Gizmos.DrawLine(origin, hit.transform.position);
-            Gizmos.DrawSphere(hit.transform.position, 0.2f);
+            Gizmos.color = validTarget ? Color.green : Color.red;
+
+            Gizmos.DrawLine(camTransform.position, targetPos);
+            Gizmos.DrawSphere(targetPos, 0.2f);
         }
     }
     // ================= INPUT =================

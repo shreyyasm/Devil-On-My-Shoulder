@@ -870,7 +870,7 @@ public class PlayerMovement : MonoBehaviour
     private Coroutine cameralerpRoutine;
     private bool slideCancelled;
 
-    private void CancelSlideImmediately()
+    public void CancelSlideImmediately()
     {
         if (!isDashing)
             return;
