@@ -91,6 +91,9 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void LateUpdate()
         {
+            if (playerMovement.cameraLocked)
+                return;
+
             if (playerMovement.finisherActive) return;
             gamepadConnected = IsGamepadConnected();
 
@@ -148,6 +151,11 @@ namespace InfimaGames.LowPolyShooterPack
         }
 
         #endregion
+
+        public void SyncRotation()
+        {
+            rotationCamera = transform.localRotation;
+        }
 
         #region FUNCTIONS
 

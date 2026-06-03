@@ -464,7 +464,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         // 🎥 LOCK CAMERA FOR JUMP
-        cameraLocked = true;
+        //cameraLocked = true;
 
         // stop any previous camera lerp
         if (cameralerpRoutine != null)
@@ -710,8 +710,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float slideDownY = 1.4f;
     [SerializeField] private float slideUpY = 1.8f;
     [SerializeField] private float heightLerpSpeed = 10f;
+    [SerializeField] private CameraLook cameraLook;
     public GameObject rootGameObject;
-    private bool cameraLocked;
+    public bool cameraLocked;
     private float standHeightY;
     private float tempHeight;
 
@@ -875,31 +876,41 @@ public class PlayerMovement : MonoBehaviour
         if (!isDashing)
             return;
 
-        // 🔥 STOP the running Slide coroutine
         if (slideRoutine != null)
         {
             StopCoroutine(slideRoutine);
             slideRoutine = null;
+        }
+
+        if (cameralerpRoutine != null)
+        {
             StopCoroutine(cameralerpRoutine);
             cameralerpRoutine = null;
         }
-        Transform root = rootGameObject.transform;
-        root.position = new Vector3(
-            root.position.x,
-            standHeightY,
-            root.position.z
-        );
 
+        capsule.height = standingHeight;
+        capsule.center = new Vector3(0f, standingHeight * 0.5f, 0f);
+
+        rootGameObject.transform.localPosition = originalRootLocalPos;
+
+        rootVisualY = originalRootLocalPos.y;
+        rootVelocityY = 0f;
+
+        //// CAMERA RESET
+        //playerCameraMain.transform.localRotation =
+        //    Quaternion.Euler(initialCamRot);
+
+        cameraLook.SyncRotation();
 
         cameraLocked = false;
 
         isDashing = false;
-        slideCancelled = false;
-        readyToDash = true;
+        isSliding = false;
+
         speedline.SetActive(false);
+
+        readyToDash = true;
     }
-
-
 
     private IEnumerator Dash()
     {
@@ -1027,6 +1038,7 @@ public class PlayerMovement : MonoBehaviour
         // snap to exact neutral at end
         cam.localRotation = neutralRot;
 
+        cameraLook.SyncRotation();
         // NOW release control
         cameraLocked = false;
         targetKickTilt = 0;
