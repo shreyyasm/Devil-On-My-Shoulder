@@ -50,6 +50,7 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private float finisherMoveSpeed = 25f; 
     [SerializeField] float horizontalAngle = 60f;
     [SerializeField] float verticalAngle = 30f;
+    [SerializeField] private Vector3 destinationOffset = Vector3.zero;
     public Transform rootCamera;
     public GameObject finisherCamera;
     public GameObject mainCameraTexture;
@@ -285,7 +286,7 @@ public class CharacterAbilities : MonoBehaviour
 
         target = FindFinisherTarget();
 
-        if (target != null && !playerMovement.isDashing && playerMovement.grounded)         
+        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)         
         {
             EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
 
@@ -541,43 +542,52 @@ public class CharacterAbilities : MonoBehaviour
         playerMovement.CancelSlideImmediately();
         // 🔥 disable movement system
 
-        rb.velocity = Vector3.zero;
+        EnemyManager enemyManager =
+       target.GetComponentInParent<EnemyManager>();
 
+        Transform finisherPoint =
+            enemyManager.finisherTarget;
 
+        float duration = 0.2f;
+        float timer = 0f;
 
-        Vector3 velocity = Vector3.zero;
+        Vector3 startPos = transform.position;
+        Quaternion startRot = transform.rotation;
 
-        while (Vector3.Distance(transform.position, target.position) > 2f)
+        Vector3 destination =
+     finisherPoint.position +
+     finisherPoint.right * destinationOffset.x +
+     finisherPoint.forward * destinationOffset.z;
+
+        destination.y = transform.position.y;
+
+        // Face the enemy from the finisher point
+        Vector3 lookDir = target.position - destination;
+        lookDir.y = 0f;
+
+        Quaternion targetRot = Quaternion.LookRotation(lookDir);
+
+        while (timer < duration)
         {
-            Vector3 targetPos = target.position;
-            targetPos.y = transform.position.y;
+            timer += Time.deltaTime;
 
-            // Smooth movement
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                targetPos,
-                ref velocity,
-                0.05f // smooth time (lower = snappier)
-            );
+            float t = timer / duration;
+            t = Mathf.SmoothStep(0f, 1f, t);
 
-            // Direction
-            Vector3 dir = (targetPos - transform.position).normalized;
+            transform.position =
+                Vector3.Lerp(startPos, destination, t);
 
-            if (dir != Vector3.zero)
-            {
-                Quaternion rot = Quaternion.LookRotation(dir);
-                transform.rotation = Quaternion.Slerp(
-                    transform.rotation,
-                    rot,
-                    Time.deltaTime * 10f
-                );
-            }
-            enemyHealthTemp.transform.LookAt(Camera.main.transform);
+            transform.rotation =
+                Quaternion.Slerp(startRot, targetRot, t);
+
             yield return null;
         }
-      
+
+        // Snap exactly at the end
+        transform.position = destination;
+        transform.rotation = targetRot;
         //target.position = finisherPosition.position;
-        //target.LookAt(finisherCamera.transform);
+        //transform.LookAt(target.GetComponent<EnemyManager>().finisherTarget);
 
 
         // Reached enemy, but wait until player is grounded

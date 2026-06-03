@@ -193,8 +193,8 @@ public class PlayerMovement : MonoBehaviour
         if (playerCam != null)
             initialCamRot = playerCameraMain.transform.localEulerAngles;
 
-        originalRootLocalPos = rootGameobject.transform.localPosition;
-        rootVisualY = rootGameobject.transform.localPosition.y;
+        originalRootLocalPos = rootGameObject.transform.localPosition;
+        rootVisualY = rootGameObject.transform.localPosition.y;
     }
 
     private void ApplyCharacterData()
@@ -296,7 +296,7 @@ public class PlayerMovement : MonoBehaviour
         }
         if (grounded && !isDashing)
         {
-            standHeightY = rootGameobject.transform.position.y;
+            standHeightY = rootGameObject.transform.position.y;
         }
 
         if (itemPressed)
@@ -710,7 +710,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float slideDownY = 1.4f;
     [SerializeField] private float slideUpY = 1.8f;
     [SerializeField] private float heightLerpSpeed = 10f;
-    public GameObject rootGameobject;
+    public GameObject rootGameObject;
     private bool cameraLocked;
     private float standHeightY;
     private float tempHeight;
@@ -731,7 +731,7 @@ public class PlayerMovement : MonoBehaviour
     {
         kickAnimator[characterindex - 1].gameObject.SetActive(true);
 
-        Transform root = rootGameobject.transform;
+        Transform root = rootGameObject.transform;
 
         cameraLocked = true;
 
@@ -883,7 +883,7 @@ public class PlayerMovement : MonoBehaviour
             StopCoroutine(cameralerpRoutine);
             cameralerpRoutine = null;
         }
-        Transform root = rootGameobject.transform;
+        Transform root = rootGameObject.transform;
         root.position = new Vector3(
             root.position.x,
             standHeightY,
