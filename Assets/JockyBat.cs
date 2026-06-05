@@ -10,6 +10,7 @@ public class JockyBat : MonoBehaviour
     public ParticleSystem KnifeBlood;
     public ParticleSystem KickBlood;
 
+    public EnemyManager EnemyManager;
 
     // Start is called before the first frame update
     void Start()
@@ -86,5 +87,9 @@ public class JockyBat : MonoBehaviour
         Time.fixedDeltaTime = 0.02f;
         //Flash(0.2f, 0f, 0.1f);
         timeRoutine = null;
+    }
+    public void AttackSound()
+    {
+        EnemyManager.AttackPlaySoundEffect();
     }
 }

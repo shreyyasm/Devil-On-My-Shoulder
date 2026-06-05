@@ -7,7 +7,7 @@ public class EnemyStats : ScriptableObject
     // ================================
     // TYPE DEFINITIONS
     // ================================
-
+    public string enemyName;
     public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, Suicider, Spider}
     public enum CoverType { No, Yes }
     public enum ShieldType { No, Yes }
@@ -162,5 +162,6 @@ public class EnemyStats : ScriptableObject
     public float detonateDistance = 2.5f;
 
     [Header("Audio")]
-    public string attackSoundKey;
+    public string attackHitKey;
+    public string attackTryKey;
 }

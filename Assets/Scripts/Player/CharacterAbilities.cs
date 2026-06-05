@@ -438,17 +438,20 @@ public class CharacterAbilities : MonoBehaviour
     private void PerformFinisher()
     {
 
-        Debug.Log("Finisher performed");
+       
         if (isFinishing) return;
 
         Transform target = FindFinisherTarget();
-        EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
 
-        enemyHealthTemp = enemyHealth;
-        enemyHealth.FinisherActive();
 
         if (target != null)
         {
+            EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
+
+            enemyHealthTemp = enemyHealth;
+            enemyHealth.FinisherActive();
+            Debug.Log("Finisher performed");
+
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
@@ -600,7 +603,7 @@ public class CharacterAbilities : MonoBehaviour
         finisherCamera.GetComponent<Animator>().SetTrigger("FinisherCamera");
         rb.velocity = Vector3.zero;
 
-       SFXManager.Instance.PlaySFX("Finisher/Jockey", 1f);
+       SFXManager.Instance.PlaySFX(enemyManager.enemyName+"/Finisher", 1f);
       
         // 🔥 reached enemy
         

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem.Controls;
 using static UnityEngine.UI.Image;
 
 public class EnemyManager : MonoBehaviour
@@ -15,7 +16,8 @@ public class EnemyManager : MonoBehaviour
 
     [Header("Stats Reference")]
     public EnemyStats enemyStats;
-    
+
+    public string enemyName;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
 
@@ -281,6 +283,7 @@ public class EnemyManager : MonoBehaviour
     private State currentState;
 
     private float nextAttackTime;
+    public float attackCooldownTimer;
     private bool isBusy;
 
 
@@ -298,7 +301,8 @@ public class EnemyManager : MonoBehaviour
 
     #region Audio Keys
     [Header("Audio")]
-    public string attackSoundKey;
+    public string attackHitKey;
+    public string attackTryKey;
 
     #endregion
 
@@ -485,9 +489,11 @@ public class EnemyManager : MonoBehaviour
         // =====================
         // Audio KEYS
         // =====================
-        attackSoundKey = enemyStats.attackSoundKey;
+        attackHitKey = enemyStats.attackHitKey;
+        attackTryKey = enemyStats.attackTryKey;
         #endregion
 
+        enemyName = enemyStats.enemyName;
         spriteHeight = enemyStats.spriteHeight;
         colliderHeight = enemyStats.colliderHeight;
 
@@ -588,7 +594,7 @@ public class EnemyManager : MonoBehaviour
 
 
 
-            if (player == null || isBusy) return;
+        if (player == null && isBusy) return;
 
         float distance = Vector3.Distance(transform.position, player.position);
 
@@ -690,8 +696,10 @@ public class EnemyManager : MonoBehaviour
     // ================================
     [SerializeField] private float knockbackForce = 8f;
     [SerializeField] private float knockbackUpward = 2f;
+    private bool hasHitPlayer;
     public void AttackRefernce(Collision collision)
     {
+        if (hasHitPlayer) return;
         if (!collision.gameObject.CompareTag("Player")) return;
         if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
         //if (!isBusy) return;
@@ -718,64 +726,19 @@ public class EnemyManager : MonoBehaviour
 
         HurtPlayer();
 
+
         PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
         playerHealth.ManageHealth(-damage);
         playerHealth.hit = true;
 
-        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, attackSoundKey, 1f);
-
+        SFXManager.Instance.PlaySFX(enemyName+ "/"+ attackHitKey, 1f);
+        hasHitPlayer = true;
 
         // Set cooldown immediately
         nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
     }
-    //private void OnCollisionEnter(Collision collision)
-    //{
-    //    if (!collision.gameObject.CompareTag("Player")) return;
-    //    if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
-    //    if (!isBusy) return;
 
-    //    // 🔥 IMPORTANT: Cooldown check
-    //    if (Time.time < nextAttackTime) return;
-
-    //    if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
-
-    //    Debug.Log("Melee Damage: " + damage);
-
-    //    HurtPlayer();
-
-    //    PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
-    //    playerHealth.ManageHealth(-damage);
-    //    playerHealth.hit = true;
-
-    //    SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, attackSoundKey, 1f);
-
-        
-    //    // Set cooldown immediately
-    //    nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
-    //}
-    //private void OnCollisionStay(Collision collision)
-    //{
-    //    if (collision.gameObject.CompareTag("Player"))
-    //    {
-
-    //        if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
-    //        if (!isBusy) return;
-
-    //        if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
-    //        if (Time.time < nextAttackTime) return;
-
-    //        Debug.Log("Melee Damage (Interval): " + damage);
-
-    //        HurtPlayer();
-    //        collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-damage);
-    //        collision.gameObject.GetComponent<PlayerHealth>().hit = true;
-
-    //        SFXManager.Instance.PlaySFX(attackSoundKey, 1f);
-
-
-    //        nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
-    //    }
-    //}
+   
     #endregion
 
     #region Melee - Enemy Method
@@ -790,26 +753,25 @@ public class EnemyManager : MonoBehaviour
         if (enemyType == EnemyStats.EnemyType.Melee && canDash)
             agent.stoppingDistance = attackRange;
 
+       
         if (currentDistance > attackRange && agent.enabled)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
+            
         }
         else
         {
             if (!agent.enabled) return;
-
-            agent.isStopped = true;
-            agent.ResetPath();                 // 🔥 removes path completely
+            agent.isStopped = true;              // 🔥 removes path completely
             agent.velocity = Vector3.zero;    // 🔥 force velocity to zero
 
-
-            if (!isBusy && Time.time >= nextAttackTime)
+            if (!isAttacking)
             {
                 // =============================
                 // GRAB LOGIC
                 // =============================
-
+                hasHitPlayer = false;
                 if (canGrab && !isGrabbing)
                 {
                     // If no one is grabbing → grab
@@ -878,6 +840,7 @@ public class EnemyManager : MonoBehaviour
     {
         isBusy = true;
         dashForceCancelled = false;   // 🔥 Reset at start
+       
 
         //yield return new WaitForSeconds(0.1f);
 
@@ -892,6 +855,7 @@ public class EnemyManager : MonoBehaviour
         isAttacking = true;
        
         animator.SetTrigger("Attack");
+       
 
         if (enemyType != EnemyStats.EnemyType.Spider && agent.enabled)
             agent.isStopped = true;
@@ -914,13 +878,19 @@ public class EnemyManager : MonoBehaviour
         currentState = State.Idle;
         yield return new WaitForSeconds(recoverTime);
 
-        SetNextAttackTime();
+       
         currentState = State.Chase;
+        agent.ResetPath();                 // 🔥 removes path completely
         isBusy = false;
         isAttacking = false;
-    
-    }
 
+     
+    }
+    public void AttackPlaySoundEffect()
+    {
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
+
+    }
     void StartDash()
     {
         if (dashCoroutine != null)
@@ -1032,7 +1002,7 @@ public class EnemyManager : MonoBehaviour
     void SetNextAttackTime()
     {
         float randomTime = Random.Range(attackIntervalMin, attackIntervalMax);
-        nextAttackTime = Time.time + randomTime;
+        nextAttackTime = randomTime;
     }
 
     IEnumerator GrabRoutine()

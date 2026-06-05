@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1625a88454a40574289e67afe35d40a3, type: 3}
   m_Name: Basic Melee Enemy
   m_EditorClassIdentifier: 
+  enemyName: Jocky
   enemyType: 0
   coverType: 0
   shieldType: 0
@@ -26,9 +27,9 @@ MonoBehaviour:
   speed: 10
   damage: 10
   AttackRange: 2
-  AttackIntervalMin: 1
-  AttackIntervalMax: 1.2
-  RecoverTime: 0.5
+  AttackIntervalMin: 3
+  AttackIntervalMax: 4
+  RecoverTime: 3
   StoppingDistance: 1.5
   canDash: 0
   canGrab: 0
@@ -76,4 +77,5 @@ MonoBehaviour:
   GuardShootSpeed: 0
   GuardShootInterval: 0
   detonateDistance: 2.5
-  attackSoundKey: Enemy/EyeAttack
+  attackHitKey: AttackHit
+  attackTryKey: AttackTry
