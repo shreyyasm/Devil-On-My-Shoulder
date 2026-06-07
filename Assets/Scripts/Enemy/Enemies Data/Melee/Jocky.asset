@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1625a88454a40574289e67afe35d40a3, type: 3}
-  m_Name: Basic Melee Enemy
+  m_Name: Jocky
   m_EditorClassIdentifier: 
   enemyName: Jocky
   enemyType: 0
@@ -18,10 +18,11 @@ MonoBehaviour:
   shieldType: 0
   deathType: 0
   surfaceType: 0
-  AfterDeath_ExplosionPrefab: {fileID: 0}
+  AfterDeath_ExplosionPrefab: {fileID: 11400000, guid: 4380eae46d5695645a571cf961ee5e6e,
+    type: 2}
   spriteHeight: 0
   colliderHeight: 0
-  health: 10000
+  health: 100
   gunHealth: 0
   shieldHealth: 0
   speed: 10

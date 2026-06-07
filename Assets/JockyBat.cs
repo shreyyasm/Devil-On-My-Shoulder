@@ -92,4 +92,8 @@ public class JockyBat : MonoBehaviour
     {
         EnemyManager.AttackPlaySoundEffect();
     }
+    public void Die()
+    {
+        EnemyManager.GetComponent<EnemyHealth>().Die(false, true, false, false);
+    }
 }

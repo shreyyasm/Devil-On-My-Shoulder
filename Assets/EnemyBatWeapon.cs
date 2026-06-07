@@ -21,6 +21,8 @@ public class EnemyBatWeapon : MonoBehaviour
         if(collision.gameObject.CompareTag("Player"))
         {
             EnemyManager.AttackRefernce(collision);
+           
+
         }
            
     }

@@ -600,7 +600,8 @@ public class CharacterAbilities : MonoBehaviour
         //}
 
         enemyHealthTemp.FinisherAnimation();
-        finisherCamera.GetComponent<Animator>().SetTrigger("FinisherCamera");
+        string enemyName = enemyHealthTemp.GetComponent<EnemyManager>().enemyName;
+        finisherCamera.GetComponent<Animator>().SetTrigger(enemyName+ "Finisher");
         rb.velocity = Vector3.zero;
 
        SFXManager.Instance.PlaySFX(enemyManager.enemyName+"/Finisher", 1f);
@@ -613,7 +614,7 @@ public class CharacterAbilities : MonoBehaviour
         // damage enemy
         // camera stuff
 
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(1.5f);
 
         // restore control
         rootCamera.GetComponent<CameraLook>().enabled = true;
@@ -622,9 +623,9 @@ public class CharacterAbilities : MonoBehaviour
         playerMovement.finisherActive = false;
         isFinishing = false;
         GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
-        LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
+       // LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
+        //enemyHealthTemp.Die(false, true, false, false);
 
-     
         Debug.Log("FInisher End");
     }
 

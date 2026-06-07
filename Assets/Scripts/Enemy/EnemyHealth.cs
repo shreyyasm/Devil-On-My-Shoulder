@@ -33,7 +33,6 @@ public class EnemyHealth : MonoBehaviour
 
 
     [Header("ObjectPool")]
-    public ObjectPool explosionPool;
     public ObjectPool BloodPool;
     public enum ShieldType { No, Yes }
     public enum DeathType { Simple, Explosion}
@@ -105,7 +104,7 @@ public class EnemyHealth : MonoBehaviour
     {
         dead = true;
         Transform explosionPoint = enemyManager.firePoint;
-        GameObject explosion = explosionPool.GetObject();
+        GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
 
         ImpactFrameEffect.Instance.GoBlack();
@@ -113,8 +112,9 @@ public class EnemyHealth : MonoBehaviour
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
         SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
-
+        //SFXManager.Instance.pla
         ScoreManager.Instance.Kills++;
+        
 
         CharacterAbilities.instance.AddKillValue(20);
 

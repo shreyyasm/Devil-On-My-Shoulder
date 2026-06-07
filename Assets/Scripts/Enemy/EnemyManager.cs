@@ -18,6 +18,7 @@ public class EnemyManager : MonoBehaviour
     public EnemyStats enemyStats;
 
     public string enemyName;
+    public ObjectPool After_DeathExplosion;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
 
@@ -73,6 +74,8 @@ public class EnemyManager : MonoBehaviour
     [Header("Dash Settings")]
     public bool canDash;
     public float dashForce;
+    [SerializeField] private float jumpHeight = 3f;
+    [SerializeField] private float landingCheckDistance = 0.5f;
     public float dashLoadTime;
     public float dashDuration = 0.3f;
     public float dashStopDistance = 1.5f;
@@ -484,6 +487,7 @@ public class EnemyManager : MonoBehaviour
         #region Suicider Enemy Settings
         detonateDistance = enemyStats.detonateDistance;
         #endregion
+        After_DeathExplosion = enemyStats.AfterDeath_ExplosionPrefab;
 
         #region Audio key Set
         // =====================
@@ -563,34 +567,41 @@ public class EnemyManager : MonoBehaviour
         }
 
     }
-
+    private bool lastFinisherState;
     private void Update()
     {
         if (enemyHealth.dead) return;
         if (enemyHealth.finisherActive) return;
 
+        if (playerMovement.finisherActive != lastFinisherState)
+        {
+            lastFinisherState = playerMovement.finisherActive;
+
+            if (lastFinisherState)
+            {
+                agent.enabled = false;
+                animator.SetFloat("Movement", 0);
+            }
+            else
+            {
+                agent.enabled = true;
+            }
+        }
+
         if (playerMovement.finisherActive)
-        {
-            agent.enabled = false;
-            animator.SetFloat("Movement", 0);
             return;
-        }
-        else
-        {
-            agent.enabled = true;
-        }
-            //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
-            //{
-            //    // Get direction to player (ignore Y so it only rotates horizontally)
-            //    Vector3 direction = player.transform.position - transform.position;
-            //    direction.y = 0f;
-            //    if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
-            //    {
-            //        Quaternion targetRotation = Quaternion.LookRotation(direction);
-            //        if (!RotateExternally)
-            //            transform.rotation = targetRotation;
-            //    }
-            //}
+        //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
+        //{
+        //    // Get direction to player (ignore Y so it only rotates horizontally)
+        //    Vector3 direction = player.transform.position - transform.position;
+        //    direction.y = 0f;
+        //    if (direction.sqrMagnitude > 0.001f) // Avoid errors if player is at same position
+        //    {
+        //        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        //        if (!RotateExternally)
+        //            transform.rotation = targetRotation;
+        //    }
+        //}
 
 
 
@@ -696,17 +707,21 @@ public class EnemyManager : MonoBehaviour
     // ================================
     [SerializeField] private float knockbackForce = 8f;
     [SerializeField] private float knockbackUpward = 2f;
-    private bool hasHitPlayer;
+    public bool hasHitPlayer;
     public void AttackRefernce(Collision collision)
     {
+        
         if (hasHitPlayer) return;
+        //Debug.Log("kaam nhi kr rha ha!");
         if (!collision.gameObject.CompareTag("Player")) return;
+      
         if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
         //if (!isBusy) return;
 
         // 🔥 IMPORTANT: Cooldown check
         //if (Time.time < nextAttackTime) return;
 
+        Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
 
@@ -731,9 +746,9 @@ public class EnemyManager : MonoBehaviour
         playerHealth.ManageHealth(-damage);
         playerHealth.hit = true;
 
-        SFXManager.Instance.PlaySFX(enemyName+ "/"+ attackHitKey, 1f);
+        //SFXManager.Instance.PlaySFX(enemyName+ "/"+ attackHitKey, 1f);
         hasHitPlayer = true;
-
+       
         // Set cooldown immediately
         nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
     }
@@ -771,7 +786,9 @@ public class EnemyManager : MonoBehaviour
                 // =============================
                 // GRAB LOGIC
                 // =============================
+               
                 hasHitPlayer = false;
+               
                 if (canGrab && !isGrabbing)
                 {
                     // If no one is grabbing → grab
@@ -789,6 +806,7 @@ public class EnemyManager : MonoBehaviour
                 else
                 {
                     // Normal melee
+                 
                     StartCoroutine(AttackRoutine());
                 }
             }
@@ -874,13 +892,13 @@ public class EnemyManager : MonoBehaviour
             isAttacking = false;
             yield break;
         }
-
+       
         currentState = State.Idle;
         yield return new WaitForSeconds(recoverTime);
-
        
         currentState = State.Chase;
-        agent.ResetPath();                 // 🔥 removes path completely
+        if(agent.enabled) 
+            agent.ResetPath();                 // 🔥 removes path completely
         isBusy = false;
         isAttacking = false;
 
@@ -904,61 +922,106 @@ public class EnemyManager : MonoBehaviour
     {
         yield return new WaitForSeconds(dashLoadTime);
 
-        if (token != dashToken) yield break;
+        if (token != dashToken)
+            yield break;
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        agent.updatePosition = false;
-        agent.updateRotation = false;
-
+        // Disable NavMesh completely during jump
         if (agent.enabled)
-            agent.isStopped = true;
+            agent.enabled = false;
 
         rb.isKinematic = false;
+        rb.useGravity = true;
+
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        Vector3 dashDir = player.position - transform.position;
-        dashDir.y = 0f;
-        dashDir.Normalize();
+        // Face player
+        Vector3 lookDir = player.position - transform.position;
+        lookDir.y = 0f;
 
-        rb.AddForce(dashDir * dashForce, ForceMode.Impulse);
+        if (lookDir.sqrMagnitude > 0.01f)
+            transform.rotation = Quaternion.LookRotation(lookDir);
 
-        yield return new WaitForSeconds(dashDuration);
+        // -------- Calculate jump arc --------
 
-        if (token != dashToken) yield break;
+        Vector3 targetPos = player.position;
+
+        Vector3 horizontalDir = targetPos - transform.position;
+        horizontalDir.y = 0f;
+
+        float distance = horizontalDir.magnitude;
+
+        if (distance > 0.1f)
+            horizontalDir.Normalize();
+
+        float gravity = Mathf.Abs(Physics.gravity.y);
+
+        float verticalVelocity =
+            Mathf.Sqrt(2f * gravity * jumpHeight);
+
+        float timeUp =
+            verticalVelocity / gravity;
+
+        float totalAirTime =
+            timeUp * 2f;
+
+        Vector3 horizontalVelocity =
+            horizontalDir * (distance / totalAirTime) * 5f;
+
+        Vector3 launchVelocity =
+            horizontalVelocity +
+            Vector3.up * verticalVelocity;
+
+        rb.velocity = launchVelocity;
+
+        // -------- Wait until landed --------
+
+        while (true)
+        {
+            if (token != dashToken)
+                yield break;
+
+            bool grounded =
+                Physics.Raycast(
+                    transform.position + Vector3.up * 0.1f,
+                    Vector3.down,
+                    landingCheckDistance
+                );
+
+            if (grounded && rb.velocity.y <= 0.1f)
+                break;
+
+            yield return null;
+        }
 
         EndDash(token);
     }
     void EndDash(int token)
     {
         if (token != dashToken)
-            return; // Dash was cancelled
+            return;
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        if (rb != null)
-        {
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
-        }
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
 
-        if (agent != null)
-        {
-            agent.updatePosition = true;
-            agent.updateRotation = true;
+        // Re-enable NavMesh
+        if (!agent.enabled)
+            agent.enabled = true;
 
-            if (!agent.enabled)
-                agent.enabled = true;
+        agent.Warp(transform.position);
 
-            agent.Warp(transform.position);
-            agent.isStopped = true;
-        }
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        agent.isStopped = true;
 
         dashCoroutine = null;
 
-        Debug.Log("DashStopped Normally");
+        Debug.Log("Spider Jump Finished");
     }
     public void StopDashImmediate()
     {
