@@ -1142,6 +1142,7 @@ public class PlayerMovement : MonoBehaviour
             yield return new WaitForSeconds(0.15f);
            
             hit.GetComponent<EnemyManager>().animator.SetBool("Kicked",true);
+
             if (hit.gameObject.layer == 16)
             {
                
@@ -1192,9 +1193,8 @@ public class PlayerMovement : MonoBehaviour
                     enemy.EnemyHit(15f, true); // tweakable
                     HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
                     hitstop.DoShake();
-                    hit.GetComponent<EnemyManager>().kickOn = false;
-                    LeanTween.delayedCall(1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
-                    
+                    //hit.GetComponent<EnemyManager>().kickOn = false;
+                    //LeanTween.delayedCall(1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
 
                 }
         
@@ -1314,6 +1314,7 @@ public class PlayerMovement : MonoBehaviour
         NavMeshAgent agent = target.GetComponent<NavMeshAgent>();
         Rigidbody rb = target.GetComponent<Rigidbody>();
 
+       
         if (agent != null)
             agent.enabled = false;
 
@@ -1329,32 +1330,35 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = launchVelocity;
 
         // -------- WAIT UNTIL GROUNDED --------
-        float airTimer = 0f;
-        bool grounded = false;
 
+        EnemyManager enemyManager =
+            target.GetComponent<EnemyManager>();
+        float groundCheckDelay = 1f;
+        float timer = 0f;
 
-        while (!grounded && airTimer < kickMaxAirTime)
+        while (true)
         {
-            // 🔥 Stop immediately if rb is destroyed
-            if (rb == null)
+            if (rb == null || enemyManager == null)
                 yield break;
 
-            airTimer += Time.deltaTime;
+            timer += Time.deltaTime;
 
-            if (rb.velocity.y <= 0f)
+            // Don't start checking for landing yet
+            if (timer < groundCheckDelay)
             {
-                if (target != null && Physics.Raycast(
-                    target.position,
-                    Vector3.down,
-                    1.2f))
-                {
-                    grounded = true;
-                }
+                yield return null;
+                continue;
+            }
+
+            if (enemyManager.CheckGrounded())
+            {
+                Debug.Log("Enemy Landed");
+              
+                break;
             }
 
             yield return null;
         }
-
         // -------- SLIDE PHASE --------
         Vector3 slideVelocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
         rb.velocity = slideVelocity;
@@ -1374,13 +1378,10 @@ public class PlayerMovement : MonoBehaviour
             );
 
             rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-
+            //rb.velocity = Vector3.zero;
+            //rb.isKinematic = true;
             yield return null;
         }
-
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = true;
-
         // -------- NAVMESH RECOVERY --------
         if (agent != null)
         {
@@ -1394,6 +1395,12 @@ public class PlayerMovement : MonoBehaviour
             }
 
             agent.enabled = true;
+            rb.velocity = Vector3.zero;
+            rb.isKinematic = true;
+
+            enemyManager.kickOn = false;
+            enemyManager.animator.SetBool("Kicked", false);
+
         }
     }
     // Called on kick impact frame

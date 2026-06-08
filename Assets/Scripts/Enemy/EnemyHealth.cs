@@ -42,10 +42,12 @@ public class EnemyHealth : MonoBehaviour
     public bool dead;
     public bool finisherActive;
     public System.Action OnDeath;
+    private AudioSource audioSource;
     
     private void Awake()
     {
         enemyStats = enemyManager.enemyStats;
+        audioSource = GetComponent<AudioSource>();
         agent = GetComponent<NavMeshAgent>();
     }
     private void Start()
@@ -64,7 +66,10 @@ public class EnemyHealth : MonoBehaviour
 
             if (agent != null)
                 agent.speed = enemyStats.speed;
+            
+            
         }
+       
     }
     public void TakeDamage(float amount, DamageInfo info)
     {
@@ -111,8 +116,12 @@ public class EnemyHealth : MonoBehaviour
         LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
-        SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
-        //SFXManager.Instance.pla
+        AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy"); 
+        Play3DDeathSound(clip, transform.position);
+        //SFXManager.Instance.PlayNPC_SFX(audioSource,"Enemy/Destroy", 1f);
+        //SFXManager.Instance.PlayNPC_SFX(audioSource, enemyManager.enemyName + "/" + enemyManager.attackTryKey, 1f);
+        //SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
+
         ScoreManager.Instance.Kills++;
         
 
@@ -161,6 +170,34 @@ public class EnemyHealth : MonoBehaviour
         }
         //Destroy(gameObject);
 
+    }
+    public void Play3DDeathSound(AudioClip clip, Vector3 position)
+    {
+        GameObject audioObj = new GameObject("DeathSFX");
+
+        audioObj.transform.position = position;
+
+        AudioSource source = audioObj.AddComponent<AudioSource>();
+
+        source.clip = clip;
+
+        // Your settings
+        source.spatialBlend = 1f;
+        source.volume = 1f;
+        source.pitch = 1f;
+        source.priority = 128;
+
+        source.dopplerLevel = 1f;
+        source.spread = 0f;
+
+        source.rolloffMode = AudioRolloffMode.Linear;
+
+        source.minDistance = 0.6f;
+        source.maxDistance = 15f;
+
+        source.Play();
+
+        Destroy(audioObj, clip.length);
     }
     public void FinisherActive()
     {

@@ -118,4 +118,14 @@ public class SFXManager : MonoBehaviour
         if (clip != null)
             audioSource.PlayOneShot(clip, Mathf.Clamp01(volume));
     }
+    public AudioClip GetAudioClip(string fullName)
+    {
+        if (!clipDict.TryGetValue(fullName, out var clips) || clips.Count == 0)
+        {
+            Debug.LogWarning($"SFXManager: No clips found for key '{fullName}'.");
+        }
+        AudioClip clip = clips[Random.Range(0, clips.Count)];
+        Debug.Log(clip.name);
+        return clip;
+    }
 }

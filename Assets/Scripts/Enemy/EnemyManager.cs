@@ -141,7 +141,7 @@ public class EnemyManager : MonoBehaviour
     private Vector3 coverPos;
     private Vector3 peekPos;
 
-    private AudioSource attack3dAudioSource;
+    public AudioSource attack3dAudioSource;
     private CoverState coverState;
 
     private enum CoverState
@@ -337,8 +337,8 @@ public class EnemyManager : MonoBehaviour
         attack3dAudioSource = GetComponent<AudioSource>();
         enemyHealth = GetComponent<EnemyHealth>();
         Target = player;
-
-
+       
+       
     }
 
     private void Start()
@@ -570,10 +570,12 @@ public class EnemyManager : MonoBehaviour
     private bool lastFinisherState;
     private void Update()
     {
+        CheckGrounded();
+        if (kickOn) return;
         if (enemyHealth.dead) return;
         if (enemyHealth.finisherActive) return;
 
-        if (playerMovement.finisherActive != lastFinisherState)
+        if (playerMovement.finisherActive != lastFinisherState )
         {
             lastFinisherState = playerMovement.finisherActive;
 
@@ -584,7 +586,7 @@ public class EnemyManager : MonoBehaviour
             }
             else
             {
-                agent.enabled = true;
+                    agent.enabled = true;
             }
         }
 
@@ -933,7 +935,7 @@ public class EnemyManager : MonoBehaviour
 
         rb.isKinematic = false;
         rb.useGravity = true;
-
+      
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
@@ -2182,4 +2184,53 @@ public class EnemyManager : MonoBehaviour
         projectile_Parried = false;
     }
     #endregion
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundCheckRadius = 0.25f;
+    [SerializeField] private float groundCheckOffset = 0.1f;
+
+    public bool IsGrounded;
+    public bool CheckGrounded()
+    {
+        Collider col = GetComponent<Collider>();
+
+        if (col == null)
+            return false;
+
+        Vector3 checkPos = new Vector3(
+            col.bounds.center.x,
+            col.bounds.min.y + groundCheckOffset,
+            col.bounds.center.z
+        );
+
+        IsGrounded = Physics.CheckSphere(
+            checkPos,
+            groundCheckRadius,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return IsGrounded;
+    }
+    private void OnDrawGizmosSelected()
+    {
+        Collider col = GetComponent<Collider>();
+
+        if (col == null)
+            return;
+
+        Vector3 checkPos = new Vector3(
+            col.bounds.center.x,
+            col.bounds.min.y + groundCheckOffset,
+            col.bounds.center.z
+        );
+
+        Gizmos.color = IsGrounded
+            ? Color.green
+            : Color.red;
+
+        Gizmos.DrawWireSphere(
+            checkPos,
+            groundCheckRadius
+        );
+    }
 }

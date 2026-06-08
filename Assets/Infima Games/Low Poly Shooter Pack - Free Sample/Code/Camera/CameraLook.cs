@@ -91,8 +91,8 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void LateUpdate()
         {
-            if (playerMovement.cameraLocked)
-                return;
+            //if (playerMovement.cameraLocked)
+            //    return;
 
             if (playerMovement.finisherActive) return;
             gamepadConnected = IsGamepadConnected();
