@@ -17,7 +17,7 @@ namespace Biostart.Impact
         {
             if (collision.collider != null)
             {
-                Debug.Log(collision.gameObject.name);
+
                 ContactPoint contact = collision.contacts[0];
                 Vector3 hitPosition = contact.point;
                 Vector3 hitNormal = contact.normal;
@@ -29,7 +29,7 @@ namespace Biostart.Impact
         {
             if (other != null)
             {
-                Debug.Log(other.gameObject.name);
+
                 Vector3 hitPosition = other.ClosestPointOnBounds(transform.position);
                 Vector3 hitNormal = other.transform.forward;
                 SpawnBloodEffect(hitPosition, hitNormal);

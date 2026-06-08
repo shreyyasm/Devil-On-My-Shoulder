@@ -1139,7 +1139,7 @@ public class PlayerMovement : MonoBehaviour
         foreach (Collider hit in hits)
         {
             hit.GetComponent<EnemyManager>().kickOn = true;
-            yield return new WaitForSeconds(0.15f);
+            yield return new WaitForSeconds(0.13f);
            
             hit.GetComponent<EnemyManager>().animator.SetBool("Kicked",true);
 

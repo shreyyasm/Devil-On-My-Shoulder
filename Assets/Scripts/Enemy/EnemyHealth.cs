@@ -1,5 +1,6 @@
 ﻿using DamageNumbersPro;
 using QFSW.MOP2;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -10,6 +11,9 @@ public class EnemyHealth : MonoBehaviour
     public EnemyManager enemyManager;
     [Header("Stats Reference")]
     private EnemyStats enemyStats;
+
+    public GameObject ragdoll;
+    public Rigidbody ragdollRB;
 
     [Header("Runtime Health Values")]
     public float maxHealth;
@@ -99,11 +103,35 @@ public class EnemyHealth : MonoBehaviour
         if (health <= 0)
         {
             health = 0;
+            //enemyManager.animator.SetTrigger("Death");
 
+
+            //StartCoroutine(SelfKnockback(50));
             // 🔥 pass ALL info to Die
-            Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
+             Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
 
         }
+    }
+    public IEnumerator SelfKnockback(float force)
+    {
+        if (ragdollRB == null)
+        {
+            Debug.Log("No ragdoll RB");
+            yield break;
+        }
+
+        Debug.Log(ragdollRB.name);
+
+       
+        ragdollRB.isKinematic = false;
+        ragdollRB.useGravity = true;
+
+        Vector3 launchVelocity =
+            -transform.forward * force;
+
+        Debug.Log(launchVelocity);
+
+        ragdollRB.velocity = launchVelocity;
     }
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
@@ -166,7 +194,11 @@ public class EnemyHealth : MonoBehaviour
         }    
         else
         {
+            StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
+            ragdoll.SetActive(true);
+            ragdoll.transform.SetParent(null);
+           
         }
         //Destroy(gameObject);
 
