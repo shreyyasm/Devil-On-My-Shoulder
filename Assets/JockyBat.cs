@@ -94,6 +94,8 @@ public class JockyBat : MonoBehaviour
     }
     public void Die()
     {
-        EnemyManager.GetComponent<EnemyHealth>().Die(false, true, false, false);
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false,true, false); });
+
+      
     }
 }
