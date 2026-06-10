@@ -1,17 +1,20 @@
+using QFSW.MOP2;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Biostart.Impact
 {
     public class ImpactEffect : MonoBehaviour
     {
-        public List<GameObject> bloodEffectPrefabs; // List of blood effect prefabs
+        public List<ObjectPool> bloodEffectPrefabs; // List of blood effect prefabs
         public float bloodEffectPrefabsDestroy = 5f; // Destroy time
         public List<BloodEffectData> otherBloodEffectsData; // List of data for other blood effects
         public bool destroy = false; // Flag to destroy the object
         public bool disabled = false; // Flag to disable objects
         public List<GameObject> disabledObjects;  // List of objects to disable
+
 
         private void OnCollisionEnter(Collision collision)
         {
@@ -35,7 +38,11 @@ namespace Biostart.Impact
                 SpawnBloodEffect(hitPosition, hitNormal);
             }
         }
-
+        IEnumerator DisableEffect(ObjectPool pool,GameObject prefab)
+        {
+            yield return new WaitForSeconds(bloodEffectPrefabsDestroy);
+            pool.Release(prefab.gameObject);
+        }
         public void SpawnBloodEffect(Vector3 position, Vector3 normal)
         {
             Quaternion rotation = Quaternion.LookRotation(normal);
@@ -43,10 +50,11 @@ namespace Biostart.Impact
             // Instantiate the main blood effect from the list of prefabs
             foreach (var bloodEffectPrefab in bloodEffectPrefabs)
             {
-                if (bloodEffectPrefab != null)
+                if (bloodEffectPrefab != null && gameObject.activeInHierarchy)
                 {
-                    GameObject effect = Instantiate(bloodEffectPrefab, position, rotation);
-                    Destroy(effect, bloodEffectPrefabsDestroy); // Destroy after 5 seconds
+                    GameObject effect = bloodEffectPrefab.GetObject(position, rotation);
+                    StartCoroutine(DisableEffect(bloodEffectPrefab, effect));
+                    //Destroy(effect, bloodEffectPrefabsDestroy); // Destroy after 5 seconds
                 }
             }
 
@@ -92,7 +100,7 @@ namespace Biostart.Impact
             }
         }
     }
-
+    
     [System.Serializable]
     public struct BloodEffectData
     {

@@ -1353,7 +1353,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (enemyManager.CheckGrounded())
             {
-                Debug.Log("Enemy Landed");
+               // Debug.Log("Enemy Landed");
               
                 break;
             }

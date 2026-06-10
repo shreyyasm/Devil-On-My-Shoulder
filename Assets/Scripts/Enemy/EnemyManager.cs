@@ -723,7 +723,7 @@ public class EnemyManager : MonoBehaviour
         // 🔥 IMPORTANT: Cooldown check
         //if (Time.time < nextAttackTime) return;
 
-        Debug.Log("Player");
+        //Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
 
@@ -1023,7 +1023,7 @@ public class EnemyManager : MonoBehaviour
 
         dashCoroutine = null;
 
-        Debug.Log("Spider Jump Finished");
+        //Debug.Log("Spider Jump Finished");
     }
     public void StopDashImmediate()
     {

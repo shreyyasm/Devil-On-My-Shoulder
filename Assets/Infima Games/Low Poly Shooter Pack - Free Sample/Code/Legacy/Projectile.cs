@@ -272,7 +272,8 @@ public class Projectile : MonoBehaviour {
             Vector3 pos = contact.point;
             BulletImpactPool.GetObject(pos, rot);
             //Instantiate(impactPrefab, pos, rot);
-            bulletPool.Release(gameObject);
+            if (gameObject.activeInHierarchy)
+                bulletPool.Release(gameObject);
         }
 
         if (specialBullets == SpecialBullets.Danceler && collision.gameObject.layer == 16)
@@ -381,8 +382,8 @@ public class Projectile : MonoBehaviour {
                 );
             }
 
-
-            bulletPool.Release(gameObject);
+            if(gameObject.activeInHierarchy)
+                bulletPool.Release(gameObject);
             //Destroy bullet object
             //Destroy(gameObject);
         }

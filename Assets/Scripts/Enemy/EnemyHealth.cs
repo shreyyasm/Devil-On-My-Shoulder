@@ -116,11 +116,11 @@ public class EnemyHealth : MonoBehaviour
     {
         if (ragdollRB == null)
         {
-            Debug.Log("No ragdoll RB");
+            //Debug.Log("No ragdoll RB");
             yield break;
         }
 
-        Debug.Log(ragdollRB.name);
+        //Debug.Log(ragdollRB.name);
 
        
         ragdollRB.isKinematic = false;
@@ -129,7 +129,7 @@ public class EnemyHealth : MonoBehaviour
         Vector3 launchVelocity =
             -transform.forward * force;
 
-        Debug.Log(launchVelocity);
+       // Debug.Log(launchVelocity);
 
         ragdollRB.velocity = launchVelocity;
     }
@@ -169,7 +169,7 @@ public class EnemyHealth : MonoBehaviour
 
         killText.UpdateText();
 
-        Debug.Log("Killed");
+        //Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
        
 
@@ -196,8 +196,12 @@ public class EnemyHealth : MonoBehaviour
         {
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
-            ragdoll.SetActive(true);
-            ragdoll.transform.SetParent(null);
+            if(ragdoll != null)
+            {
+                ragdoll.SetActive(true);
+                ragdoll.transform.SetParent(null);
+            }
+        
            
         }
         //Destroy(gameObject);
