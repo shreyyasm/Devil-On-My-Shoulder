@@ -196,7 +196,7 @@ public class EnemyHealth : MonoBehaviour
         {
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
-            if(ragdoll != null)
+            if(ragdoll != null && !isFinisher)
             {
                 ragdoll.SetActive(true);
                 ragdoll.transform.SetParent(null);

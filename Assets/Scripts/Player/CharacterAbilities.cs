@@ -565,10 +565,10 @@ public class CharacterAbilities : MonoBehaviour
         destination.y = transform.position.y;
 
         // Face the enemy from the finisher point
-        Vector3 lookDir = target.position - destination;
+        Vector3 lookDir = finisherPoint.forward;
         lookDir.y = 0f;
 
-        Quaternion targetRot = Quaternion.LookRotation(lookDir);
+        Quaternion targetRot = Quaternion.LookRotation(-lookDir);
 
         while (timer < duration)
         {
@@ -585,6 +585,12 @@ public class CharacterAbilities : MonoBehaviour
 
             yield return null;
         }
+        enemyManager.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        enemyManager.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
 
         // Snap exactly at the end
         transform.position = destination;
@@ -623,7 +629,8 @@ public class CharacterAbilities : MonoBehaviour
         playerMovement.finisherActive = false;
         isFinishing = false;
         GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
-       // LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
+        rb.isKinematic = false;
+        // LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
         //enemyHealthTemp.Die(false, true, false, false);
 
         Debug.Log("FInisher End");

@@ -92,10 +92,16 @@ public class JockyBat : MonoBehaviour
     {
         EnemyManager.AttackPlaySoundEffect();
     }
-    public void Die()
+    public void FinisherDie()
     {
-        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false,true, false); });
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, true,false, false); });
 
       
+    }
+    public void KickDie()
+    {
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false, true, false); });
+
+
     }
 }
