@@ -15,6 +15,7 @@ public class EnemyHealth : MonoBehaviour
     public GameObject ragdoll;
     public Rigidbody ragdollRB;
 
+  
     [Header("Runtime Health Values")]
     public float maxHealth;
     public float health;
@@ -140,8 +141,9 @@ public class EnemyHealth : MonoBehaviour
         GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
 
-        ImpactFrameEffect.Instance.GoBlack();
-        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        //ImpactFrameEffect.Instance.GoBlack();
+        //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
         AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy"); 

@@ -36,7 +36,7 @@ public class EnemyProjectile : MonoBehaviour
     public float turnSpeed = 10f;
     void Update()
     {
-        if (!enemyRigibody.GetComponent<EnemyManager>().projectile_Parried) return;
+        if (enemyRigibody!= null && !enemyRigibody.GetComponent<EnemyManager>().projectile_Parried) return;
         // Keep flying forward
         //rb.velocity = transform.forward * eliminatorSpeed;
 

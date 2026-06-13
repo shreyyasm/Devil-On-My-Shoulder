@@ -9,6 +9,7 @@ public class JockyBat : MonoBehaviour
     public ParticleSystem PunchBlood;
     public ParticleSystem KnifeBlood;
     public ParticleSystem KickBlood;
+    public ParticleSystem KickBlood2;
 
     public EnemyManager EnemyManager;
 
@@ -56,6 +57,13 @@ public class JockyBat : MonoBehaviour
     public void SpawnBloodKick()
     {
         KickBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+    }
+    public void SpawnBloodKick2()
+    {
+        KickBlood2.Play();
         DoTimeSlow();
         RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
         GetComponent<HitstopShake>().DoShake();

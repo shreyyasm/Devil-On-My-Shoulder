@@ -21,6 +21,7 @@ public class EnemyManager : MonoBehaviour
     public ObjectPool After_DeathExplosion;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
+    public float finisherTime;
 
 
     // ================================
@@ -488,6 +489,7 @@ public class EnemyManager : MonoBehaviour
         detonateDistance = enemyStats.detonateDistance;
         #endregion
         After_DeathExplosion = enemyStats.AfterDeath_ExplosionPrefab;
+        finisherTime = enemyStats.finisherTime;
 
         #region Audio key Set
         // =====================
@@ -592,7 +594,7 @@ public class EnemyManager : MonoBehaviour
 
         if (playerMovement.finisherActive)
             return;
-        //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
+        //if (!kickOn && enemyType == EnemyStats.EnemyType.Shoot && !canShootMove)
         //{
         //    // Get direction to player (ignore Y so it only rotates horizontally)
         //    Vector3 direction = player.transform.position - transform.position;
@@ -642,6 +644,23 @@ public class EnemyManager : MonoBehaviour
         }
         if (enemyType == EnemyStats.EnemyType.Shoot)
         {
+            Vector3 dir =
+       player.position - transform.position;
+
+            dir.y = 0f;
+
+            if (dir.sqrMagnitude < 0.01f)
+                return;
+
+            Quaternion targetRot =
+                Quaternion.LookRotation(dir);
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRot,
+                    10 * Time.deltaTime
+                );
             if (coverType == EnemyStats.CoverType.Yes)
             {
                 HandleCoverShooter();
@@ -854,7 +873,8 @@ public class EnemyManager : MonoBehaviour
     // ================================
     // ATTACK ROUTINE
     // ================================
-    private int dashToken = 0;
+    [HideInInspector]
+    public int dashToken = 0;
     private bool dashForceCancelled;
     IEnumerator AttackRoutine()
     {
@@ -1000,15 +1020,17 @@ public class EnemyManager : MonoBehaviour
 
         EndDash(token);
     }
-    void EndDash(int token)
+    public void EndDash(int token)
     {
         if (token != dashToken)
             return;
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        if (!rb.isKinematic)
+            rb.velocity = Vector3.zero;
+        if (!rb.isKinematic)
+            rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
         // Re-enable NavMesh
@@ -1171,28 +1193,34 @@ public class EnemyManager : MonoBehaviour
             shootTimer = shootInterval;
         }
     }
+    bool isShooting;
     void HandleMovingShooter()
     {
-        if (player == null) return;
+        if (player == null)
+            return;
 
-        // Shooting
         shootTimer -= Time.deltaTime;
-        if (shootTimer <= 0f)
-        {
-            TryShoot();
-            shootTimer = shootInterval;
-        }
 
-        // Random reposition
-        positionTimer -= Time.deltaTime;
-
-        if (positionTimer <= 0f)
+        if (shootTimer <= 0f && !isShooting)
         {
-            SetRandomShootPosition();
-            positionTimer = changePositionTime;
+            StartCoroutine(HandleShooting());
         }
 
         agent.SetDestination(shootMoveTarget);
+    }
+    IEnumerator HandleShooting()
+    {
+        isShooting = true;
+
+        TryShoot();
+
+        yield return new WaitForSeconds(1f);
+
+        SetRandomShootPosition();
+
+        shootTimer = shootInterval;
+
+        isShooting = false;
     }
     void HandleCoverShooter()
     {
@@ -1395,6 +1423,8 @@ public class EnemyManager : MonoBehaviour
         {
             Shoot();
         }
+       
+        
     }
     IEnumerator BurstShoot()
     {
@@ -1413,9 +1443,12 @@ public class EnemyManager : MonoBehaviour
     void Shoot()
     {
        
+        
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
-       
+
+
+        animator.SetTrigger("Attack");
         Vector3 targetPosition = player.position + Vector3.up * 2.3f; // Aim slightly above feet
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
@@ -1434,7 +1467,7 @@ public class EnemyManager : MonoBehaviour
 
             rb.velocity = direction * shootSpeed;
         }
-
+        //animator.SetTrigger("Attack");
         Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
     }
     void SetRandomShootPosition()
