@@ -68,6 +68,18 @@ public class EnemyManager : MonoBehaviour
     public float attackIntervalMax;
     public float recoverTime;
     public bool isAttacking;
+
+
+    [SerializeField] private bool airEnemy;
+    [SerializeField] float directAttackRadius = 8f;
+
+    [SerializeField] float zigZagDistance = 4f;
+    [SerializeField] float zigZagInterval = 0.5f;
+
+    float zigZagTimer;
+    bool zigLeft;
+    Vector3 currentMoveTarget;
+
     // ================================
     // DASH SETTINGS
     // ================================
@@ -338,7 +350,7 @@ public class EnemyManager : MonoBehaviour
         attack3dAudioSource = GetComponent<AudioSource>();
         enemyHealth = GetComponent<EnemyHealth>();
         Target = player;
-       
+    
        
     }
 
@@ -541,32 +553,32 @@ public class EnemyManager : MonoBehaviour
         }
 
 
-        if (surfaceType == EnemyStats.SurfaceType.Air)
-        {
-            // Move sprite up
-            if (sprite != null)
-            {
-                Vector3 pos = sprite.transform.localPosition;
-                pos.y = spriteHeight;
-                sprite.transform.localPosition = pos;
-            }
+        //if (surfaceType == EnemyStats.SurfaceType.Air)
+        //{
+        //    // Move sprite up
+        //    if (sprite != null)
+        //    {
+        //        Vector3 pos = sprite.transform.localPosition;
+        //        pos.y = spriteHeight;
+        //        sprite.transform.localPosition = pos;
+        //    }
 
-            // Adjust collider center
-            Collider col = GetComponent<Collider>();
+        //    // Adjust collider center
+        //    Collider col = GetComponent<Collider>();
 
-            if (col is CapsuleCollider capsule)
-            {
-                Vector3 center = capsule.center;
-                center.y = colliderHeight;
-                capsule.center = center;
-            }
-            else if (col is BoxCollider box)
-            {
-                Vector3 center = box.center;
-                center.y = colliderHeight;
-                box.center = center;
-            }
-        }
+        //    if (col is CapsuleCollider capsule)
+        //    {
+        //        Vector3 center = capsule.center;
+        //        center.y = colliderHeight;
+        //        capsule.center = center;
+        //    }
+        //    else if (col is BoxCollider box)
+        //    {
+        //        Vector3 center = box.center;
+        //        center.y = colliderHeight;
+        //        box.center = center;
+        //    }
+        //}
 
     }
     private bool lastFinisherState;
@@ -784,6 +796,12 @@ public class EnemyManager : MonoBehaviour
 
     void HandleChase()
     {
+        if (airEnemy)
+        {
+            HandleZigZagChase();
+            return;
+        }
+
         float currentDistance = Vector3.Distance(transform.position, player.position);
 
         if (enemyType == EnemyStats.EnemyType.Melee && canDash)
@@ -831,6 +849,114 @@ public class EnemyManager : MonoBehaviour
                     StartCoroutine(AttackRoutine());
                 }
             }
+        }
+    }
+    void HandleZigZagChase()
+    {
+        if (player == null || !agent.enabled)
+            return;
+
+        float distanceToPlayer =
+            Vector3.Distance(
+                transform.position,
+                player.position
+            );
+
+        // ==========================
+        // DIRECT CHASE + ATTACK
+        // ==========================
+        if (distanceToPlayer <= directAttackRadius)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+
+            if (distanceToPlayer <= attackRange)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+
+                if (!isAttacking)
+                {
+                    hasHitPlayer = false;
+
+                    if (canGrab && !isGrabbing)
+                    {
+                        if (currentGrabber == null)
+                        {
+                            currentGrabber = this;
+                            StartCoroutine(GrabRoutine());
+                        }
+                        else
+                        {
+                            StartCoroutine(AttackRoutine());
+                        }
+                    }
+                    else
+                    {
+                        StartCoroutine(AttackRoutine());
+                    }
+                }
+            }
+
+            return;
+        }
+
+        // ==========================
+        // ZIG-ZAG CHASE
+        // ==========================
+        zigZagTimer -= Time.deltaTime;
+
+        if (zigZagTimer <= 0f)
+        {
+            zigZagTimer = zigZagInterval;
+
+            Vector3 dirToPlayer =
+                (player.position - transform.position).normalized;
+
+            Vector3 side =
+                zigLeft
+                ? -Vector3.Cross(dirToPlayer, Vector3.up)
+                : Vector3.Cross(dirToPlayer, Vector3.up);
+
+            zigLeft = !zigLeft;
+
+            // Reduce zig-zag amount when getting closer
+            float sideAmount =
+                Mathf.Clamp(
+                    distanceToPlayer * 0.25f,
+                    0f,
+                    zigZagDistance
+                );
+
+            // IMPORTANT:
+            // Always move FORWARD toward player
+            // while adding side movement
+            currentMoveTarget =
+                transform.position +
+                dirToPlayer * 4f +
+                side * sideAmount;
+        }
+
+        agent.isStopped = false;
+        agent.SetDestination(currentMoveTarget);
+
+        // Optional: smoothly face movement direction
+        Vector3 moveDir =
+            agent.desiredVelocity;
+
+        moveDir.y = 0f;
+
+        if (moveDir.sqrMagnitude > 0.1f)
+        {
+            Quaternion targetRot =
+                Quaternion.LookRotation(moveDir);
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRot,
+                    Time.deltaTime * 8f
+                );
         }
     }
 
@@ -999,21 +1125,37 @@ public class EnemyManager : MonoBehaviour
         rb.velocity = launchVelocity;
 
         // -------- Wait until landed --------
-
+        float airTimer = 0f;
         while (true)
         {
+         
             if (token != dashToken)
                 yield break;
 
-            bool grounded =
-                Physics.Raycast(
-                    transform.position + Vector3.up * 0.1f,
-                    Vector3.down,
-                    landingCheckDistance
-                );
+            if(surfaceType == EnemyStats.SurfaceType.Ground)
+            {
+                bool grounded =
+               Physics.Raycast(
+                   transform.position + Vector3.up * 0.1f,
+                   Vector3.down,
+                   landingCheckDistance
+               );
 
-            if (grounded && rb.velocity.y <= 0.1f)
-                break;
+                if (grounded && rb.velocity.y <= 0.1f)
+                    break;
+            }
+
+            if (surfaceType == EnemyStats.SurfaceType.Air)
+            {
+                airTimer += Time.deltaTime;
+               
+                if (airTimer >= dashDuration)
+                    break;
+
+                Debug.Log(dashDuration);
+            }
+
+
 
             yield return null;
         }
@@ -1206,7 +1348,7 @@ public class EnemyManager : MonoBehaviour
             StartCoroutine(HandleShooting());
         }
 
-        agent.SetDestination(shootMoveTarget);
+        
     }
     IEnumerator HandleShooting()
     {
@@ -1214,8 +1356,9 @@ public class EnemyManager : MonoBehaviour
 
         TryShoot();
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(1);
 
+        agent.SetDestination(shootMoveTarget);
         SetRandomShootPosition();
 
         shootTimer = shootInterval;
@@ -1459,8 +1602,12 @@ public class EnemyManager : MonoBehaviour
 
         if (rb != null)
         {
-            rb.velocity = Vector3.zero; // Clear anything
-            rb.angularVelocity = Vector3.zero;
+            if(!rb.isKinematic)
+            {
+                rb.velocity = Vector3.zero; // Clear anything
+                rb.angularVelocity = Vector3.zero;
+
+            }
 
             rb.useGravity = false; // VERY IMPORTANT for straight bullets
             rb.drag = 0f;

@@ -141,9 +141,9 @@ public class EnemyHealth : MonoBehaviour
         GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
 
-        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
-        //ImpactFrameEffect.Instance.GoBlack();
-        //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        //RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        ImpactFrameEffect.Instance.GoBlack();
+        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
         AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy"); 
@@ -192,6 +192,7 @@ public class EnemyHealth : MonoBehaviour
             agent.isStopped = true;
             agent.ResetPath();                 // 🔥 removes path completely
             agent.velocity = Vector3.zero;
+            GetComponent<BoxCollider>().enabled = false;
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
         }    
         else

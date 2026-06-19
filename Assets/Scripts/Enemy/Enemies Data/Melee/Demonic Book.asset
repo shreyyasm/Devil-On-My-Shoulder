@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1625a88454a40574289e67afe35d40a3, type: 3}
+  m_Name: Demonic Book
+  m_EditorClassIdentifier: 
+  enemyName: DemonicBook
+  enemyType: 0
+  coverType: 0
+  shieldType: 0
+  deathType: 0
+  surfaceType: 1
+  AfterDeath_ExplosionPrefab: {fileID: 11400000, guid: 4380eae46d5695645a571cf961ee5e6e,
+    type: 2}
+  finisherTime: 2.4
+  spriteHeight: 0
+  colliderHeight: 0.5
+  health: 20
+  gunHealth: 0
+  shieldHealth: 0
+  speed: 40
+  damage: 10
+  AttackRange: 4
+  AttackIntervalMin: 3
+  AttackIntervalMax: 4
+  RecoverTime: 1
+  StoppingDistance: 1.5
+  canDash: 1
+  canGrab: 0
+  grabDamageInterval: 0.5
+  grabOffset: 1
+  grabHeightOffset: 0
+  DashForce: 0.1
+  DashLoadTime: 0.05
+  DashDurationTime: 0.1
+  DashStopTime: 0.1
+  projectilePrefab: {fileID: 0}
+  ShootSpeed: 1
+  ShootInterval: 2
+  ChangePositionTime: 3
+  MoveRadius: 10
+  canShootMove: 0
+  burstShooting: 0
+  burstCount: 3
+  burstInterval: 0.1
+  CoverTime: 0
+  PeekDuration: 0
+  PeekRadius: 0
+  CoverSearchRadius: 0
+  VisionHeight: 0
+  spawnEnemyPrefab: {fileID: 0}
+  spawnInterval: 3
+  spawnLimit: 5
+  useSpawnLimit: 0
+  isShooterTombstone: 0
+  repositionInterval: 6
+  spawnBatchCount: 3
+  shootDelayAfterSpawn: 2
+  shootProjectilePrefab: {fileID: 0}
+  mortarArcHeight: 6
+  shootProjectileSpeed: 20
+  recoverAfterShot: 3
+  initialSpawnDelay: 3
+  canThrowerDash: 1
+  throwerDashForce: 15
+  throwerDashDuration: 0.35
+  throwerDashInterval: 2
+  ImmortalRadius: 0
+  isShooterGuard: 0
+  GuardProjectile: {fileID: 0}
+  GuardShootSpeed: 0
+  GuardShootInterval: 0
+  detonateDistance: 2.5
+  attackHitKey: AttackHit
+  attackTryKey: AttackTry

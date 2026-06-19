@@ -57,6 +57,7 @@ public class CharacterAbilities : MonoBehaviour
     public GameObject renderFinisherCanvas;
     public GameObject mainCameraTexture;
     public Transform finisherPosition;
+    public GameObject crosshairCanvas;
 
     public GameObject playerRightHand;
     public GameObject playerLeftHand;
@@ -475,6 +476,7 @@ public class CharacterAbilities : MonoBehaviour
             renderFinisherCanvas.SetActive(true);
             finisherCamera.transform.rotation = Quaternion.identity;
             rootCamera.GetComponent<CameraLook>().enabled = false;
+            crosshairCanvas.SetActive(false);
 
             playerLeftHand.SetActive(false);
             playerRightHand.SetActive(false);
@@ -701,6 +703,7 @@ public class CharacterAbilities : MonoBehaviour
         playerLeftHand.SetActive(true);
         playerRightHand.SetActive(true);
         rb.isKinematic = false;
+        crosshairCanvas.SetActive(true);
 
         Debug.Log("Finisher End");
     }

@@ -464,7 +464,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         // 🎥 LOCK CAMERA FOR JUMP
-        //cameraLocked = true;
+        cameraLocked = true;
 
         // stop any previous camera lerp
         if (cameralerpRoutine != null)

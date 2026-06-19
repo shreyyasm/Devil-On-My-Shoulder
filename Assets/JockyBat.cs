@@ -68,6 +68,17 @@ public class JockyBat : MonoBehaviour
         RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
         GetComponent<HitstopShake>().DoShake();
     }
+    public void SpawnBloodDouble()
+    {
+        PunchBlood.Play();      
+        KnifeBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+
+       
+
+    }
     [Header("Time Slow Settings")]
     [SerializeField] private float slowTimeScale = 0.15f;
     [SerializeField] private float slowDuration = 1f;
