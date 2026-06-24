@@ -125,7 +125,7 @@ public class SFXManager : MonoBehaviour
             Debug.LogWarning($"SFXManager: No clips found for key '{fullName}'.");
         }
         AudioClip clip = clips[Random.Range(0, clips.Count)];
-        //Debug.Log(clip.name);
+        Debug.Log(clip.name);
         return clip;
     }
 }

@@ -26,7 +26,6 @@ public class EnemyStats : ScriptableObject
     // DeathAfter STATS
     // ================================
     public ObjectPool AfterDeath_ExplosionPrefab;
-    public float finisherTime;
 
     // ================================
     // Surface STATS

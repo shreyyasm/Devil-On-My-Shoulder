@@ -15,7 +15,6 @@ public class EnemyHealth : MonoBehaviour
     public GameObject ragdoll;
     public Rigidbody ragdollRB;
 
-  
     [Header("Runtime Health Values")]
     public float maxHealth;
     public float health;
@@ -117,11 +116,11 @@ public class EnemyHealth : MonoBehaviour
     {
         if (ragdollRB == null)
         {
-            //Debug.Log("No ragdoll RB");
+            Debug.Log("No ragdoll RB");
             yield break;
         }
 
-        //Debug.Log(ragdollRB.name);
+        Debug.Log(ragdollRB.name);
 
        
         ragdollRB.isKinematic = false;
@@ -130,7 +129,7 @@ public class EnemyHealth : MonoBehaviour
         Vector3 launchVelocity =
             -transform.forward * force;
 
-       // Debug.Log(launchVelocity);
+        Debug.Log(launchVelocity);
 
         ragdollRB.velocity = launchVelocity;
     }
@@ -141,7 +140,6 @@ public class EnemyHealth : MonoBehaviour
         GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
 
-        //RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
         ImpactFrameEffect.Instance.GoBlack();
         LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
@@ -171,7 +169,7 @@ public class EnemyHealth : MonoBehaviour
 
         killText.UpdateText();
 
-        //Debug.Log("Killed");
+        Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
        
 
@@ -192,19 +190,14 @@ public class EnemyHealth : MonoBehaviour
             agent.isStopped = true;
             agent.ResetPath();                 // 🔥 removes path completely
             agent.velocity = Vector3.zero;
-            GetComponent<BoxCollider>().enabled = false;
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
         }    
         else
         {
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
-            if(ragdoll != null && !isFinisher)
-            {
-                ragdoll.SetActive(true);
-                ragdoll.transform.SetParent(null);
-            }
-        
+            ragdoll.SetActive(true);
+            ragdoll.transform.SetParent(null);
            
         }
         //Destroy(gameObject);

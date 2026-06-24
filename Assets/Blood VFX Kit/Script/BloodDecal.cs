@@ -1,14 +1,12 @@
-using QFSW.MOP2;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Biostart.Blood
 {
     public class BloodDecal : MonoBehaviour
     {
-        public List<ObjectPool> decalPrefabs; // List of decal prefabs
+        public List<GameObject> decalPrefabs; // List of decal prefabs
         public bool randomRotation = true; // Rotation on spawn
         public float minScale = 1f; // Minimum decal size
         public float maxScale = 1.5f; // Maximum decal size
@@ -49,26 +47,16 @@ namespace Biostart.Blood
                             : Quaternion.LookRotation(-normal, Vector3.up);
 
                         // Select a random prefab from the list
-                        ObjectPool decalPrefab = decalPrefabs[Random.Range(0, decalPrefabs.Count)];
+                        GameObject decalPrefab = decalPrefabs[Random.Range(0, decalPrefabs.Count)];
 
                         // Spawn the decal at the collision position
-                        //GameObject decal = Instantiate(decalPrefab, pos + normal * 0.0002f, rotation);
-                        
-                        //Destroy(decal, destroyDelay); // Destroy the decal after a delay
-
-                        GameObject decal = decalPrefab.GetObject(pos + normal * 0.0002f, rotation);
+                        GameObject decal = Instantiate(decalPrefab, pos + normal * 0.0002f, rotation);
                         decal.transform.localScale *= Random.Range(minScale, maxScale); // Scale the decal
-                        StartCoroutine(DisableEffect(decalPrefab, decal));
-                      
+                        Destroy(decal, destroyDelay); // Destroy the decal after a delay
                     }
                     break; // Stop checking if at least one tag matches
                 }
             }
-        }
-        IEnumerator DisableEffect(ObjectPool pool, GameObject prefab)
-        {
-            yield return new WaitForSeconds(destroyDelay);
-            pool.Release(prefab.gameObject);
         }
     }
 }

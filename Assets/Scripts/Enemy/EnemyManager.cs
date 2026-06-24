@@ -21,7 +21,6 @@ public class EnemyManager : MonoBehaviour
     public ObjectPool After_DeathExplosion;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
-    public float finisherTime;
 
 
     // ================================
@@ -68,18 +67,6 @@ public class EnemyManager : MonoBehaviour
     public float attackIntervalMax;
     public float recoverTime;
     public bool isAttacking;
-
-
-    [SerializeField] private bool airEnemy;
-    [SerializeField] float directAttackRadius = 8f;
-
-    [SerializeField] float zigZagDistance = 4f;
-    [SerializeField] float zigZagInterval = 0.5f;
-
-    float zigZagTimer;
-    bool zigLeft;
-    Vector3 currentMoveTarget;
-
     // ================================
     // DASH SETTINGS
     // ================================
@@ -350,7 +337,7 @@ public class EnemyManager : MonoBehaviour
         attack3dAudioSource = GetComponent<AudioSource>();
         enemyHealth = GetComponent<EnemyHealth>();
         Target = player;
-    
+       
        
     }
 
@@ -501,7 +488,6 @@ public class EnemyManager : MonoBehaviour
         detonateDistance = enemyStats.detonateDistance;
         #endregion
         After_DeathExplosion = enemyStats.AfterDeath_ExplosionPrefab;
-        finisherTime = enemyStats.finisherTime;
 
         #region Audio key Set
         // =====================
@@ -553,32 +539,32 @@ public class EnemyManager : MonoBehaviour
         }
 
 
-        //if (surfaceType == EnemyStats.SurfaceType.Air)
-        //{
-        //    // Move sprite up
-        //    if (sprite != null)
-        //    {
-        //        Vector3 pos = sprite.transform.localPosition;
-        //        pos.y = spriteHeight;
-        //        sprite.transform.localPosition = pos;
-        //    }
+        if (surfaceType == EnemyStats.SurfaceType.Air)
+        {
+            // Move sprite up
+            if (sprite != null)
+            {
+                Vector3 pos = sprite.transform.localPosition;
+                pos.y = spriteHeight;
+                sprite.transform.localPosition = pos;
+            }
 
-        //    // Adjust collider center
-        //    Collider col = GetComponent<Collider>();
+            // Adjust collider center
+            Collider col = GetComponent<Collider>();
 
-        //    if (col is CapsuleCollider capsule)
-        //    {
-        //        Vector3 center = capsule.center;
-        //        center.y = colliderHeight;
-        //        capsule.center = center;
-        //    }
-        //    else if (col is BoxCollider box)
-        //    {
-        //        Vector3 center = box.center;
-        //        center.y = colliderHeight;
-        //        box.center = center;
-        //    }
-        //}
+            if (col is CapsuleCollider capsule)
+            {
+                Vector3 center = capsule.center;
+                center.y = colliderHeight;
+                capsule.center = center;
+            }
+            else if (col is BoxCollider box)
+            {
+                Vector3 center = box.center;
+                center.y = colliderHeight;
+                box.center = center;
+            }
+        }
 
     }
     private bool lastFinisherState;
@@ -606,7 +592,7 @@ public class EnemyManager : MonoBehaviour
 
         if (playerMovement.finisherActive)
             return;
-        //if (!kickOn && enemyType == EnemyStats.EnemyType.Shoot && !canShootMove)
+        //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
         //{
         //    // Get direction to player (ignore Y so it only rotates horizontally)
         //    Vector3 direction = player.transform.position - transform.position;
@@ -656,23 +642,6 @@ public class EnemyManager : MonoBehaviour
         }
         if (enemyType == EnemyStats.EnemyType.Shoot)
         {
-            Vector3 dir =
-       player.position - transform.position;
-
-            dir.y = 0f;
-
-            if (dir.sqrMagnitude < 0.01f)
-                return;
-
-            Quaternion targetRot =
-                Quaternion.LookRotation(dir);
-
-            transform.rotation =
-                Quaternion.Slerp(
-                    transform.rotation,
-                    targetRot,
-                    10 * Time.deltaTime
-                );
             if (coverType == EnemyStats.CoverType.Yes)
             {
                 HandleCoverShooter();
@@ -754,7 +723,7 @@ public class EnemyManager : MonoBehaviour
         // 🔥 IMPORTANT: Cooldown check
         //if (Time.time < nextAttackTime) return;
 
-        //Debug.Log("Player");
+        Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
 
@@ -796,12 +765,6 @@ public class EnemyManager : MonoBehaviour
 
     void HandleChase()
     {
-        if (airEnemy)
-        {
-            HandleZigZagChase();
-            return;
-        }
-
         float currentDistance = Vector3.Distance(transform.position, player.position);
 
         if (enemyType == EnemyStats.EnemyType.Melee && canDash)
@@ -851,114 +814,6 @@ public class EnemyManager : MonoBehaviour
             }
         }
     }
-    void HandleZigZagChase()
-    {
-        if (player == null || !agent.enabled)
-            return;
-
-        float distanceToPlayer =
-            Vector3.Distance(
-                transform.position,
-                player.position
-            );
-
-        // ==========================
-        // DIRECT CHASE + ATTACK
-        // ==========================
-        if (distanceToPlayer <= directAttackRadius)
-        {
-            agent.isStopped = false;
-            agent.SetDestination(player.position);
-
-            if (distanceToPlayer <= attackRange)
-            {
-                agent.isStopped = true;
-                agent.velocity = Vector3.zero;
-
-                if (!isAttacking)
-                {
-                    hasHitPlayer = false;
-
-                    if (canGrab && !isGrabbing)
-                    {
-                        if (currentGrabber == null)
-                        {
-                            currentGrabber = this;
-                            StartCoroutine(GrabRoutine());
-                        }
-                        else
-                        {
-                            StartCoroutine(AttackRoutine());
-                        }
-                    }
-                    else
-                    {
-                        StartCoroutine(AttackRoutine());
-                    }
-                }
-            }
-
-            return;
-        }
-
-        // ==========================
-        // ZIG-ZAG CHASE
-        // ==========================
-        zigZagTimer -= Time.deltaTime;
-
-        if (zigZagTimer <= 0f)
-        {
-            zigZagTimer = zigZagInterval;
-
-            Vector3 dirToPlayer =
-                (player.position - transform.position).normalized;
-
-            Vector3 side =
-                zigLeft
-                ? -Vector3.Cross(dirToPlayer, Vector3.up)
-                : Vector3.Cross(dirToPlayer, Vector3.up);
-
-            zigLeft = !zigLeft;
-
-            // Reduce zig-zag amount when getting closer
-            float sideAmount =
-                Mathf.Clamp(
-                    distanceToPlayer * 0.25f,
-                    0f,
-                    zigZagDistance
-                );
-
-            // IMPORTANT:
-            // Always move FORWARD toward player
-            // while adding side movement
-            currentMoveTarget =
-                transform.position +
-                dirToPlayer * 4f +
-                side * sideAmount;
-        }
-
-        agent.isStopped = false;
-        agent.SetDestination(currentMoveTarget);
-
-        // Optional: smoothly face movement direction
-        Vector3 moveDir =
-            agent.desiredVelocity;
-
-        moveDir.y = 0f;
-
-        if (moveDir.sqrMagnitude > 0.1f)
-        {
-            Quaternion targetRot =
-                Quaternion.LookRotation(moveDir);
-
-            transform.rotation =
-                Quaternion.Slerp(
-                    transform.rotation,
-                    targetRot,
-                    Time.deltaTime * 8f
-                );
-        }
-    }
 
     void HandleChaseSpider()
     {
@@ -999,8 +854,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
     // ATTACK ROUTINE
     // ================================
-    [HideInInspector]
-    public int dashToken = 0;
+    private int dashToken = 0;
     private bool dashForceCancelled;
     IEnumerator AttackRoutine()
     {
@@ -1125,54 +979,36 @@ public class EnemyManager : MonoBehaviour
         rb.velocity = launchVelocity;
 
         // -------- Wait until landed --------
-        float airTimer = 0f;
+
         while (true)
         {
-         
             if (token != dashToken)
                 yield break;
 
-            if(surfaceType == EnemyStats.SurfaceType.Ground)
-            {
-                bool grounded =
-               Physics.Raycast(
-                   transform.position + Vector3.up * 0.1f,
-                   Vector3.down,
-                   landingCheckDistance
-               );
+            bool grounded =
+                Physics.Raycast(
+                    transform.position + Vector3.up * 0.1f,
+                    Vector3.down,
+                    landingCheckDistance
+                );
 
-                if (grounded && rb.velocity.y <= 0.1f)
-                    break;
-            }
-
-            if (surfaceType == EnemyStats.SurfaceType.Air)
-            {
-                airTimer += Time.deltaTime;
-               
-                if (airTimer >= dashDuration)
-                    break;
-
-                Debug.Log(dashDuration);
-            }
-
-
+            if (grounded && rb.velocity.y <= 0.1f)
+                break;
 
             yield return null;
         }
 
         EndDash(token);
     }
-    public void EndDash(int token)
+    void EndDash(int token)
     {
         if (token != dashToken)
             return;
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        if (!rb.isKinematic)
-            rb.velocity = Vector3.zero;
-        if (!rb.isKinematic)
-            rb.angularVelocity = Vector3.zero;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
         // Re-enable NavMesh
@@ -1187,7 +1023,7 @@ public class EnemyManager : MonoBehaviour
 
         dashCoroutine = null;
 
-        //Debug.Log("Spider Jump Finished");
+        Debug.Log("Spider Jump Finished");
     }
     public void StopDashImmediate()
     {
@@ -1335,35 +1171,28 @@ public class EnemyManager : MonoBehaviour
             shootTimer = shootInterval;
         }
     }
-    bool isShooting;
     void HandleMovingShooter()
     {
-        if (player == null)
-            return;
+        if (player == null) return;
 
+        // Shooting
         shootTimer -= Time.deltaTime;
-
-        if (shootTimer <= 0f && !isShooting)
+        if (shootTimer <= 0f)
         {
-            StartCoroutine(HandleShooting());
+            TryShoot();
+            shootTimer = shootInterval;
         }
 
-        
-    }
-    IEnumerator HandleShooting()
-    {
-        isShooting = true;
+        // Random reposition
+        positionTimer -= Time.deltaTime;
 
-        TryShoot();
-
-        yield return new WaitForSeconds(1);
+        if (positionTimer <= 0f)
+        {
+            SetRandomShootPosition();
+            positionTimer = changePositionTime;
+        }
 
         agent.SetDestination(shootMoveTarget);
-        SetRandomShootPosition();
-
-        shootTimer = shootInterval;
-
-        isShooting = false;
     }
     void HandleCoverShooter()
     {
@@ -1566,8 +1395,6 @@ public class EnemyManager : MonoBehaviour
         {
             Shoot();
         }
-       
-        
     }
     IEnumerator BurstShoot()
     {
@@ -1586,12 +1413,9 @@ public class EnemyManager : MonoBehaviour
     void Shoot()
     {
        
-        
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
-
-
-        animator.SetTrigger("Attack");
+       
         Vector3 targetPosition = player.position + Vector3.up * 2.3f; // Aim slightly above feet
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
@@ -1602,19 +1426,15 @@ public class EnemyManager : MonoBehaviour
 
         if (rb != null)
         {
-            if(!rb.isKinematic)
-            {
-                rb.velocity = Vector3.zero; // Clear anything
-                rb.angularVelocity = Vector3.zero;
-
-            }
+            rb.velocity = Vector3.zero; // Clear anything
+            rb.angularVelocity = Vector3.zero;
 
             rb.useGravity = false; // VERY IMPORTANT for straight bullets
             rb.drag = 0f;
 
             rb.velocity = direction * shootSpeed;
         }
-        //animator.SetTrigger("Attack");
+
         Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
     }
     void SetRandomShootPosition()

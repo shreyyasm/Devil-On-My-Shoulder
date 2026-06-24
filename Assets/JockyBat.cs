@@ -9,7 +9,6 @@ public class JockyBat : MonoBehaviour
     public ParticleSystem PunchBlood;
     public ParticleSystem KnifeBlood;
     public ParticleSystem KickBlood;
-    public ParticleSystem KickBlood2;
 
     public EnemyManager EnemyManager;
 
@@ -61,24 +60,6 @@ public class JockyBat : MonoBehaviour
         RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
         GetComponent<HitstopShake>().DoShake();
     }
-    public void SpawnBloodKick2()
-    {
-        KickBlood2.Play();
-        DoTimeSlow();
-        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
-        GetComponent<HitstopShake>().DoShake();
-    }
-    public void SpawnBloodDouble()
-    {
-        PunchBlood.Play();      
-        KnifeBlood.Play();
-        DoTimeSlow();
-        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
-        GetComponent<HitstopShake>().DoShake();
-
-       
-
-    }
     [Header("Time Slow Settings")]
     [SerializeField] private float slowTimeScale = 0.15f;
     [SerializeField] private float slowDuration = 1f;
@@ -111,16 +92,10 @@ public class JockyBat : MonoBehaviour
     {
         EnemyManager.AttackPlaySoundEffect();
     }
-    public void FinisherDie()
+    public void Die()
     {
-        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, true,false, false); });
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false,true, false); });
 
       
-    }
-    public void KickDie()
-    {
-        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false, true, false); });
-
-
     }
 }
