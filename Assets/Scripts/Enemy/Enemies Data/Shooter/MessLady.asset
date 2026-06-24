@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1625a88454a40574289e67afe35d40a3, type: 3}
+  m_Name: MessLady
+  m_EditorClassIdentifier: 
+  enemyName: MessLady
+  enemyType: 1
+  coverType: 0
+  shieldType: 1
+  deathType: 0
+  surfaceType: 0
+  AfterDeath_ExplosionPrefab: {fileID: 11400000, guid: 4380eae46d5695645a571cf961ee5e6e,
+    type: 2}
+  finisherTime: 3
+  spriteHeight: 0
+  colliderHeight: 0
+  health: 100
+  gunHealth: 0
+  shieldHealth: 0
+  speed: 10
+  damage: 50
+  AttackRange: 5
+  AttackIntervalMin: 1
+  AttackIntervalMax: 1.5
+  RecoverTime: 2
+  StoppingDistance: 0
+  canDash: 0
+  canGrab: 0
+  grabDamageInterval: 0.5
+  grabOffset: 1
+  grabHeightOffset: 0
+  DashForce: 15
+  DashLoadTime: 0.05
+  DashDurationTime: 0.5
+  DashStopTime: 1.5
+  projectilePrefab: {fileID: 11400000, guid: 2e53f6e09e23202498490778741f402b, type: 2}
+  ShootSpeed: 20
+  ShootInterval: 4
+  ChangePositionTime: 3
+  MoveRadius: 10
+  canShootMove: 1
+  burstShooting: 1
+  burstCount: 3
+  burstInterval: 0.5
+  CoverTime: 3
+  PeekDuration: 2
+  PeekRadius: 3
+  CoverSearchRadius: 50
+  VisionHeight: 1
+  spawnEnemyPrefab: {fileID: 0}
+  spawnInterval: 3
+  spawnLimit: 5
+  useSpawnLimit: 0
+  isShooterTombstone: 0
+  repositionInterval: 6
+  spawnBatchCount: 3
+  shootDelayAfterSpawn: 2
+  shootProjectilePrefab: {fileID: 0}
+  mortarArcHeight: 6
+  shootProjectileSpeed: 20
+  recoverAfterShot: 3
+  initialSpawnDelay: 3
+  canThrowerDash: 1
+  throwerDashForce: 15
+  throwerDashDuration: 0.35
+  throwerDashInterval: 2
+  ImmortalRadius: 0
+  isShooterGuard: 0
+  GuardProjectile: {fileID: 0}
+  GuardShootSpeed: 0
+  GuardShootInterval: 0
+  detonateDistance: 2.5
+  attackHitKey: 
+  attackTryKey: 

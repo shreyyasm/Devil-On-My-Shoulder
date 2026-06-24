@@ -197,8 +197,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.8085074, y: 2.0590377, z: 1}
-  m_Center: {x: 0.014454556, y: -0.28407547, z: 0}
+  m_Size: {x: 0.8529415, y: 2.059038, z: 1}
+  m_Center: {x: -0.0077625276, y: -0.28407547, z: 0}
 --- !u!54 &5669371720841459498
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -278,6 +278,10 @@ MonoBehaviour:
   attackIntervalMax: 2
   recoverTime: 1.5
   isAttacking: 0
+  airEnemy: 0
+  directAttackRadius: 8
+  zigZagDistance: 4
+  zigZagInterval: 0.5
   canDash: 0
   dashForce: 15
   jumpHeight: 3
@@ -750,8 +754,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.3552043, y: 0.45620662, z: 0.49860144}
-  m_Center: {x: 0.00032714606, y: 0.967483, z: -0.0028258802}
+  m_Size: {x: 0.30419222, y: 0.3510209, z: 0.49860144}
+  m_Center: {x: -0.025179029, y: 0.91488993, z: -0.0028258802}
 --- !u!1 &379006521791918727
 GameObject:
   m_ObjectHideFlags: 0
