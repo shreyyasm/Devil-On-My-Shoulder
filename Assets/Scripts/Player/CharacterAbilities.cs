@@ -46,15 +46,21 @@ public class CharacterAbilities : MonoBehaviour
     private bool canFinisherGlow;
     private bool isFullBreathe;
 
+    [Header("Finisher Data")]
     [SerializeField] private float finisherRange = 6f;
-    [SerializeField] private float finisherMoveSpeed = 25f; 
+    [SerializeField] private float finisherMoveSpeed = 25f;
     [SerializeField] float horizontalAngle = 60f;
     [SerializeField] float verticalAngle = 30f;
     [SerializeField] private Vector3 destinationOffset = Vector3.zero;
     public Transform rootCamera;
     public GameObject finisherCamera;
+    public GameObject renderFinisherCanvas;
     public GameObject mainCameraTexture;
     public Transform finisherPosition;
+
+    public GameObject playerRightHand;
+    public GameObject playerLeftHand;
+
 
     private bool isFinishing = false;
 
@@ -202,8 +208,8 @@ public class CharacterAbilities : MonoBehaviour
     #region Ability4_Fields
     [Header("Ability 4 - Inferno Room Lockdown")]
     public bool Ability4_Active;
-   [SerializeField] private GameObject fireRoomPrefab;
-    
+    [SerializeField] private GameObject fireRoomPrefab;
+
     [SerializeField] private LayerMask roomLayer;
 
     private GameObject spawnedFire;
@@ -239,7 +245,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         playerMovement = GetComponent<PlayerMovement>();
-       
+
         if (playerCam == null)
             playerCam = GetComponentInChildren<Camera>();
 
@@ -271,7 +277,7 @@ public class CharacterAbilities : MonoBehaviour
     Transform target;
     private void Update()
     {
-        
+
 
         if (Input.GetKeyDown(KeyCode.X) && !playerMovement.isDashing && playerMovement.grounded)
         {
@@ -286,7 +292,7 @@ public class CharacterAbilities : MonoBehaviour
 
         target = FindFinisherTarget();
 
-        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)         
+        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)
         {
             EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
 
@@ -324,7 +330,7 @@ public class CharacterAbilities : MonoBehaviour
             fovTransitionActive = false;
         }
 
-       
+
 
     }
     private void LateUpdate()
@@ -376,7 +382,7 @@ public class CharacterAbilities : MonoBehaviour
             CheckStates();
         }
     }
-  
+
     private void CheckStates()
     {
         abilityReady = currentKillValue >= maxKillValue;
@@ -438,14 +444,25 @@ public class CharacterAbilities : MonoBehaviour
     private void PerformFinisher()
     {
 
-       
+
         if (isFinishing) return;
+
 
         Transform target = FindFinisherTarget();
 
+        EnemyManager[] enemies =
+    FindObjectsOfType<EnemyManager>();
 
+        foreach (EnemyManager e in enemies)
+        {
+            if (e.canDash)
+                e.StopDashImmediate();
+        }
         if (target != null)
         {
+            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+            enemyManager.EndDash(enemyManager.dashToken);
+
             EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
 
             enemyHealthTemp = enemyHealth;
@@ -455,14 +472,16 @@ public class CharacterAbilities : MonoBehaviour
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
+            renderFinisherCanvas.SetActive(true);
             finisherCamera.transform.rotation = Quaternion.identity;
             rootCamera.GetComponent<CameraLook>().enabled = false;
-         
-          
+
+            playerLeftHand.SetActive(false);
+            playerRightHand.SetActive(false);
 
             mainCameraTexture.SetActive(false);
             GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
-            
+
         }
         // TODO: implement finisher logic later
     }
@@ -539,14 +558,16 @@ public class CharacterAbilities : MonoBehaviour
     }
     IEnumerator FinisherRoutine(Transform target)
     {
-       
         isFinishing = true;
         playerMovement.finisherActive = true;
         playerMovement.CancelSlideImmediately();
-        // 🔥 disable movement system
+
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
 
         EnemyManager enemyManager =
-       target.GetComponentInParent<EnemyManager>();
+            target.GetComponentInParent<EnemyManager>();
 
         Transform finisherPoint =
             enemyManager.finisherTarget;
@@ -555,80 +576,138 @@ public class CharacterAbilities : MonoBehaviour
         float timer = 0f;
 
         Vector3 startPos = transform.position;
-        Quaternion startRot = transform.rotation;
 
         Vector3 destination =
-     finisherPoint.position +
-     finisherPoint.right * destinationOffset.x +
-     finisherPoint.forward * destinationOffset.z;
+            finisherPoint.position +
+            finisherPoint.right * destinationOffset.x +
+            finisherPoint.forward * destinationOffset.z;
 
         destination.y = transform.position.y;
 
-        // Face the enemy from the finisher point
-        Vector3 lookDir = target.position - destination;
-        lookDir.y = 0f;
-
-        Quaternion targetRot = Quaternion.LookRotation(lookDir);
-
+        // Move player to finisher position
         while (timer < duration)
         {
             timer += Time.deltaTime;
 
-            float t = timer / duration;
-            t = Mathf.SmoothStep(0f, 1f, t);
+            float t = Mathf.SmoothStep(
+                0f,
+                1f,
+                timer / duration
+            );
+
+            destination =
+                finisherPoint.position +
+                finisherPoint.right * destinationOffset.x +
+                finisherPoint.forward * destinationOffset.z;
+
+            destination.y = startPos.y;
 
             transform.position =
-                Vector3.Lerp(startPos, destination, t);
+                Vector3.Lerp(
+                    startPos,
+                    destination,
+                    t
+                );
 
-            transform.rotation =
-                Quaternion.Slerp(startRot, targetRot, t);
+            Vector3 lookDir =
+                enemyManager.transform.position -
+                transform.position;
+
+            lookDir.y = 0f;
+
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation =
+                    Quaternion.LookRotation(
+                        lookDir
+                    );
+            }
 
             yield return null;
         }
 
-        // Snap exactly at the end
-        transform.position = destination;
-        transform.rotation = targetRot;
-        //target.position = finisherPosition.position;
-        //transform.LookAt(target.GetComponent<EnemyManager>().finisherTarget);
+        if (!rb.isKinematic)
+        {
+            enemyManager.GetComponent<Rigidbody>().velocity =
+           Vector3.zero;
 
 
-        // Reached enemy, but wait until player is grounded
-        //while (!playerMovement.grounded)
-        //{
-        //    yield return null;
-        //}
+            enemyManager.GetComponent<Rigidbody>().angularVelocity =
+                Vector3.zero;
+
+        }
 
         enemyHealthTemp.FinisherAnimation();
-        string enemyName = enemyHealthTemp.GetComponent<EnemyManager>().enemyName;
-        finisherCamera.GetComponent<Animator>().SetTrigger(enemyName+ "Finisher");
-        rb.velocity = Vector3.zero;
 
-       SFXManager.Instance.PlaySFX(enemyManager.enemyName+"/Finisher", 1f);
-      
-        // 🔥 reached enemy
-        
+        string enemyName =
+            enemyHealthTemp.GetComponent<EnemyManager>().enemyName;
 
-        // TODO:
-        // play animation
-        // damage enemy
-        // camera stuff
+        finisherCamera.GetComponent<Animator>()
+            .SetTrigger(enemyName + "Finisher");
 
-        yield return new WaitForSeconds(1.5f);
+        SFXManager.Instance.PlaySFX(
+            enemyManager.enemyName + "/Finisher",
+            1f
+        );
 
-        // restore control
+        // Lock player during finisher
+        float finisherDuration = enemyManager.finisherTime;
+        float finisherTimer = 0f;
+
+        while (finisherTimer < finisherDuration)
+        {
+            destination =
+                finisherPoint.position +
+                finisherPoint.right * destinationOffset.x +
+                finisherPoint.forward * destinationOffset.z;
+
+            destination.y = startPos.y;
+
+            transform.position = destination;
+
+            Vector3 lookDir =
+                enemyManager.transform.position -
+                transform.position;
+
+            lookDir.y = 0f;
+
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation =
+                    Quaternion.LookRotation(
+                        lookDir
+                    );
+            }
+
+            if (!rb.isKinematic)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+
+            finisherTimer += Time.deltaTime;
+            yield return null;
+        }
+
         rootCamera.GetComponent<CameraLook>().enabled = true;
         finisherCamera.SetActive(false);
+        renderFinisherCanvas.SetActive(false);
         mainCameraTexture.SetActive(true);
+
         playerMovement.finisherActive = false;
         isFinishing = false;
-        GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
-       // LeanTween.delayedCall(0.4f, () => { enemyHealthTemp.Die(false, true, false, false); });
-        //enemyHealthTemp.Die(false, true, false, false);
 
-        Debug.Log("FInisher End");
+        GetComponent<Character>()
+            .characterAnimator
+            .SetBool("FinisherUnholstered", false);
+
+        playerLeftHand.SetActive(true);
+        playerRightHand.SetActive(true);
+        rb.isKinematic = false;
+
+        Debug.Log("Finisher End");
     }
-
     private void OnDrawGizmos()
     {
         Vector3 origin = transform.position;
@@ -799,7 +878,7 @@ public class CharacterAbilities : MonoBehaviour
 
     private void ActivateAbility()
     {
-       
+
         abilityActive = true;
         recharging = false;
         abilityTimer = abilityDuration;
@@ -856,14 +935,14 @@ public class CharacterAbilities : MonoBehaviour
     private void StartAbility1()
     {
         LeanTween.delayedCall(0.3f, () => { if (leftGun != null) leftGun.gameObject.SetActive(true); });
-       
+
         if (rightGun != null) rightGun.gameObject.SetActive(true);
 
         currentFireInterval = startFireInterval; // RESET fire rate
         ability1Routine = StartCoroutine(Ability1FireLoop());
 
         TargetIconCanvas.SetActive(true);
-      
+
 
     }
     private IEnumerator Ability1FireLoop()
@@ -872,7 +951,7 @@ public class CharacterAbilities : MonoBehaviour
         SetTargetFOV(120f, 5f);
         while (abilityActive)
         {
-          
+
             UpdateFireRate();     // 🔥 UPDATE BASED ON TIMER
             FireAbility1Shot();
 
@@ -926,7 +1005,7 @@ public class CharacterAbilities : MonoBehaviour
         Transform socket = fireLeft ? SocketPointLeft : SocketPointRight;
         Animator flash = fireLeft ? flashLeft : flashRight;
 
-        if(fireLeft)
+        if (fireLeft)
         {
             leftGun.GetComponent<Animator>().SetTrigger("Fire");
             leftGunFlash.Play();
@@ -1024,7 +1103,7 @@ public class CharacterAbilities : MonoBehaviour
         return bestTarget;
     }
 
-   
+
     private void UpdateAbility1TargetUI()
     {
         if (!abilityActive || Ability != AbilityType.Ability1 || currentAbility1Target == null)
@@ -1162,7 +1241,7 @@ public class CharacterAbilities : MonoBehaviour
 
         shieldSaw.SetActive(true);
         shieldSaw.transform.SetParent(null);
- 
+
         ability3Routine = StartCoroutine(ShieldThrowRoutine());
 
 

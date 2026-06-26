@@ -9,19 +9,20 @@ public class JockyBat : MonoBehaviour
     public ParticleSystem PunchBlood;
     public ParticleSystem KnifeBlood;
     public ParticleSystem KickBlood;
+    public ParticleSystem KickBlood2;
 
     public EnemyManager EnemyManager;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
     public void ActivateBatCollider()
     {
@@ -31,7 +32,7 @@ public class JockyBat : MonoBehaviour
     {
         WeaponPrefab.SetActive(false);
     }
-    public  void ScreenEffect()
+    public void ScreenEffect()
     {
         //ImpactFrameEffect.Instance.GoBlack();
         //LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
@@ -48,7 +49,7 @@ public class JockyBat : MonoBehaviour
     }
     public void SpawnBloodKnife()
     {
-       KnifeBlood.Play();
+        KnifeBlood.Play();
         DoTimeSlow();
         RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
         GetComponent<HitstopShake>().DoShake();
@@ -59,6 +60,24 @@ public class JockyBat : MonoBehaviour
         DoTimeSlow();
         RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
         GetComponent<HitstopShake>().DoShake();
+    }
+    public void SpawnBloodKick2()
+    {
+        KickBlood2.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+    }
+    public void SpawnBloodDouble()
+    {
+        PunchBlood.Play();
+        KnifeBlood.Play();
+        DoTimeSlow();
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.1f);
+        GetComponent<HitstopShake>().DoShake();
+
+
+
     }
     [Header("Time Slow Settings")]
     [SerializeField] private float slowTimeScale = 0.15f;
@@ -92,10 +111,16 @@ public class JockyBat : MonoBehaviour
     {
         EnemyManager.AttackPlaySoundEffect();
     }
-    public void Die()
+    public void FinisherDie() 
     {
-        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false,true, false); });
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, true, false, false); });
 
-      
+
+    }
+    public void KickDie()
+    {
+        LeanTween.delayedCall(0.3f, () => { EnemyManager.GetComponent<EnemyHealth>().Die(false, false, true, false); });
+
+
     }
 }

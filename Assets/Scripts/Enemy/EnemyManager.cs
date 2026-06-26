@@ -21,6 +21,7 @@ public class EnemyManager : MonoBehaviour
     public ObjectPool After_DeathExplosion;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
+    public float finisherTime;
 
 
     // ================================
@@ -44,7 +45,7 @@ public class EnemyManager : MonoBehaviour
     public EnemyStats.DeathType deathType;
     public EnemyStats.SurfaceType surfaceType;
 
-   
+
     // ================================
     // RUNTIME COMBAT VALUES
     // ================================
@@ -67,6 +68,17 @@ public class EnemyManager : MonoBehaviour
     public float attackIntervalMax;
     public float recoverTime;
     public bool isAttacking;
+
+    [SerializeField] private bool airEnemy;
+
+    [SerializeField] float directAttackRadius = 8f;
+
+    [SerializeField] float zigZagDistance = 4f;
+    [SerializeField] float zigZagInterval = 0.5f;
+
+    float zigZagTimer;
+    bool zigLeft;
+    Vector3 currentMoveTarget;
     // ================================
     // DASH SETTINGS
     // ================================
@@ -178,7 +190,7 @@ public class EnemyManager : MonoBehaviour
     public int spawnBatchCount = 3;
 
     public float shootDelayAfterSpawn = 2f;
- 
+
     public float recoverAfterShot = 3f;
     public float initialSpawnDelay = 3f;
 
@@ -223,7 +235,7 @@ public class EnemyManager : MonoBehaviour
     private float HistoricalPositionInterval;
     private float LastHistoryRecordedTime;
 
-   
+
     private float SpherecastRadius = 0.5f;
     private float LastAttackTime;
 
@@ -256,8 +268,8 @@ public class EnemyManager : MonoBehaviour
     [Header("Guard-Shooter Settings")]
     public bool isShooterGuard;
 
-    public ObjectPool GuardProjectile;     
-    public float GuardShootSpeed;          
+    public ObjectPool GuardProjectile;
+    public float GuardShootSpeed;
     public float GuardShootInterval;
 
     private float guardShootTimer;
@@ -337,8 +349,8 @@ public class EnemyManager : MonoBehaviour
         attack3dAudioSource = GetComponent<AudioSource>();
         enemyHealth = GetComponent<EnemyHealth>();
         Target = player;
-       
-       
+
+
     }
 
     private void Start()
@@ -478,7 +490,7 @@ public class EnemyManager : MonoBehaviour
         #region Guard Stats Reference Set
 
         ImmortalRadius = enemyStats.ImmortalRadius;
-        isShooterGuard = enemyStats.isShooterGuard; 
+        isShooterGuard = enemyStats.isShooterGuard;
         GuardProjectile = enemyStats.GuardProjectile;
         GuardShootSpeed = enemyStats.GuardShootSpeed;
         GuardShootInterval = enemyStats.GuardShootInterval;
@@ -488,6 +500,7 @@ public class EnemyManager : MonoBehaviour
         detonateDistance = enemyStats.detonateDistance;
         #endregion
         After_DeathExplosion = enemyStats.AfterDeath_ExplosionPrefab;
+        finisherTime = enemyStats.finisherTime;
 
         #region Audio key Set
         // =====================
@@ -510,12 +523,12 @@ public class EnemyManager : MonoBehaviour
             currentState = State.Chase;
             SetNextAttackTime();
         }
-        if(enemyType == EnemyStats.EnemyType.Spider)
+        if (enemyType == EnemyStats.EnemyType.Spider)
         {
             currentState = State.Chase;
             SetNextAttackTime();
         }
-      
+
         if (enemyType == EnemyStats.EnemyType.Shoot)
         {
             shootTimer = shootInterval;
@@ -529,7 +542,7 @@ public class EnemyManager : MonoBehaviour
             spawnTimer = spawnInterval;
         }
 
-   
+
         if (enemyType == EnemyStats.EnemyType.Tombstone && isShooterTombstone)
         {
             repositionTimer = repositionInterval;
@@ -575,7 +588,7 @@ public class EnemyManager : MonoBehaviour
         if (enemyHealth.dead) return;
         if (enemyHealth.finisherActive) return;
 
-        if (playerMovement.finisherActive != lastFinisherState )
+        if (playerMovement.finisherActive != lastFinisherState)
         {
             lastFinisherState = playerMovement.finisherActive;
 
@@ -586,13 +599,13 @@ public class EnemyManager : MonoBehaviour
             }
             else
             {
-                    agent.enabled = true;
+                agent.enabled = true;
             }
         }
 
         if (playerMovement.finisherActive)
             return;
-        //if(!kickOn && enemyType != EnemyStats.EnemyType.Spider)
+        //if (!kickOn && enemyType == EnemyStats.EnemyType.Shoot && !canShootMove)
         //{
         //    // Get direction to player (ignore Y so it only rotates horizontally)
         //    Vector3 direction = player.transform.position - transform.position;
@@ -633,7 +646,7 @@ public class EnemyManager : MonoBehaviour
 
         switch (currentState)
         {
-            case State.Chase:               
+            case State.Chase:
                 if (enemyType == EnemyStats.EnemyType.Spider)
                     HandleChaseSpider();
                 else
@@ -642,6 +655,23 @@ public class EnemyManager : MonoBehaviour
         }
         if (enemyType == EnemyStats.EnemyType.Shoot)
         {
+            Vector3 dir =
+       player.position - transform.position;
+
+            dir.y = 0f;
+
+            if (dir.sqrMagnitude < 0.01f)
+                return;
+
+            Quaternion targetRot =
+                Quaternion.LookRotation(dir);
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRot,
+                    10 * Time.deltaTime
+                );
             if (coverType == EnemyStats.CoverType.Yes)
             {
                 HandleCoverShooter();
@@ -700,7 +730,7 @@ public class EnemyManager : MonoBehaviour
             HistoricalPositions.Enqueue(Target.position);
         }
 
-      
+
     }
 
     #region Collision - Methods
@@ -712,18 +742,18 @@ public class EnemyManager : MonoBehaviour
     public bool hasHitPlayer;
     public void AttackRefernce(Collision collision)
     {
-        
+
         if (hasHitPlayer) return;
         //Debug.Log("kaam nhi kr rha ha!");
         if (!collision.gameObject.CompareTag("Player")) return;
-      
+
         if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
         //if (!isBusy) return;
 
         // 🔥 IMPORTANT: Cooldown check
         //if (Time.time < nextAttackTime) return;
 
-        Debug.Log("Player");
+        //Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
 
@@ -750,12 +780,12 @@ public class EnemyManager : MonoBehaviour
 
         //SFXManager.Instance.PlaySFX(enemyName+ "/"+ attackHitKey, 1f);
         hasHitPlayer = true;
-       
+
         // Set cooldown immediately
         nextAttackTime = Time.time + Random.Range(attackIntervalMin, attackIntervalMax);
     }
 
-   
+
     #endregion
 
     #region Melee - Enemy Method
@@ -765,17 +795,23 @@ public class EnemyManager : MonoBehaviour
 
     void HandleChase()
     {
+        if (airEnemy)
+        {
+            HandleZigZagChase();
+            return;
+        }
+
         float currentDistance = Vector3.Distance(transform.position, player.position);
 
         if (enemyType == EnemyStats.EnemyType.Melee && canDash)
             agent.stoppingDistance = attackRange;
 
-       
+
         if (currentDistance > attackRange && agent.enabled)
         {
             agent.isStopped = false;
             agent.SetDestination(player.position);
-            
+
         }
         else
         {
@@ -788,9 +824,9 @@ public class EnemyManager : MonoBehaviour
                 // =============================
                 // GRAB LOGIC
                 // =============================
-               
+
                 hasHitPlayer = false;
-               
+
                 if (canGrab && !isGrabbing)
                 {
                     // If no one is grabbing → grab
@@ -808,13 +844,121 @@ public class EnemyManager : MonoBehaviour
                 else
                 {
                     // Normal melee
-                 
+
                     StartCoroutine(AttackRoutine());
                 }
             }
         }
     }
+  
+    void HandleZigZagChase()
+    {
+        if (player == null || !agent.enabled)
+            return;
 
+        float distanceToPlayer =
+            Vector3.Distance(
+                transform.position,
+                player.position
+            );
+
+        // ==========================
+        // DIRECT CHASE + ATTACK
+        // ==========================
+        if (distanceToPlayer <= directAttackRadius)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(player.position);
+
+            if (distanceToPlayer <= attackRange)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+
+                if (!isAttacking)
+                {
+                    hasHitPlayer = false;
+
+                    if (canGrab && !isGrabbing)
+                    {
+                        if (currentGrabber == null)
+                        {
+                            currentGrabber = this;
+                            StartCoroutine(GrabRoutine());
+                        }
+                        else
+                        {
+                            StartCoroutine(AttackRoutine());
+                        }
+                    }
+                    else
+                    {
+                        StartCoroutine(AttackRoutine());
+                    }
+                }
+            }
+
+            return;
+        }
+
+        // ==========================
+        // ZIG-ZAG CHASE
+        // ==========================
+        zigZagTimer -= Time.deltaTime;
+
+        if (zigZagTimer <= 0f)
+        {
+            zigZagTimer = zigZagInterval;
+
+            Vector3 dirToPlayer =
+                (player.position - transform.position).normalized;
+
+            Vector3 side =
+                zigLeft
+                ? -Vector3.Cross(dirToPlayer, Vector3.up)
+                : Vector3.Cross(dirToPlayer, Vector3.up);
+
+            zigLeft = !zigLeft;
+
+            // Reduce zig-zag amount when getting closer
+            float sideAmount =
+                Mathf.Clamp(
+                    distanceToPlayer * 0.25f,
+                    0f,
+                    zigZagDistance
+                );
+
+            // IMPORTANT:
+            // Always move FORWARD toward player
+            // while adding side movement
+            currentMoveTarget =
+                transform.position +
+                dirToPlayer * 4f +
+                side * sideAmount;
+        }
+
+        agent.isStopped = false;
+        agent.SetDestination(currentMoveTarget);
+
+        // Optional: smoothly face movement direction
+        Vector3 moveDir =
+            agent.desiredVelocity;
+
+        moveDir.y = 0f;
+
+        if (moveDir.sqrMagnitude > 0.1f)
+        {
+            Quaternion targetRot =
+                Quaternion.LookRotation(moveDir);
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRot,
+                    Time.deltaTime * 8f
+                );
+        }
+    }
     void HandleChaseSpider()
     {
         float currentDistance = Vector3.Distance(transform.position, player.position);
@@ -847,20 +991,21 @@ public class EnemyManager : MonoBehaviour
                     StartCoroutine(AttackRoutine());
                 }
             }
-           
+
         }
 
     }
     // ================================
     // ATTACK ROUTINE
     // ================================
-    private int dashToken = 0;
+    [HideInInspector]
+    public int dashToken = 0;
     private bool dashForceCancelled;
     IEnumerator AttackRoutine()
     {
         isBusy = true;
         dashForceCancelled = false;   // 🔥 Reset at start
-       
+
 
         //yield return new WaitForSeconds(0.1f);
 
@@ -873,9 +1018,9 @@ public class EnemyManager : MonoBehaviour
 
         currentState = State.Attack;
         isAttacking = true;
-       
+
         animator.SetTrigger("Attack");
-       
+
 
         if (enemyType != EnemyStats.EnemyType.Spider && agent.enabled)
             agent.isStopped = true;
@@ -894,17 +1039,17 @@ public class EnemyManager : MonoBehaviour
             isAttacking = false;
             yield break;
         }
-       
+
         currentState = State.Idle;
         yield return new WaitForSeconds(recoverTime);
-       
+
         currentState = State.Chase;
-        if(agent.enabled) 
+        if (agent.enabled)
             agent.ResetPath();                 // 🔥 removes path completely
         isBusy = false;
         isAttacking = false;
 
-     
+
     }
     public void AttackPlaySoundEffect()
     {
@@ -935,7 +1080,7 @@ public class EnemyManager : MonoBehaviour
 
         rb.isKinematic = false;
         rb.useGravity = true;
-      
+
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
@@ -1000,15 +1145,17 @@ public class EnemyManager : MonoBehaviour
 
         EndDash(token);
     }
-    void EndDash(int token)
+    public void EndDash(int token)
     {
         if (token != dashToken)
             return;
 
         Rigidbody rb = GetComponent<Rigidbody>();
 
-        rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        if (!rb.isKinematic)
+            rb.velocity = Vector3.zero;
+        if (!rb.isKinematic)
+            rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
         // Re-enable NavMesh
@@ -1023,7 +1170,7 @@ public class EnemyManager : MonoBehaviour
 
         dashCoroutine = null;
 
-        Debug.Log("Spider Jump Finished");
+        //Debug.Log("Spider Jump Finished");
     }
     public void StopDashImmediate()
     {
@@ -1078,12 +1225,12 @@ public class EnemyManager : MonoBehaviour
         isGrabbing = true;
         Physics.IgnoreCollision(enemyCollider, playerCollider, true);
         // Disable NavMesh
-        if(agent != null)
+        if (agent != null)
         {
             agent.isStopped = true;
             agent.enabled = false;
         }
-        
+
 
         Rigidbody enemyRb = GetComponent<Rigidbody>();
 
@@ -1171,28 +1318,34 @@ public class EnemyManager : MonoBehaviour
             shootTimer = shootInterval;
         }
     }
+    bool isShooting;
     void HandleMovingShooter()
     {
-        if (player == null) return;
+        if (player == null)
+            return;
 
-        // Shooting
         shootTimer -= Time.deltaTime;
-        if (shootTimer <= 0f)
-        {
-            TryShoot();
-            shootTimer = shootInterval;
-        }
 
-        // Random reposition
-        positionTimer -= Time.deltaTime;
-
-        if (positionTimer <= 0f)
+        if (shootTimer <= 0f && !isShooting)
         {
-            SetRandomShootPosition();
-            positionTimer = changePositionTime;
+            StartCoroutine(HandleShooting());
         }
 
         agent.SetDestination(shootMoveTarget);
+    }
+    IEnumerator HandleShooting()
+    {
+        isShooting = true;
+
+        TryShoot();
+
+        yield return new WaitForSeconds(1f);
+
+        SetRandomShootPosition();
+
+        shootTimer = shootInterval;
+
+        isShooting = false;
     }
     void HandleCoverShooter()
     {
@@ -1395,6 +1548,8 @@ public class EnemyManager : MonoBehaviour
         {
             Shoot();
         }
+
+
     }
     IEnumerator BurstShoot()
     {
@@ -1412,10 +1567,13 @@ public class EnemyManager : MonoBehaviour
     }
     void Shoot()
     {
-       
+
+
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
-       
+
+
+        animator.SetTrigger("Attack");
         Vector3 targetPosition = player.position + Vector3.up * 2.3f; // Aim slightly above feet
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
@@ -1434,7 +1592,7 @@ public class EnemyManager : MonoBehaviour
 
             rb.velocity = direction * shootSpeed;
         }
-
+        //animator.SetTrigger("Attack");
         Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
     }
     void SetRandomShootPosition()
@@ -1494,7 +1652,7 @@ public class EnemyManager : MonoBehaviour
         GameObject newEnemy =
             spawnEnemyPrefab.GetObject(spawnPos,
             Quaternion.identity);
-            
+
 
 
         // Small pop effect
@@ -1534,7 +1692,7 @@ public class EnemyManager : MonoBehaviour
                 direction * 1.5f +
                 Vector3.up * 0.5f;
 
-            GameObject enemy = 
+            GameObject enemy =
                 spawnEnemyPrefab.GetObject(spawnPos, Quaternion.identity);
 
 
@@ -1575,7 +1733,7 @@ public class EnemyManager : MonoBehaviour
             spawnedAgent.Warp(enemy.transform.position);
         }
     }
- 
+
     void HandleShooterTombstone()
     {
         if (player == null) return;
@@ -1724,7 +1882,7 @@ public class EnemyManager : MonoBehaviour
 
     public IEnumerator Attack()
     {
-   
+
         transform.LookAt(Target);
 
         AttackProjectile.gameObject.SetActive(true);
@@ -1758,7 +1916,7 @@ public class EnemyManager : MonoBehaviour
         }
 
         DoThrow(throwData);
- 
+
         yield return null;
 
         agent.isStopped = false;
@@ -2153,7 +2311,7 @@ public class EnemyManager : MonoBehaviour
             EnemyHealth enemyHealth = GetComponent<EnemyHealth>();
 
             if (enemyHealth != null)
-                enemyHealth.Die(false, false, false,false);
+                enemyHealth.Die(false, false, false, false);
             else
                 Destroy(gameObject);
         }

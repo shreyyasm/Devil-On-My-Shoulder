@@ -15,6 +15,7 @@ public class EnemyHealth : MonoBehaviour
     public GameObject ragdoll;
     public Rigidbody ragdollRB;
 
+
     [Header("Runtime Health Values")]
     public float maxHealth;
     public float health;
@@ -39,7 +40,7 @@ public class EnemyHealth : MonoBehaviour
     [Header("ObjectPool")]
     public ObjectPool BloodPool;
     public enum ShieldType { No, Yes }
-    public enum DeathType { Simple, Explosion}
+    public enum DeathType { Simple, Explosion }
 
     public ObjectPool AfterDeath_ExplosionPrefab;
 
@@ -47,7 +48,7 @@ public class EnemyHealth : MonoBehaviour
     public bool finisherActive;
     public System.Action OnDeath;
     private AudioSource audioSource;
-    
+
     private void Awake()
     {
         enemyStats = enemyManager.enemyStats;
@@ -70,10 +71,10 @@ public class EnemyHealth : MonoBehaviour
 
             if (agent != null)
                 agent.speed = enemyStats.speed;
-            
-            
+
+
         }
-       
+
     }
     public void TakeDamage(float amount, DamageInfo info)
     {
@@ -108,7 +109,7 @@ public class EnemyHealth : MonoBehaviour
 
             //StartCoroutine(SelfKnockback(50));
             // 🔥 pass ALL info to Die
-             Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
+            Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
 
         }
     }
@@ -116,20 +117,20 @@ public class EnemyHealth : MonoBehaviour
     {
         if (ragdollRB == null)
         {
-            Debug.Log("No ragdoll RB");
+            //Debug.Log("No ragdoll RB");
             yield break;
         }
 
-        Debug.Log(ragdollRB.name);
+        //Debug.Log(ragdollRB.name);
 
-       
+
         ragdollRB.isKinematic = false;
         ragdollRB.useGravity = true;
 
         Vector3 launchVelocity =
             -transform.forward * force;
 
-        Debug.Log(launchVelocity);
+        // Debug.Log(launchVelocity);
 
         ragdollRB.velocity = launchVelocity;
     }
@@ -140,18 +141,19 @@ public class EnemyHealth : MonoBehaviour
         GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
         explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
 
-        ImpactFrameEffect.Instance.GoBlack();
-        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        //ImpactFrameEffect.Instance.GoBlack();
+        //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
-        AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy"); 
+        AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy");
         Play3DDeathSound(clip, transform.position);
         //SFXManager.Instance.PlayNPC_SFX(audioSource,"Enemy/Destroy", 1f);
         //SFXManager.Instance.PlayNPC_SFX(audioSource, enemyManager.enemyName + "/" + enemyManager.attackTryKey, 1f);
         //SFXManager.Instance.PlaySFX("Enemy/Destroy", 1f);
 
         ScoreManager.Instance.Kills++;
-        
+
 
         CharacterAbilities.instance.AddKillValue(20);
 
@@ -169,20 +171,20 @@ public class EnemyHealth : MonoBehaviour
 
         killText.UpdateText();
 
-        Debug.Log("Killed");
+        //Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
-       
 
-      
+
+
         ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
-      
+
 
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
 
-        if(deathType == EnemyStats.DeathType.Explosion)
+        if (deathType == EnemyStats.DeathType.Explosion)
         {
-            AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);           
+            AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);
         }
         if (isHeadshot)
         {
@@ -191,14 +193,18 @@ public class EnemyHealth : MonoBehaviour
             agent.ResetPath();                 // 🔥 removes path completely
             agent.velocity = Vector3.zero;
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
-        }    
+        }
         else
         {
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
-            ragdoll.SetActive(true);
-            ragdoll.transform.SetParent(null);
-           
+            if (ragdoll != null && !isFinisher)
+            {
+                ragdoll.SetActive(true);
+                ragdoll.transform.SetParent(null);
+            }
+
+
         }
         //Destroy(gameObject);
 
@@ -238,7 +244,7 @@ public class EnemyHealth : MonoBehaviour
         agent.ResetPath();                 // 🔥 removes path completely
         agent.velocity = Vector3.zero;
         enemyManager.enabled = false;
-       
+
     }
     public void FinisherAnimation()
     {
@@ -341,7 +347,7 @@ public class EnemyHealth : MonoBehaviour
             if (isInvincible)
                 return;
 
-            if(dead) return;
+            if (dead) return;
 
             float damage = collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
 
