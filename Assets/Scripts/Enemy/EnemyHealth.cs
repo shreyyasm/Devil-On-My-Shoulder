@@ -137,13 +137,22 @@ public class EnemyHealth : MonoBehaviour
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
         dead = true;
-        Transform explosionPoint = enemyManager.firePoint;
-        GameObject explosion = enemyManager.After_DeathExplosion.GetObject();
-        explosion.transform.position = explosionPoint.position + new Vector3(0, 0.6f, 0);
+        Transform bloodPoint = enemyManager.firePoint;
+        GameObject bloodBlast = enemyManager.After_BloodExplosion.GetObject();
+        bloodBlast.transform.position = bloodPoint.position + new Vector3(0, 0.6f, 0);
 
-        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
-        //ImpactFrameEffect.Instance.GoBlack();
-        //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        if(!isFinisher)
+        {
+            Transform explosionPoint = enemyManager.firePoint;
+            GameObject explosionBlast = enemyManager.After_DeathExplosion.GetObject();
+            explosionBlast.transform.position = explosionPoint.position + new Vector3(0.5f, 0.6f, 0);
+        }
+      
+
+
+        //RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        ImpactFrameEffect.Instance.GoBlack();
+        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
         AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy");
@@ -184,7 +193,7 @@ public class EnemyHealth : MonoBehaviour
 
         if (deathType == EnemyStats.DeathType.Explosion)
         {
-            AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);
+           // AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);
         }
         if (isHeadshot)
         {

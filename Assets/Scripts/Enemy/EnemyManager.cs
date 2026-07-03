@@ -18,7 +18,9 @@ public class EnemyManager : MonoBehaviour
     public EnemyStats enemyStats;
 
     public string enemyName;
+
     public ObjectPool After_DeathExplosion;
+    public ObjectPool After_BloodExplosion;
     public Transform finisherTarget;
     public GameObject finisherIndicator;
     public float finisherTime;
@@ -499,6 +501,7 @@ public class EnemyManager : MonoBehaviour
         #region Suicider Enemy Settings
         detonateDistance = enemyStats.detonateDistance;
         #endregion
+        After_BloodExplosion = enemyStats.AfterBlood_ExplosionPrefab;
         After_DeathExplosion = enemyStats.AfterDeath_ExplosionPrefab;
         finisherTime = enemyStats.finisherTime;
 

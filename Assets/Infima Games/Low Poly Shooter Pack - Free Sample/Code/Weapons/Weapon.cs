@@ -966,14 +966,11 @@ namespace InfimaGames.LowPolyShooterPack
 
         #region AMMO
 
-        public override void FillAmmunition(int amount)
-        {
-            ammunitionCurrent = amount != 0
-                ? Mathf.Clamp(ammunitionCurrent + amount, 0, ammunitionTotal)
-                : ammunitionTotal;
-
-            LeanTween.delayedCall(reloadAnimationTime, () => { GetAnimatorHands().SetBool("Empty", false); GetAnimatorHands().ResetTrigger("Reload"); });
-           
+        public override void FillAmmunition(int amount) 
+        { 
+            ammunitionCurrent = amount != 0 ? Mathf.Clamp(ammunitionCurrent + amount, 0, ammunitionTotal) : ammunitionTotal; 
+            LeanTween.delayedCall(reloadAnimationTime, () => { GetAnimatorHands().SetBool("Empty", false); 
+                GetAnimatorHands().ResetTrigger("Reload"); }); 
         }
 
         #endregion

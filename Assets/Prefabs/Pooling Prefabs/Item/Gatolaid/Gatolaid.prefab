@@ -60,25 +60,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec4b67d0f6232be4c872a7f273ce1f7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemName: Gatolaid
+  explosionPrefab: {fileID: 0}
+  explosionHeight: 5
   itemType: 3
-  pool: {fileID: 0}
   fuseTime: 2
   radius: 5
   enemyLayer:
     serializedVersion: 2
     m_Bits: 0
-  explosionPrefabParticle: {fileID: 0}
   Fireprefab: {fileID: 0}
   effectTime: 10
   movementSpeedModifer: 15
+  knifePrefab: {fileID: 0}
+  throwPoint: {fileID: 0}
+  knifeSpeed: 25
+  knifeDetectionRadius: 15
+  knifeFOV: 120
   systemType: 0
   damage: 40
-  knockbackForce: 6
-  upwardForce: 4
-  gravity: 30
-  maxAirTime: 1.2
-  slideDuration: 0.4
-  slideDamping: 8
-  groundCheckDistance: 2.5
-  groundCheckRadius: 0.35
   mesh: {fileID: 0}
+  pool: {fileID: 0}

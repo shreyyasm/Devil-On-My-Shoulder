@@ -103,6 +103,7 @@ public class PlayerMovement : MonoBehaviour
     public bool canKick = true;
     private bool kickPressed;
     public List<Animator> kickAnimator;
+    public List<Animator> jumpBackAnimator;
 
     [Header("Kick NavMesh Knockback")]
     [SerializeField] private float kickGravity = 30f;
@@ -438,7 +439,7 @@ public class PlayerMovement : MonoBehaviour
         //Apply forces to move player
         rb.AddForce(orientation.transform.forward * y * moveSpeed* itemUseMovementSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier * multiplierV);
         rb.AddForce(orientation.transform.right * x * moveSpeed * itemUseMovementSpeed * characterAbilities.GetMovementSpeedModifier() * Time.deltaTime * multiplier );
-
+       // Debug.Log("Movment" + rb.velocity.sqrMagnitude);
       
     }
 
@@ -500,9 +501,10 @@ public class PlayerMovement : MonoBehaviour
             else if (y < -0.1f)
             {
                 jumpTilt = new Vector3(-8f, 0f, 0f);
-                StartCoroutine(
-                LerpCameraZPosition(-0.1f, 0.5f, 8f, 0f));
-
+                //StartCoroutine(
+                //LerpCameraZPosition(-0.2f, 0.5f, 8f, 0f));
+               jumpBackAnimator[characterindex - 1].gameObject.SetActive(true);
+               jumpBackAnimator[characterindex - 1].SetTrigger("BackJump");
             }
            
 
@@ -598,6 +600,7 @@ public class PlayerMovement : MonoBehaviour
             //FLOOR
             if (IsFloor(normal)) {
                 grounded = true;
+                //jumpBackAnimator[characterindex - 1].gameObject.SetActive(false);
                 cancellingGrounded = false;
                 normalVector = normal;
                 CancelInvoke(nameof(StopGrounded));
@@ -796,6 +799,7 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = vel;
 
             timer += Time.deltaTime;
+            //Debug.Log("Slide" + rb.velocity.sqrMagnitude);
             yield return null;
         }
 
@@ -938,7 +942,8 @@ public class PlayerMovement : MonoBehaviour
             vel.y = rb.velocity.y; // preserve vertical velocity
             rb.velocity = vel;
 
-            timer += Time.deltaTime;
+            timer += Time.deltaTime; 
+            //Debug.Log("Dash" + rb.velocity.sqrMagnitude);
             yield return null;
         }
         speedline.SetActive(false);
@@ -975,7 +980,7 @@ public class PlayerMovement : MonoBehaviour
         //StartCoroutine(Dash());
         StartCoroutine(KickDelay());
         if(!cameraLocked)
-            StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f, 100,0.24f)); // time in seconds
+            StartCoroutine(LerpCameraRotation(new Vector3(-11f, 0.7f, -3.7f), 0.15f, 100,0.1f)); // time in seconds
 
     }
     public IEnumerator LerpCameraRotation(
@@ -1471,13 +1476,21 @@ public class PlayerMovement : MonoBehaviour
             homing.eliminatorSpeed = speed;
         }
     }
-    [SerializeField] private List<PlayerItem> availableItems;
 
-    private PlayerItem currentItemPrefab; // 🔥 store prefab only
+    [System.Serializable]
+    public class ItemData
+    {
+        public PlayerItem itemPrefab;
+        public Transform throwPoint;
+        public Animator animator;
+    }
+
+    [SerializeField] private List<ItemData> availableItems;
+
+    public ItemData currentItem;
     private PlayerItem spawnedItem;       // actual instance (only when needed)
 
     [Header("Item System")]
-    public GameObject currentItem;
     public Transform itemHoldPoint;
 
     [Header("Throw Settings")]
@@ -1511,26 +1524,52 @@ public class PlayerMovement : MonoBehaviour
 
         int index = Random.Range(0, availableItems.Count);
 
-        currentItemPrefab = availableItems[index];
+        currentItem = availableItems[index];
+        Animator animator = currentItem.animator;
 
-        Debug.Log("Picked item: " + currentItemPrefab.name);
+        animator.gameObject.SetActive(true);
+        animator.SetTrigger("Pick");
+        canThrow = false;
+        DisableItem = StartCoroutine(DisableItemHands(animator));
+        Debug.Log("Picked item: " + currentItem.itemPrefab.name);
+
+      
     }
-   
+    Coroutine DisableItem;
+    IEnumerator DisableItemHands(Animator animator)
+    {
+        yield return new WaitForSeconds(1.2f);
+        if (animator != null)
+            animator.gameObject.SetActive(false);
+
+        canThrow = true;
+
+    }
+
+
     PlayerItem SpawnItem()
     {
-        if (currentItemPrefab == null) return null;
+        if (currentItem.itemPrefab == null) return null;
 
-        spawnedItem = Instantiate(currentItemPrefab, itemHoldPoint.position, itemHoldPoint.rotation);
+        spawnedItem = Instantiate(currentItem.itemPrefab, currentItem.throwPoint.position, currentItem.throwPoint.rotation);
 
         return spawnedItem;
     }
     void UseOrThrowItem()
     {
-        if (currentItemPrefab == null || !canThrow) return;
+       
+        if (currentItem.itemPrefab == null || !canThrow) return;
 
         PlayerItem item = SpawnItem();
 
         if (item == null) return;
+
+        if (DisableItem != null)
+        {
+            StopCoroutine(DisableItem);
+            DisableItem = null;
+        }
+
 
         if (item.throwable)
         {
@@ -1540,8 +1579,18 @@ public class PlayerMovement : MonoBehaviour
         {
             item.OnUse(this);
         }
+        Animator animator = currentItem.animator;
 
-        currentItemPrefab = null; // clear after use
+        animator.gameObject.SetActive(true);
+        animator.CrossFade("Throw", 0.1f);
+        string itemName = currentItem.itemPrefab.GetComponent<PlayerUseItem>().itemName;
+        SFXManager.Instance.PlaySFX("PlayerItems/" + itemName+ "Throw", 1f);
+        //animator.SetTrigger("Throw");
+
+        DisableItem = StartCoroutine(DisableItemHands(animator));
+        currentItem = null; // clear after use
+      
+
     }
     void ThrowItem(PlayerItem item)
     {
@@ -1549,7 +1598,7 @@ public class PlayerMovement : MonoBehaviour
 
         Rigidbody rb = item.rb;
 
-        item.transform.position = itemHoldPoint.position + itemHoldPoint.forward * 0.5f;
+        item.transform.position = currentItem.throwPoint.position;
 
         rb.isKinematic = false;
         item.col.enabled = true;
