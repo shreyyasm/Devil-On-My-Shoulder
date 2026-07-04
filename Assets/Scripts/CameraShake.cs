@@ -54,5 +54,6 @@ public class CameraShake : MonoBehaviour
     {
         shakeDuration = duration;
         shakeMagnitude = shakeMagnitudePower;
+     
     }
 }

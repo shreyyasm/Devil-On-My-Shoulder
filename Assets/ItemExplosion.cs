@@ -59,6 +59,7 @@ public class ItemExplosion : MonoBehaviour
         {
             DoExplosionDamge(hit);
             DoKnockback(hit.gameObject);
+            CameraShake.Instance.Shake();
         }
        
     }

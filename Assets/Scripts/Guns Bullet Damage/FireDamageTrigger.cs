@@ -64,6 +64,14 @@ public class FireDamageTrigger : MonoBehaviour
                 continue;
             }
 
+            EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+
+            if (health == null || health.dead)
+            {
+                damageTimers.Remove(enemy);
+                continue;
+            }
+
             damageTimers[enemy] -= Time.deltaTime;
 
             if (damageTimers[enemy] <= 0f)
@@ -76,14 +84,19 @@ public class FireDamageTrigger : MonoBehaviour
 
     private void DealDamage(GameObject enemy)
     {
-        // Example: generic health script
-        var health = enemy.GetComponent<EnemyHealth>();
-        if (health != null)
-        {
-            health.EnemyHit(damagePerTick);
-            Debug.Log("Enemy Hit By " + damagePerTick + "Damage");
+        if (enemy == null)
+            return;
 
-        }
+        EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+
+        if (health == null)
+            return;
+
+        // Don't damage dead enemies
+        if (health.dead)
+            return;
+
+        health.EnemyHit(damagePerTick);
     }
     public void FacePlayerZAxisOnly(Transform player, float rotationSpeed = 0f)
     {

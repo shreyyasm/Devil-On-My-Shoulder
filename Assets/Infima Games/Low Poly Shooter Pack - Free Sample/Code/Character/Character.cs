@@ -28,7 +28,7 @@ namespace InfimaGames.LowPolyShooterPack
 
 		[Tooltip("Normal Camera.")]
 		[SerializeField]
-		private Camera cameraWorld;
+		public Camera cameraWorld;
 
 		[Header("Animation")]
 
