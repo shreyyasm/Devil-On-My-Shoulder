@@ -33,6 +33,9 @@ public class ItemExplosion : MonoBehaviour
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         DealDamage();
+        CameraShake.Instance.ShakeWithValue(1f,0.3f);
+        ImpactFrameEffect.Instance.GoBlack();
+        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
     }
     private Transform player;
     // Update is called once per frame
@@ -59,7 +62,7 @@ public class ItemExplosion : MonoBehaviour
         {
             DoExplosionDamge(hit);
             DoKnockback(hit.gameObject);
-            CameraShake.Instance.Shake();
+           
         }
        
     }

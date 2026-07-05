@@ -56,4 +56,10 @@ public class CameraShake : MonoBehaviour
         shakeMagnitude = shakeMagnitudePower;
      
     }
+    public void ShakeWithValue(float duration, float shakeMagnitudePower)
+    {
+        shakeDuration = duration;
+        shakeMagnitude = shakeMagnitudePower;
+
+    }
 }

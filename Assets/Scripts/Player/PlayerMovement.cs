@@ -1538,7 +1538,7 @@ public class PlayerMovement : MonoBehaviour
     Coroutine DisableItem;
     IEnumerator DisableItemHands(Animator animator)
     {
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(1.3f);
         if (animator != null)
             animator.gameObject.SetActive(false);
 
@@ -1555,6 +1555,7 @@ public class PlayerMovement : MonoBehaviour
 
         return spawnedItem;
     }
+  
     void UseOrThrowItem()
     {
        
