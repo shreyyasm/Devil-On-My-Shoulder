@@ -1585,7 +1585,9 @@ public class PlayerMovement : MonoBehaviour
         animator.gameObject.SetActive(true);
         animator.CrossFade("Throw", 0.1f);
         string itemName = currentItem.itemPrefab.GetComponent<PlayerUseItem>().itemName;
+       
         SFXManager.Instance.PlaySFX("PlayerItems/" + itemName+ "Throw", 1f);
+        //SFXManager.Instance.PlayNPC_SFX(audioSource, "PlayerItems/" + itemName + "Throw", 1f);
         //animator.SetTrigger("Throw");
 
         DisableItem = StartCoroutine(DisableItemHands(animator));

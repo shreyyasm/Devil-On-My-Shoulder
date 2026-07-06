@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class FireDamageTrigger : MonoBehaviour
 {
+    public string itemName;
     public ObjectPool pool;
     [Header("Damage")]
     public float damagePerTick = 5f;
@@ -13,10 +14,12 @@ public class FireDamageTrigger : MonoBehaviour
     public float lifeTime = 8f;
 
     private PlayerMovement player;
+    public AudioSource audioSource;
+
     private void OnEnable()
     {
         player = FindAnyObjectByType<PlayerMovement>();
-
+        SFXManager.Instance.PlayNPC_SFX(audioSource, "PlayerItems/" + itemName + "Explosion", 1f);
         StartCoroutine(DisableExplosion());
     }
     IEnumerator DisableExplosion()
@@ -48,7 +51,7 @@ public class FireDamageTrigger : MonoBehaviour
 
     private void Update()
     {
-        FacePlayerZAxisOnly(player.gameObject.transform, 8f); // smooth turn
+        //FacePlayerZAxisOnly(player.gameObject.transform, 8f); // smooth turn
 
         //if (damageTimers.Count == 0)
         //    return;

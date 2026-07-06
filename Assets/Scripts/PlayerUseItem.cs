@@ -60,9 +60,16 @@ public class PlayerUseItem : MonoBehaviour
     public GameObject mesh;
     public ObjectPool pool;
 
+
+    public AudioSource audioSource;
+
+
+
+
     private void OnEnable()
     {
-        if(itemType == ItemType.Grenade)
+       
+        if (itemType == ItemType.Grenade)
             StartCoroutine(FuseRoutine());
 
         if (itemType == ItemType.Dynamite)
@@ -93,7 +100,11 @@ public class PlayerUseItem : MonoBehaviour
     {
         GameObject explosion = explosionPrefab.GetObject(transform.position + new Vector3(0,explosionHeight,0), Quaternion.identity);
         explosion.GetComponent<ItemExplosion>().damage = damage;
-        SFXManager.Instance.PlaySFX("PlayerItems/" + itemName + "Explosion",1f);
+
+       
+        //SFXManager.Instance.PlaySFX("PlayerItems/" + itemName+ "Throw", 1f);
+      
+        //SFXManager.Instance.PlaySFX("PlayerItems/" + itemName + "Explosion",1f);
         //pool.Release(gameObject);
         gameObject.SetActive(false);
 
@@ -107,7 +118,7 @@ public class PlayerUseItem : MonoBehaviour
         if(collision.gameObject.layer == 17 && itemType == ItemType.Molotov)
         {
             Fireprefab.GetObject(transform.position, Quaternion.identity);
-            SFXManager.Instance.PlaySFX("PlayerItems/" + itemName + "Explosion", 0.4f);
+            //SFXManager.Instance.PlaySFX("PlayerItems/" + itemName + "Explosion", 0.4f);
             gameObject.SetActive(false);
         }
         //if (collision.gameObject.layer == 17 && itemType == ItemType.Dynamite)

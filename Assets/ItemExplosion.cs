@@ -6,6 +6,7 @@ using UnityEngine.AI;
 
 public class ItemExplosion : MonoBehaviour
 {
+    public string itemName;
     [SerializeField] private float radius = 5f;
     [SerializeField] private LayerMask enemyLayer;
 
@@ -28,14 +29,20 @@ public class ItemExplosion : MonoBehaviour
 
     public ObjectPool pool;
     public bool RotateExternally;
+   
+    public AudioSource audioSource;
+                
 
     private void OnEnable()
     {
+        
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         DealDamage();
         CameraShake.Instance.ShakeWithValue(1f,0.3f);
+        SFXManager.Instance.PlayNPC_SFX(audioSource, "PlayerItems/" + itemName + "Explosion", 1f);
         ImpactFrameEffect.Instance.GoBlack();
         LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+     
     }
     private Transform player;
     // Update is called once per frame

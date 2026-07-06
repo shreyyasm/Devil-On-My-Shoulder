@@ -283,6 +283,11 @@ public class CharacterAbilities : MonoBehaviour
         {
             PerformFinisher();
         }
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            ActivateAbility();
+        }
+        
 
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
@@ -997,7 +1002,12 @@ public class CharacterAbilities : MonoBehaviour
     private void FireAbility1Shot()
     {
         Transform target = FindNearestEnemy();
-        currentAbility1Target = target;   // lock target for this shot
+
+        // ❌ No enemy nearby -> don't shoot
+        if (target == null)
+            return;
+
+        currentAbility1Target = target;
 
         bool fireLeft = fireLeftNext;
 
@@ -1017,20 +1027,12 @@ public class CharacterAbilities : MonoBehaviour
             rightGunFlash.Play();
             rightGunSmoke.Play();
         }
-        if (gun == null || socket == null) return;
 
-        Vector3 dir;
+        if (gun == null || socket == null)
+            return;
 
-        // ✅ If we have a target, always aim at the CLOSEST one returned
-        if (target != null)
-        {
-            dir = (target.position - socket.position).normalized;
-        }
-        else
-        {
-            // ✅ No enemy → shoot center screen
-            dir = playerCamera.forward;
-        }
+        // Always shoot at the locked target
+        Vector3 dir = (target.position - socket.position).normalized;
 
         flash.SetTrigger("Flash");
 
