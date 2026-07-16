@@ -9538,6 +9538,94 @@ RectTransform:
   m_AnchoredPosition: {x: -327.9, y: -23.4}
   m_SizeDelta: {x: 223.7, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &278220025
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 278220026}
+  - component: {fileID: 278220027}
+  m_Layer: 19
+  m_Name: Glass_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &278220026
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 278220025}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.8682008, y: 0.2545597, z: -0.39103627, w: 0.16887084}
+  m_LocalPosition: {x: 2.766869, y: -0.790223, z: 5.7764196}
+  m_LocalScale: {x: 93.55817, y: 83.806885, z: 90.63815}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1773250536353817196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!137 &278220027
+SkinnedMeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 278220025}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 3
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 0e9ff52247329af41be78efa4876eafa, type: 2}
+  - {fileID: 2100000, guid: a9e049ac019342144ab31d7e21a5e330, type: 2}
+  - {fileID: 2100000, guid: a391f6d73292e8c4182553f53aaad678, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  serializedVersion: 2
+  m_Quality: 0
+  m_UpdateWhenOffscreen: 0
+  m_SkinnedMotionVectors: 1
+  m_Mesh: {fileID: -9146618070568788744, guid: e861895c93ae8f842adf969c7b4aa79e, type: 3}
+  m_Bones:
+  - {fileID: 4924474411801078490}
+  m_BlendShapeWeights: []
+  m_RootBone: {fileID: 4924474411801078490}
+  m_AABB:
+    m_Center: {x: -0.00028595328, y: 0.004322989, z: 0.0007568798}
+    m_Extent: {x: 0.004786863, y: 0.0077123838, z: 0.0048704552}
+  m_DirtyAABB: 0
 --- !u!1 &279252826
 GameObject:
   m_ObjectHideFlags: 0
@@ -31129,6 +31217,111 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 619696143}
   m_CullTransparentMesh: 1
+--- !u!1 &624738662
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 624738663}
+  - component: {fileID: 624738666}
+  - component: {fileID: 624738665}
+  - component: {fileID: 624738664}
+  m_Layer: 19
+  m_Name: Sphere
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &624738663
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624738662}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.00001, y: -0.01027, z: 0.00066}
+  m_LocalScale: {x: 0.009, y: 0.00086725503, z: 0.009412522}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3893550776888331387}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &624738664
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624738662}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &624738665
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624738662}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: ea7e4cd7d2128e54a83f1707fc4a55f9, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &624738666
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624738662}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1001 &625303809
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -34752,6 +34945,112 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 724640952}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &728402297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 728402300}
+  - component: {fileID: 728402299}
+  - component: {fileID: 728402298}
+  m_Layer: 0
+  m_Name: frame0000
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!95 &728402298
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728402297}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 6be2a29a0e82da744ac6a83d7aba612f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!212 &728402299
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728402297}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: bd94029a1f78e1a4da078ed1e00c5ffc, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.64, y: 0.32}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &728402300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728402297}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.7164973, z: -0, w: 0.69758993}
+  m_LocalPosition: {x: 14.58, y: -0.23, z: 1.22}
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -91.532, z: 0}
 --- !u!1 &728467842
 GameObject:
   m_ObjectHideFlags: 0
@@ -38564,6 +38863,12 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 875355263}
   m_CullTransparentMesh: 1
+--- !u!1 &878846092 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8487402871801164198, guid: 90375796f996bff4cabed66da5e558cb,
+    type: 3}
+  m_PrefabInstance: {fileID: 1852157561}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &879191722 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5256493942630818746, guid: 441e987338d8f9c47bca94830c94d165,
@@ -73599,6 +73904,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2e53f6e09e23202498490778741f402b, type: 2}
   - {fileID: 11400000, guid: 12d9e57f09680b34897e00c5d6723ad9, type: 2}
   - {fileID: 11400000, guid: 4a11947883378e5468e45ba935e918c0, type: 2}
+  - {fileID: 11400000, guid: b51ee18c45d42f243adbf4cedaaf4b7a, type: 2}
 --- !u!4 &1541108212
 Transform:
   m_ObjectHideFlags: 0
@@ -94433,6 +94739,125 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1852057792}
   m_CullTransparentMesh: 1
+--- !u!1001 &1852157561
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8307091720835499462}
+    m_Modifications:
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.037
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.125
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.129
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.9832082
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.054202106
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.14426391
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.09773348
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4206214766532364235, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4292828191062302238, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7225402540269331919, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7853804594171130388, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487402871801164198, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_Name
+      value: CFXR2 Cartoon Fight (Loop)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8487402871801164198, guid: 90375796f996bff4cabed66da5e558cb,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 90375796f996bff4cabed66da5e558cb, type: 3}
+--- !u!4 &1852157562 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4036418579442813153, guid: 90375796f996bff4cabed66da5e558cb,
+    type: 3}
+  m_PrefabInstance: {fileID: 1852157561}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1853276232
 GameObject:
   m_ObjectHideFlags: 0
@@ -103564,12 +103989,12 @@ PrefabInstance:
     - target: {fileID: -8578990581436289171, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -4.756971
+      value: -4.7569685
       objectReference: {fileID: 0}
     - target: {fileID: -8578990581436289171, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -0.31046468
+      value: -0.31046712
       objectReference: {fileID: 0}
     - target: {fileID: -8415556815585712202, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103609,17 +104034,17 @@ PrefabInstance:
     - target: {fileID: -7616055324971071614, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 15.864876
+      value: 15.731626
       objectReference: {fileID: 0}
     - target: {fileID: -7616055324971071614, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -26.668894
+      value: -26.921602
       objectReference: {fileID: 0}
     - target: {fileID: -7616055324971071614, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -27.45943
+      value: -25.376417
       objectReference: {fileID: 0}
     - target: {fileID: -7599553746520983821, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103629,7 +104054,7 @@ PrefabInstance:
     - target: {fileID: -7599553746520983821, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 148.39204
+      value: 148.39203
       objectReference: {fileID: 0}
     - target: {fileID: -7599553746520983821, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103649,17 +104074,17 @@ PrefabInstance:
     - target: {fileID: -7374014872019849734, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 26.271467
+      value: 25.71738
       objectReference: {fileID: 0}
     - target: {fileID: -7374014872019849734, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -14.633251
+      value: -14.511706
       objectReference: {fileID: 0}
     - target: {fileID: -7374014872019849734, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -38.18619
+      value: -36.03772
       objectReference: {fileID: 0}
     - target: {fileID: -7320198880641957893, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103674,12 +104099,12 @@ PrefabInstance:
     - target: {fileID: -7260652918820237740, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 7.236475
+      value: 7.236513
       objectReference: {fileID: 0}
     - target: {fileID: -7260652918820237740, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 37.170094
+      value: 37.170135
       objectReference: {fileID: 0}
     - target: {fileID: -7205720298632021399, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103709,12 +104134,12 @@ PrefabInstance:
     - target: {fileID: -6836200320512251504, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 22.399017
+      value: 22.399015
       objectReference: {fileID: 0}
     - target: {fileID: -6836200320512251504, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 35.60465
+      value: 35.60464
       objectReference: {fileID: 0}
     - target: {fileID: -6551098967393052979, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103739,17 +104164,17 @@ PrefabInstance:
     - target: {fileID: -6261825099712287484, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 77.17152
+      value: 77.17155
       objectReference: {fileID: 0}
     - target: {fileID: -6261825099712287484, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -75.10559
+      value: -75.10565
       objectReference: {fileID: 0}
     - target: {fileID: -6261825099712287484, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -35.385994
+      value: -35.38605
       objectReference: {fileID: 0}
     - target: {fileID: -6230960167302262745, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103804,17 +104229,17 @@ PrefabInstance:
     - target: {fileID: -5583737015482660087, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 17.566107
+      value: 15.142689
       objectReference: {fileID: 0}
     - target: {fileID: -5583737015482660087, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 76.76267
+      value: 75.53935
       objectReference: {fileID: 0}
     - target: {fileID: -5583737015482660087, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -145.95134
+      value: -156.6357
       objectReference: {fileID: 0}
     - target: {fileID: -5390083842762510564, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103824,17 +104249,17 @@ PrefabInstance:
     - target: {fileID: -5189721935699906191, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 43.323307
+      value: 41.357
       objectReference: {fileID: 0}
     - target: {fileID: -5189721935699906191, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 47.83073
+      value: 47.384495
       objectReference: {fileID: 0}
     - target: {fileID: -5189721935699906191, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 45.993073
+      value: 46.54847
       objectReference: {fileID: 0}
     - target: {fileID: -5187322197268202635, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103919,17 +104344,17 @@ PrefabInstance:
     - target: {fileID: -3367449913616902346, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 39.613327
+      value: 38.75044
       objectReference: {fileID: 0}
     - target: {fileID: -3367449913616902346, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -5.467252
+      value: -4.8091593
       objectReference: {fileID: 0}
     - target: {fileID: -3367449913616902346, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -40.929718
+      value: -38.589115
       objectReference: {fileID: 0}
     - target: {fileID: -3338255809673109097, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -103964,7 +104389,7 @@ PrefabInstance:
     - target: {fileID: -2659294581894386008, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0.67116934
+      value: 0.6711665
       objectReference: {fileID: 0}
     - target: {fileID: -2298694429477596366, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104034,17 +104459,17 @@ PrefabInstance:
     - target: {fileID: -1027381315230955701, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 58.741646
+      value: 52.329754
       objectReference: {fileID: 0}
     - target: {fileID: -1027381315230955701, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.5721117
+      value: -3.977518
       objectReference: {fileID: 0}
     - target: {fileID: -1027381315230955701, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -1.2925074
+      value: -7.8471622
       objectReference: {fileID: 0}
     - target: {fileID: -863811412916680130, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104104,17 +104529,17 @@ PrefabInstance:
     - target: {fileID: 148182707308615493, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -26.677507
+      value: -17.100994
       objectReference: {fileID: 0}
     - target: {fileID: 148182707308615493, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 3.2806537
+      value: -3.4893801
       objectReference: {fileID: 0}
     - target: {fileID: 148182707308615493, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 1.5027865
+      value: 17.264963
       objectReference: {fileID: 0}
     - target: {fileID: 247951643103862256, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104129,17 +104554,17 @@ PrefabInstance:
     - target: {fileID: 583248689487010625, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 9.376063
+      value: 9.376058
       objectReference: {fileID: 0}
     - target: {fileID: 583248689487010625, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -18.791725
+      value: -18.791721
       objectReference: {fileID: 0}
     - target: {fileID: 583248689487010625, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 1.8794577
+      value: 1.8794526
       objectReference: {fileID: 0}
     - target: {fileID: 586318931672025109, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104149,17 +104574,17 @@ PrefabInstance:
     - target: {fileID: 597514996792087739, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -24.358862
+      value: -24.358868
       objectReference: {fileID: 0}
     - target: {fileID: 597514996792087739, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 2.1902606
+      value: 2.190261
       objectReference: {fileID: 0}
     - target: {fileID: 597514996792087739, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -5.1676464
+      value: -5.1676474
       objectReference: {fileID: 0}
     - target: {fileID: 606091132914861958, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104169,12 +104594,12 @@ PrefabInstance:
     - target: {fileID: 606091132914861958, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -137.59106
+      value: -137.59111
       objectReference: {fileID: 0}
     - target: {fileID: 606091132914861958, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -140.52057
+      value: -140.5206
       objectReference: {fileID: 0}
     - target: {fileID: 623264018690055846, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104209,32 +104634,32 @@ PrefabInstance:
     - target: {fileID: 1053949473004995609, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 4.061525
+      value: 4.061527
       objectReference: {fileID: 0}
     - target: {fileID: 1053949473004995609, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 2.933617
+      value: 2.933619
       objectReference: {fileID: 0}
     - target: {fileID: 1053949473004995609, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -16.526693
+      value: -16.526705
       objectReference: {fileID: 0}
     - target: {fileID: 1210586606604306955, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 18.995773
+      value: 30.915134
       objectReference: {fileID: 0}
     - target: {fileID: 1210586606604306955, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -1.876018
+      value: -0.6187034
       objectReference: {fileID: 0}
     - target: {fileID: 1210586606604306955, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -1.888887
+      value: -5.5190554
       objectReference: {fileID: 0}
     - target: {fileID: 1211524572889122709, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104324,17 +104749,17 @@ PrefabInstance:
     - target: {fileID: 1904443306935544803, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 68.91828
+      value: 68.918304
       objectReference: {fileID: 0}
     - target: {fileID: 1904443306935544803, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 24.264914
+      value: 24.264912
       objectReference: {fileID: 0}
     - target: {fileID: 1904443306935544803, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 52.306072
+      value: 52.306076
       objectReference: {fileID: 0}
     - target: {fileID: 2296393078715663276, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104409,17 +104834,17 @@ PrefabInstance:
     - target: {fileID: 2960891835591784310, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 74.04183
+      value: 74.041855
       objectReference: {fileID: 0}
     - target: {fileID: 2960891835591784310, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -36.925125
+      value: -36.925137
       objectReference: {fileID: 0}
     - target: {fileID: 2960891835591784310, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -21.366272
+      value: -21.366283
       objectReference: {fileID: 0}
     - target: {fileID: 3164982295968437048, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104439,17 +104864,17 @@ PrefabInstance:
     - target: {fileID: 3173329358773643028, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -7.109148
+      value: -4.7651815
       objectReference: {fileID: 0}
     - target: {fileID: 3173329358773643028, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 172.53929
+      value: 174.81818
       objectReference: {fileID: 0}
     - target: {fileID: 3173329358773643028, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 55.31003
+      value: 32.291946
       objectReference: {fileID: 0}
     - target: {fileID: 3208974742184460162, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104464,12 +104889,12 @@ PrefabInstance:
     - target: {fileID: 3216429484703358887, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.00012190763
+      value: 0.00012206404
       objectReference: {fileID: 0}
     - target: {fileID: 3216429484703358887, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0.00011479319
+      value: 0.000114979106
       objectReference: {fileID: 0}
     - target: {fileID: 3469015427090887644, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104524,17 +104949,17 @@ PrefabInstance:
     - target: {fileID: 4246293698592602980, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -15.216119
+      value: -33.661594
       objectReference: {fileID: 0}
     - target: {fileID: 4246293698592602980, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -4.2859654
+      value: -2.6784012
       objectReference: {fileID: 0}
     - target: {fileID: 4246293698592602980, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 6.1890182
+      value: 20.893642
       objectReference: {fileID: 0}
     - target: {fileID: 4257075474270197494, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104599,32 +105024,32 @@ PrefabInstance:
     - target: {fileID: 5307373740505333530, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 89.211174
+      value: 88.62456
       objectReference: {fileID: 0}
     - target: {fileID: 5307373740505333530, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 179.4617
+      value: -0.6479217
       objectReference: {fileID: 0}
     - target: {fileID: 5307373740505333530, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 179.47261
+      value: -0.63963395
       objectReference: {fileID: 0}
     - target: {fileID: 5425334576674915642, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 46.359863
+      value: 45.709366
       objectReference: {fileID: 0}
     - target: {fileID: 5425334576674915642, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -12.271606
+      value: -11.122206
       objectReference: {fileID: 0}
     - target: {fileID: 5425334576674915642, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -54.33072
+      value: -51.592922
       objectReference: {fileID: 0}
     - target: {fileID: 5432273140038064630, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104634,32 +105059,32 @@ PrefabInstance:
     - target: {fileID: 5497084363067227340, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 30.101603
+      value: 30.101582
       objectReference: {fileID: 0}
     - target: {fileID: 5497084363067227340, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 31.183254
+      value: 31.183237
       objectReference: {fileID: 0}
     - target: {fileID: 5497084363067227340, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 4.701551
+      value: 4.701546
       objectReference: {fileID: 0}
     - target: {fileID: 5640974036669041144, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 12.151463
+      value: 12.151454
       objectReference: {fileID: 0}
     - target: {fileID: 5640974036669041144, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -0.12239886
+      value: -0.12239798
       objectReference: {fileID: 0}
     - target: {fileID: 5640974036669041144, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -36.82749
+      value: -36.827465
       objectReference: {fileID: 0}
     - target: {fileID: 5684061150752107862, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104674,12 +105099,12 @@ PrefabInstance:
     - target: {fileID: 5746430580699682127, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -159.25626
+      value: -159.2563
       objectReference: {fileID: 0}
     - target: {fileID: 5746430580699682127, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -169.17564
+      value: -169.17569
       objectReference: {fileID: 0}
     - target: {fileID: 5809860051949401442, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -104729,17 +105154,17 @@ PrefabInstance:
     - target: {fileID: 6577049756788977501, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 89.214905
+      value: 88.60913
       objectReference: {fileID: 0}
     - target: {fileID: 6577049756788977501, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 179.91104
+      value: -1.4500151
       objectReference: {fileID: 0}
     - target: {fileID: 6577049756788977501, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 179.92412
+      value: -1.458472
       objectReference: {fileID: 0}
     - target: {fileID: 6617927552543340770, guid: 012c49dcf2a5ef34ab7c07a0fc4c513e,
         type: 3}
@@ -136419,7 +136844,7 @@ Transform:
   m_Children:
   - {fileID: 691749680920277876}
   m_Father: {fileID: 5644429458479731377}
-  m_LocalEulerAnglesHint: {x: 74.833595, y: -156.1049, z: -133.07266}
+  m_LocalEulerAnglesHint: {x: 74.833595, y: -156.10489, z: -133.07266}
 --- !u!1 &301723638441582390
 GameObject:
   m_ObjectHideFlags: 0
@@ -141708,7 +142133,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
-  m_Pitch: 1.2
+  m_Pitch: 1
   Loop: 0
   Mute: 0
   Spatialize: 0
@@ -142252,7 +142677,7 @@ Transform:
   m_GameObject: {fileID: 2290132052739671271}
   serializedVersion: 2
   m_LocalRotation: {x: 0.92722404, y: 0.16380006, z: -0.032394618, w: 0.33522502}
-  m_LocalPosition: {x: 7.216093, y: -0.047729917, z: 1.7338085}
+  m_LocalPosition: {x: 7.609, y: 0.105, z: 1.627}
   m_LocalScale: {x: 87.6631, y: 87.6631, z: 87.6631}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -142674,7 +143099,7 @@ Transform:
   m_Children:
   - {fileID: 4481522043668016151}
   m_Father: {fileID: 6005815707020261707}
-  m_LocalEulerAnglesHint: {x: 73.4085, y: 26.561352, z: 53.077446}
+  m_LocalEulerAnglesHint: {x: 73.408516, y: 26.561333, z: 53.077423}
 --- !u!1 &395522313148562665
 GameObject:
   m_ObjectHideFlags: 0
@@ -143539,6 +143964,8 @@ MonoBehaviour:
   socket: {fileID: 5426021349155411969}
   audioClipFire: {fileID: 8300000, guid: 1a4d232499459f24e941b23120c6ccf3, type: 3}
   reloadAnimationTime: 3.5
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -143550,6 +143977,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -143592,7 +144021,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -143620,6 +144053,7 @@ MonoBehaviour:
   audioSource: {fileID: 1493314627236076460}
   MuzzleFlash: {fileID: 5300335209208150597}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &454177934760508499
 GameObject:
   m_ObjectHideFlags: 0
@@ -153688,7 +154122,7 @@ Transform:
   m_Children:
   - {fileID: 3892891171413029617}
   m_Father: {fileID: 3766337731309689592}
-  m_LocalEulerAnglesHint: {x: 3.1805723, y: 5.2639785, z: -32.325954}
+  m_LocalEulerAnglesHint: {x: 3.1805718, y: 5.263978, z: -32.325954}
 --- !u!4 &486354624766142640
 Transform:
   m_ObjectHideFlags: 0
@@ -155005,6 +155439,8 @@ MonoBehaviour:
   socket: {fileID: 4408652213294831807}
   audioClipFire: {fileID: 8300000, guid: 92d13c2d07be2484fae6c924a2eed402, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -155016,6 +155452,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -155058,7 +155496,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -155086,6 +155528,7 @@ MonoBehaviour:
   audioSource: {fileID: 184007797814060878}
   MuzzleFlash: {fileID: 184762824223855217}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &562919201437888241
 Transform:
   m_ObjectHideFlags: 0
@@ -166070,7 +166513,7 @@ Transform:
   m_Children:
   - {fileID: 6005815707020261707}
   m_Father: {fileID: 3766337731309689592}
-  m_LocalEulerAnglesHint: {x: -4.562329, y: -7.995637, z: -16.836973}
+  m_LocalEulerAnglesHint: {x: -4.5623293, y: -7.9956384, z: -16.836975}
 --- !u!4 &675970846099886570
 Transform:
   m_ObjectHideFlags: 0
@@ -166563,7 +167006,7 @@ Transform:
   m_Children:
   - {fileID: 1659995501355556550}
   m_Father: {fileID: 301066252394138579}
-  m_LocalEulerAnglesHint: {x: 79.487335, y: 68.12255, z: 41.343594}
+  m_LocalEulerAnglesHint: {x: 79.487335, y: 68.12256, z: 41.343605}
 --- !u!1 &692145680195844625
 GameObject:
   m_ObjectHideFlags: 0
@@ -166814,7 +167257,7 @@ Transform:
   m_GameObject: {fileID: 3098161813953244993}
   serializedVersion: 2
   m_LocalRotation: {x: 0.0988023, y: -0.056494348, z: 0.06822787, w: -0.9911566}
-  m_LocalPosition: {x: -0.0015, y: 0.0012, z: 0.0012}
+  m_LocalPosition: {x: -0.0026, y: 0.0005, z: 0.0016}
   m_LocalScale: {x: 0.045363937, y: 0.056250192, z: 0.056090206}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -242991,6 +243434,8 @@ MonoBehaviour:
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -243002,6 +243447,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -243044,7 +243491,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -243056,6 +243507,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   MuzzleFlash: {fileID: 0}
   Character: {fileID: 0}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &1028555464095672009
 Transform:
   m_ObjectHideFlags: 0
@@ -280238,7 +280690,7 @@ Transform:
   m_Children:
   - {fileID: 5861896113061268607}
   m_Father: {fileID: 2948459106539894006}
-  m_LocalEulerAnglesHint: {x: -11.997904, y: 17.133953, z: -11.922197}
+  m_LocalEulerAnglesHint: {x: -11.997909, y: 17.133951, z: -11.922196}
 --- !u!23 &1275419198995134670
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -303034,6 +303486,8 @@ MonoBehaviour:
   socket: {fileID: 6263884593907254309}
   audioClipFire: {fileID: 8300000, guid: d26bdcf1c084cdd4fafb2c8fd4fddd74, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -303045,6 +303499,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -303087,7 +303543,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -303115,6 +303575,7 @@ MonoBehaviour:
   audioSource: {fileID: 9118399255820143523}
   MuzzleFlash: {fileID: 4976059524018741809}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &1519298862657720128
 Transform:
   m_ObjectHideFlags: 0
@@ -314598,7 +315059,7 @@ Transform:
   m_Children:
   - {fileID: 970840638371743396}
   m_Father: {fileID: 691749680920277876}
-  m_LocalEulerAnglesHint: {x: 21.135906, y: -27.512438, z: -5.205144}
+  m_LocalEulerAnglesHint: {x: 21.135904, y: -27.512445, z: -5.2051435}
 --- !u!4 &1660063132077563496
 Transform:
   m_ObjectHideFlags: 0
@@ -315433,7 +315894,7 @@ Transform:
   m_Children:
   - {fileID: 1720424603417832170}
   m_Father: {fileID: 3892891171413029617}
-  m_LocalEulerAnglesHint: {x: 80.493774, y: -30.615484, z: -55.749332}
+  m_LocalEulerAnglesHint: {x: 80.49374, y: -30.615437, z: -55.749294}
 --- !u!1 &1691423720267027031
 GameObject:
   m_ObjectHideFlags: 0
@@ -315969,7 +316430,7 @@ Transform:
   m_Children:
   - {fileID: 9028025941085921824}
   m_Father: {fileID: 1691141407138972161}
-  m_LocalEulerAnglesHint: {x: 32.617203, y: 28.678614, z: 14.64608}
+  m_LocalEulerAnglesHint: {x: 32.617207, y: 28.678614, z: 14.646083}
 --- !u!4 &1721875527959229355
 Transform:
   m_ObjectHideFlags: 0
@@ -316989,8 +317450,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1427651368987113686}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0028989024, y: -0.9813623, z: -0.13325678, w: 0.13842788}
-  m_LocalPosition: {x: 4.67, y: 3.11, z: -1.77}
+  m_LocalRotation: {x: -0.009808463, y: -0.98245966, z: -0.16965142, w: 0.0767811}
+  m_LocalPosition: {x: 6.28, y: 2.03, z: -0.18}
   m_LocalScale: {x: 3, y: 2.4, z: 2.4}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -316998,6 +317459,7 @@ Transform:
   - {fileID: 844996364865775015}
   - {fileID: 2095424074312153071}
   - {fileID: 5438167958779612096}
+  - {fileID: 278220026}
   - {fileID: 369574812415636848}
   - {fileID: 1033845436742383413}
   - {fileID: 7825230948291358517}
@@ -317007,7 +317469,7 @@ Transform:
   - {fileID: 4244084412105133583}
   - {fileID: 8584029984501625}
   m_Father: {fileID: 8341406133598472336}
-  m_LocalEulerAnglesHint: {x: -15.114, y: -163.607, z: -2.528}
+  m_LocalEulerAnglesHint: {x: -19.564, y: -170.992, z: -0.412}
 --- !u!4 &1775106595655436601
 Transform:
   m_ObjectHideFlags: 0
@@ -381026,7 +381488,7 @@ Transform:
   m_GameObject: {fileID: 7900240163144088083}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.246, y: 0.126, z: 0.429}
+  m_LocalPosition: {x: 0.238, y: 0.126, z: 0.429}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -387585,6 +388047,8 @@ MonoBehaviour:
   socket: {fileID: 3714094496632625632}
   audioClipFire: {fileID: 8300000, guid: f1b6f078461630d4496b32298cf35b5b, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -387596,6 +388060,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -387638,7 +388104,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -387666,6 +388136,7 @@ MonoBehaviour:
   audioSource: {fileID: 3517786726928969158}
   MuzzleFlash: {fileID: 7111354491997611330}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!198 &2517312752455216249
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -417495,7 +417966,7 @@ Transform:
   m_Children:
   - {fileID: 1274802355362251166}
   m_Father: {fileID: 3766337731309689592}
-  m_LocalEulerAnglesHint: {x: 35.074142, y: 6.8304605, z: 3.4548454}
+  m_LocalEulerAnglesHint: {x: 35.074142, y: 6.83046, z: 3.4548461}
 --- !u!1 &2948891901316027762
 GameObject:
   m_ObjectHideFlags: 0
@@ -428917,19 +429388,23 @@ MonoBehaviour:
   maximumDistance: 500
   ammunitionTotal: 100
   socket: {fileID: 3310542857801739671}
-  audioClipFire: {fileID: 8300000, guid: 769cb4c7aab3f7c47b6d1a9cd8bb7bdf, type: 3}
+  audioClipFire: {fileID: 8300000, guid: b2d273ea93f364f4f970d019816bc84f, type: 3}
   reloadAnimationTime: 3.5
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
   laserDamagePerTick: 5
   beamRenderer: {fileID: 3245654164653552147}
-  laserOverheatTime: 10
-  laserCooldownTime: 2.7
+  laserOverheatTime: 11
+  laserCooldownTime: 2
   enemyLayer:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 8786259438437149207}
+  GunOverheatSFX: {fileID: 8300000, guid: 46f5c0196b3d774468313eea069e458f, type: 3}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -428947,10 +429422,10 @@ MonoBehaviour:
   spriteBody: {fileID: 21300000, guid: 83bd180441453a843bfad2339dc2d457, type: 3}
   audioClipHolster: {fileID: 8300000, guid: 8c4ede782a70c6e4b9e515d40d6e6e69, type: 3}
   audioClipUnholster: {fileID: 8300000, guid: 4aaa78b2722c0344cb0363a3980adf64, type: 3}
-  audioClipReload: {fileID: 8300000, guid: 0d66871c0020a974ab11e6e3beef6c07, type: 3}
-  audioClipReloadEmpty: {fileID: 8300000, guid: 1fe5c2e1733f354428fe88c1a7cbafe4,
+  audioClipReload: {fileID: 8300000, guid: 46f5c0196b3d774468313eea069e458f, type: 3}
+  audioClipReloadEmpty: {fileID: 8300000, guid: 46f5c0196b3d774468313eea069e458f,
     type: 3}
-  audioClipFireEmpty: {fileID: 8300000, guid: 0c187ee2790c74c4e9985aa1ee1a12d5, type: 3}
+  audioClipFireEmpty: {fileID: 8300000, guid: 46f5c0196b3d774468313eea069e458f, type: 3}
   pistolRecoil: {x: 1.5, y: 0.6}
   automaticRecoil: {x: 0.1, y: 0.1}
   shotgunRecoil: {x: 4, y: 1.8}
@@ -428971,8 +429446,12 @@ MonoBehaviour:
   rayGunMaxDamage: 25
   rayGunDamageIncreaseRate: 20
   rayGunBaseBeamWidth: 0.1
-  rayGunMaxBeamWidth: 0.6
+  rayGunMaxBeamWidth: 0.4
+  rayGunBaseBeamSpeed: 9
+  rayGunMaxBeamSpeed: 16
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1.5
+  CloudVFX: {fileID: 878846092}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -429000,6 +429479,7 @@ MonoBehaviour:
   audioSource: {fileID: 338183765821641899}
   MuzzleFlash: {fileID: 3032603537073149926}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 11400000, guid: b51ee18c45d42f243adbf4cedaaf4b7a, type: 2}
 --- !u!1 &3062909246126024764
 GameObject:
   m_ObjectHideFlags: 0
@@ -450820,7 +451300,7 @@ Transform:
   m_Children:
   - {fileID: 3681849615807406739}
   m_Father: {fileID: 972908662059889610}
-  m_LocalEulerAnglesHint: {x: 8.13598, y: 74.59579, z: -166.49501}
+  m_LocalEulerAnglesHint: {x: 8.136028, y: 74.5958, z: -166.49503}
 --- !u!1 &3286427580719783485
 GameObject:
   m_ObjectHideFlags: 0
@@ -451114,7 +451594,8 @@ Transform:
   m_LocalPosition: {x: 0.0002, y: -0.0047, z: 0.0013}
   m_LocalScale: {x: 0.120509125, y: 0.12722899, z: 0.11085894}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 7352544547795988514}
   m_Father: {fileID: 1225425059}
   m_LocalEulerAnglesHint: {x: 230.65201, y: 91.856, z: 87.847}
 --- !u!1 &3310558176474429082
@@ -460047,6 +460528,8 @@ MonoBehaviour:
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -460058,6 +460541,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -460100,7 +460585,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -460112,6 +460601,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   MuzzleFlash: {fileID: 0}
   Character: {fileID: 0}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &3559578309071862208
 GameObject:
   m_ObjectHideFlags: 0
@@ -476233,7 +476723,7 @@ Transform:
   m_Children:
   - {fileID: 1817914313758366320}
   m_Father: {fileID: 3284237171064196750}
-  m_LocalEulerAnglesHint: {x: 6.21614, y: -177.30637, z: 19.67497}
+  m_LocalEulerAnglesHint: {x: 6.2161207, y: -177.30638, z: 19.674877}
 --- !u!4 &3682373647126650354
 Transform:
   m_ObjectHideFlags: 0
@@ -487189,7 +487679,7 @@ Transform:
   - {fileID: 6078673704894906557}
   - {fileID: 485082547648309373}
   m_Father: {fileID: 1259834641982942324}
-  m_LocalEulerAnglesHint: {x: 74.117035, y: -149.80316, z: -150.1418}
+  m_LocalEulerAnglesHint: {x: 72.95356, y: -147.70985, z: -153.14693}
 --- !u!4 &3770611108397472559
 Transform:
   m_ObjectHideFlags: 0
@@ -498316,7 +498806,7 @@ Transform:
   m_Children:
   - {fileID: 1691141407138972161}
   m_Father: {fileID: 485082547648309373}
-  m_LocalEulerAnglesHint: {x: 66.72292, y: -122.92046, z: -115.60948}
+  m_LocalEulerAnglesHint: {x: 66.72292, y: -122.92052, z: -115.609535}
 --- !u!4 &3893010568189271767
 Transform:
   m_ObjectHideFlags: 0
@@ -498345,7 +498835,8 @@ Transform:
   m_LocalPosition: {x: -0, y: 0.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 624738663}
   m_Father: {fileID: 4924474411801078490}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &3893616643872958595
@@ -498363,7 +498854,7 @@ Transform:
   m_Children:
   - {fileID: 5813598050627965128}
   m_Father: {fileID: 6078673704894906557}
-  m_LocalEulerAnglesHint: {x: 76.91222, y: 126.256516, z: 156.18233}
+  m_LocalEulerAnglesHint: {x: 76.9122, y: 126.25653, z: 156.18234}
 --- !u!1 &3898192676898608275
 GameObject:
   m_ObjectHideFlags: 0
@@ -498410,17 +498901,17 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8307091720835499462}
+  - {fileID: 2665731179431580411}
+  - {fileID: 4603151608901042358}
   - {fileID: 3462163484899165145}
   - {fileID: 6010464915138415622}
   - {fileID: 678712539676885780}
-  - {fileID: 4603151608901042358}
   - {fileID: 420372920198084904}
   - {fileID: 8104353634611832530}
   - {fileID: 5668621651435561425}
   - {fileID: 6247439915871833981}
   - {fileID: 4641362844027028970}
   - {fileID: 7410977472921021691}
-  - {fileID: 2665731179431580411}
   m_Father: {fileID: 3504656212642405720}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &3899669384438941222
@@ -502059,9 +502550,9 @@ Transform:
   m_GameObject: {fileID: 4310212825277550479}
   serializedVersion: 2
   m_LocalRotation: {x: -0.03294544, y: -0.117956586, z: 0.075528905, w: 0.98959404}
-  m_LocalPosition: {x: 0.059, y: 0.065, z: 0.159}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0.054, y: 0.093, z: 0.157}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3329286252410861198}
   m_Father: {fileID: 6010464915138415622}
@@ -515565,6 +516056,7 @@ GameObject:
   - component: {fileID: 8786259438437149206}
   - component: {fileID: 3062655716535156832}
   - component: {fileID: 338183765821641899}
+  - component: {fileID: 8786259438437149207}
   m_Layer: 19
   m_Name: GeyGun
   m_TagString: Gun 2
@@ -523831,7 +524323,7 @@ Transform:
   m_Children:
   - {fileID: 2114430859525193857}
   m_Father: {fileID: 395350924481916516}
-  m_LocalEulerAnglesHint: {x: 73.32802, y: 9.571175, z: 14.464236}
+  m_LocalEulerAnglesHint: {x: 73.32802, y: 9.571167, z: 14.4642315}
 --- !u!4 &4481816653022785884
 Transform:
   m_ObjectHideFlags: 0
@@ -534228,6 +534720,8 @@ MonoBehaviour:
   socket: {fileID: 0}
   audioClipFire: {fileID: 0}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -534239,6 +534733,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -534281,7 +534777,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -534293,6 +534793,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   MuzzleFlash: {fileID: 0}
   Character: {fileID: 0}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &4562349423395616053
 GameObject:
   m_ObjectHideFlags: 0
@@ -535585,8 +536086,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9056922358582387656}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14766113, y: -0.22839487, z: 0.037113126, w: 0.9615897}
-  m_LocalPosition: {x: 0.157, y: 0.027, z: 0.226}
+  m_LocalRotation: {x: 0.053266104, y: -0.15493876, z: 0.03578607, w: 0.9858377}
+  m_LocalPosition: {x: 0.025, y: 0.081, z: 0.007}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -535594,7 +536095,7 @@ Transform:
   - {fileID: 2397551579377816170}
   - {fileID: 2670619927086343702}
   m_Father: {fileID: 4603151608901042358}
-  m_LocalEulerAnglesHint: {x: 17.514, y: -26.686, z: 0.236}
+  m_LocalEulerAnglesHint: {x: 6.668, y: -17.682, z: 3.12}
 --- !u!199 &4636419928745706976
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -564147,7 +564648,7 @@ Transform:
   m_Children:
   - {fileID: 7844096424259360218}
   m_Father: {fileID: 5813598050627965128}
-  m_LocalEulerAnglesHint: {x: 22.29976, y: -13.480403, z: -6.46726}
+  m_LocalEulerAnglesHint: {x: 22.29976, y: -13.480401, z: -6.4672585}
 --- !u!1 &4903200059686956834
 GameObject:
   m_ObjectHideFlags: 0
@@ -564496,7 +564997,7 @@ Transform:
   m_Children:
   - {fileID: 3893550776888331387}
   m_Father: {fileID: 2854418417440792530}
-  m_LocalEulerAnglesHint: {x: 76.53641, y: 2.9407413, z: -7.4487343}
+  m_LocalEulerAnglesHint: {x: 81.701294, y: 3.8383555, z: -9.155103}
 --- !u!4 &4925222597243601408
 Transform:
   m_ObjectHideFlags: 0
@@ -618379,7 +618880,7 @@ Transform:
   m_Children:
   - {fileID: 301066252394138579}
   m_Father: {fileID: 3766337731309689592}
-  m_LocalEulerAnglesHint: {x: 15.569965, y: 11.552236, z: -41.83776}
+  m_LocalEulerAnglesHint: {x: 15.569962, y: 11.552236, z: -41.837753}
 --- !u!4 &5646632160528340257
 Transform:
   m_ObjectHideFlags: 0
@@ -620425,7 +620926,7 @@ Transform:
   m_Children:
   - {fileID: 4902494887163652911}
   m_Father: {fileID: 3893616643872958595}
-  m_LocalEulerAnglesHint: {x: 73.07968, y: 8.179266, z: -0.077934675}
+  m_LocalEulerAnglesHint: {x: 73.07968, y: 8.179267, z: -0.07793174}
 --- !u!1 &5813697393389118484
 GameObject:
   m_ObjectHideFlags: 0
@@ -620600,6 +621101,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
+  - {fileID: 2100000, guid: 3fa06a5fbd16b412c8a012ad61ba024e, type: 2}
   - {fileID: 2100000, guid: a9e049ac019342144ab31d7e21a5e330, type: 2}
   - {fileID: 2100000, guid: a391f6d73292e8c4182553f53aaad678, type: 2}
   m_StaticBatchInfo:
@@ -620799,7 +621301,7 @@ Transform:
   m_GameObject: {fileID: 13432137118480870}
   serializedVersion: 2
   m_LocalRotation: {x: -0.03294544, y: -0.117956586, z: 0.075528905, w: 0.98959404}
-  m_LocalPosition: {x: 0.16, y: 0.0674, z: 0.283}
+  m_LocalPosition: {x: 0.063, y: 0.0921, z: 0.1597}
   m_LocalScale: {x: 0.11, y: 0.11, z: 0.11}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -622033,7 +622535,7 @@ Transform:
   m_Children:
   - {fileID: 784140166664306308}
   m_Father: {fileID: 1274802355362251166}
-  m_LocalEulerAnglesHint: {x: 0.81873953, y: 16.864218, z: -26.764385}
+  m_LocalEulerAnglesHint: {x: 0.8187408, y: 16.86422, z: -26.76439}
 --- !u!108 &5867417615038647683
 Light:
   m_ObjectHideFlags: 0
@@ -627676,8 +628178,8 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a9e049ac019342144ab31d7e21a5e330, type: 2}
-  - {fileID: 2100000, guid: c850f9770c7d378489bc28248b342eff, type: 2}
+  - {fileID: 2100000, guid: ea7e4cd7d2128e54a83f1707fc4a55f9, type: 2}
+  - {fileID: 2100000, guid: a391f6d73292e8c4182553f53aaad678, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -628731,7 +629233,7 @@ Transform:
   m_Children:
   - {fileID: 395350924481916516}
   m_Father: {fileID: 675318402561999365}
-  m_LocalEulerAnglesHint: {x: 41.74572, y: 26.386993, z: 8.930356}
+  m_LocalEulerAnglesHint: {x: 41.745716, y: 26.387003, z: 8.930362}
 --- !u!1 &6007420367204900362
 GameObject:
   m_ObjectHideFlags: 0
@@ -630468,7 +630970,7 @@ Transform:
   m_Children:
   - {fileID: 3893616643872958595}
   m_Father: {fileID: 3766337731309689592}
-  m_LocalEulerAnglesHint: {x: 24.480757, y: 7.4219093, z: -53.059185}
+  m_LocalEulerAnglesHint: {x: 24.480757, y: 7.421908, z: -53.059185}
 --- !u!1 &6078788982264170323
 GameObject:
   m_ObjectHideFlags: 0
@@ -637466,6 +637968,8 @@ MonoBehaviour:
   socket: {fileID: 3266889910936920857}
   audioClipFire: {fileID: 8300000, guid: 78763c8811d5cc34dbcbc28265cb363f, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -637477,6 +637981,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -637519,7 +638025,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -637547,6 +638057,7 @@ MonoBehaviour:
   audioSource: {fileID: 5899648934715622292}
   MuzzleFlash: {fileID: 9215985758485697494}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &6238262010493398135
 GameObject:
   m_ObjectHideFlags: 0
@@ -637969,6 +638480,8 @@ MonoBehaviour:
   socket: {fileID: 1141282017486634591}
   audioClipFire: {fileID: 8300000, guid: 769cb4c7aab3f7c47b6d1a9cd8bb7bdf, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -637980,6 +638493,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -638022,7 +638537,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -638050,6 +638569,7 @@ MonoBehaviour:
   audioSource: {fileID: 2464273633579049796}
   MuzzleFlash: {fileID: 274026102931379303}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &6276476292788617937
 Transform:
   m_ObjectHideFlags: 0
@@ -667596,8 +668116,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 377154671275714128}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14766113, y: -0.22839487, z: 0.037113126, w: 0.9615897}
-  m_LocalPosition: {x: 0.09, y: 0.062, z: 0.051}
+  m_LocalRotation: {x: -0.0324066, y: -0.23139009, z: -0.008181246, w: 0.97228676}
+  m_LocalPosition: {x: 0.047, y: 0.044, z: 0.137}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -667605,7 +668125,7 @@ Transform:
   - {fileID: 7380685185438911722}
   - {fileID: 7492043003018595023}
   m_Father: {fileID: 6010464915138415622}
-  m_LocalEulerAnglesHint: {x: 17.514, y: -26.686, z: 0.236}
+  m_LocalEulerAnglesHint: {x: -3.83, y: -26.771, z: -0.052}
 --- !u!1 &6657916483193518825
 GameObject:
   m_ObjectHideFlags: 0
@@ -667630,8 +668150,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6901948376769119041}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14766113, y: -0.22839487, z: 0.037113126, w: 0.9615897}
-  m_LocalPosition: {x: 0.157, y: 0.027, z: 0.226}
+  m_LocalRotation: {x: -0.13486668, y: -0.22918786, z: -0.03084216, w: 0.9635002}
+  m_LocalPosition: {x: 0.111247495, y: 0.064787574, z: 0.2269754}
   m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -667639,7 +668159,7 @@ Transform:
   - {fileID: 1366824076591061426}
   - {fileID: 2479265753137898801}
   m_Father: {fileID: 3462163484899165145}
-  m_LocalEulerAnglesHint: {x: 17.514, y: -26.686, z: 0.236}
+  m_LocalEulerAnglesHint: {x: -15.904, y: -26.78, z: 0.142}
 --- !u!1 &6665220567677168622
 GameObject:
   m_ObjectHideFlags: 0
@@ -716130,10 +716650,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   maximumDistance: 500
-  ammunitionTotal: 10
+  ammunitionTotal: 7
   socket: {fileID: 3149014725333001608}
   audioClipFire: {fileID: 8300000, guid: 7947343c1b9d85641a0456811307cd96, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 1
+  PoisonMat: {fileID: 2100000, guid: 0e9ff52247329af41be78efa4876eafa, type: 2}
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -716145,6 +716667,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -716187,7 +716711,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -716215,6 +716743,7 @@ MonoBehaviour:
   audioSource: {fileID: 501174497992796244}
   MuzzleFlash: {fileID: 2758363854714423636}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &7043246533002593198
 Transform:
   m_ObjectHideFlags: 0
@@ -729096,6 +729625,8 @@ MonoBehaviour:
   socket: {fileID: 8876066253911550751}
   audioClipFire: {fileID: 8300000, guid: 716358fb2fa172f42bc0f860ab313761, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -729107,6 +729638,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -729149,7 +729682,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -729177,6 +729714,7 @@ MonoBehaviour:
   audioSource: {fileID: 1174566507232493662}
   MuzzleFlash: {fileID: 5986670129857127222}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &7294648143967228918
 GameObject:
   m_ObjectHideFlags: 0
@@ -734831,12 +735369,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8972271924798491900}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.018952766, y: 0.13383594, z: -0.00962706, w: 0.9907755}
-  m_LocalPosition: {x: 0.029999807, y: 0.019999376, z: -0.009999998}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.0066827214, y: 0.9781638, z: -0.009745825, w: 0.2074993}
+  m_LocalPosition: {x: -0.185, y: -0.077, z: 0.436}
+  m_LocalScale: {x: 0.91766244, y: 0.9973625, z: 1.0900267}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8307091720835499462}
+  m_Father: {fileID: 3310542857801739671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7354344588446796020
 GameObject:
@@ -745398,7 +745936,7 @@ Transform:
   m_Children:
   - {fileID: 8013778395556328286}
   m_Father: {fileID: 1033845436742383413}
-  m_LocalEulerAnglesHint: {x: 77.27618, y: -50.506233, z: -44.857925}
+  m_LocalEulerAnglesHint: {x: 79.1117, y: -74.06264, z: -68.6685}
 --- !u!4 &7410977472921021691
 Transform:
   m_ObjectHideFlags: 0
@@ -776441,6 +776979,8 @@ MonoBehaviour:
   socket: {fileID: 6474855405525251710}
   audioClipFire: {fileID: 8300000, guid: 100bbde9ff3d0044c86fcbfceb2f7b25, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -776452,6 +776992,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -776494,7 +777036,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -776522,6 +777068,7 @@ MonoBehaviour:
   audioSource: {fileID: 1619939110900562237}
   MuzzleFlash: {fileID: 8961346272670591481}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &7582422801823751101
 Transform:
   m_ObjectHideFlags: 0
@@ -788031,6 +788578,8 @@ MonoBehaviour:
   socket: {fileID: 2428557814444496253}
   audioClipFire: {fileID: 8300000, guid: 7b954b9c5463f514f9e89f8f92e55358, type: 3}
   reloadAnimationTime: 3
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -788042,6 +788591,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -788084,7 +788635,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -788112,6 +788667,7 @@ MonoBehaviour:
   audioSource: {fileID: 1491623466886561920}
   MuzzleFlash: {fileID: 1944602391306652056}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!4 &7779368516249346758
 Transform:
   m_ObjectHideFlags: 0
@@ -844508,10 +845064,10 @@ Transform:
   - {fileID: 5923128081242823324}
   - {fileID: 8460847268041051358}
   - {fileID: 198693035991637007}
+  - {fileID: 1852157562}
   - {fileID: 6815903642416146564}
   - {fileID: 912181312573837236}
   - {fileID: 2128444921393541918}
-  - {fileID: 7352544547795988514}
   - {fileID: 435899904}
   m_Father: {fileID: 3899399096872980293}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -849650,6 +850206,8 @@ MonoBehaviour:
   socket: {fileID: 1234428197286207691}
   audioClipFire: {fileID: 8300000, guid: 56d9661206c7b9c4eb5d140a2f32aa64, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -849661,6 +850219,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 3
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -849703,7 +850263,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 15
   rayGunBaseBeamWidth: 0.02
   rayGunMaxBeamWidth: 0.8
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.03
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 1
   piercerFireInterval: 0.15
@@ -849731,6 +850295,7 @@ MonoBehaviour:
   audioSource: {fileID: 467606367219629553}
   MuzzleFlash: {fileID: 158327913724443409}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &8331971474477990181
 GameObject:
   m_ObjectHideFlags: 0
@@ -883918,6 +884483,8 @@ MonoBehaviour:
   socket: {fileID: 2832804937279086030}
   audioClipFire: {fileID: 8300000, guid: 769cb4c7aab3f7c47b6d1a9cd8bb7bdf, type: 3}
   reloadAnimationTime: 1
+  peaPoison: 0
+  PoisonMat: {fileID: 0}
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -883929,6 +884496,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   laserCooldownRate: 1
+  beamLoopSource: {fileID: 0}
+  GunOverheatSFX: {fileID: 0}
   minChargedImpulseMultiplier: 0.5
   maxChargedImpulseMultiplier: 2
   maxChargeValue: 100
@@ -883971,7 +884540,11 @@ MonoBehaviour:
   rayGunDamageIncreaseRate: 6
   rayGunBaseBeamWidth: 0.05
   rayGunMaxBeamWidth: 0.25
+  rayGunBaseBeamSpeed: 7
+  rayGunMaxBeamSpeed: 14
   rayGunBeamWidthIncreaseRate: 0.08
+  rayGunBeamSpeedIncreaseRate: 1
+  CloudVFX: {fileID: 0}
   piercerMaxBullets: 3
   piercerSecondsPerBullet: 3
   piercerFireInterval: 0.15
@@ -883999,6 +884572,7 @@ MonoBehaviour:
   audioSource: {fileID: 2431413245923280112}
   MuzzleFlash: {fileID: 8291850501870875978}
   Character: {fileID: 8090627907286243157}
+  BulletImpactPool: {fileID: 0}
 --- !u!1 &8655661859629507546
 GameObject:
   m_ObjectHideFlags: 0
@@ -890294,6 +890868,102 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!82 &8786259438437149207
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4253750185016752373}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: ff51a3adae22db84d80b525fedaeb257, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!4 &8786900973020725320
 Transform:
   m_ObjectHideFlags: 0
@@ -902383,7 +903053,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4310212825277550479}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -921401,3 +922071,4 @@ SceneRoots:
   - {fileID: 4970430711938170817}
   - {fileID: 7583236242706813718}
   - {fileID: 338206040}
+  - {fileID: 728402300}

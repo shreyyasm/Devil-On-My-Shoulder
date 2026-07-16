@@ -25,6 +25,7 @@ Shader "Custom/URP/RainbowLaser"
         _WaveAmplitude ("Wave Amplitude", Range(0,0.2)) = 0.05
         _WaveFrequency ("Wave Frequency", Float) = 8.0
         _WaveSpeed ("Wave Speed", Float) = 2.0
+        _WaveOffset ("Wave Offset", Float) = 0
     }
 
     SubShader
@@ -84,6 +85,7 @@ Shader "Custom/URP/RainbowLaser"
                 float _WaveAmplitude;
                 float _WaveFrequency;
                 float _WaveSpeed;
+                float _WaveOffset;
             CBUFFER_END
 
             Varyings vert(Attributes IN)
@@ -120,10 +122,10 @@ Shader "Custom/URP/RainbowLaser"
                 // =========================================================
                 // 1) MAKE THE WHOLE RAINBOW WAVE UP/DOWN
                 // =========================================================
-                float wave = sin(uv.x * _WaveFrequency - _Time.y * _WaveSpeed) * _WaveAmplitude;
+                float wave = sin(uv.x * _WaveFrequency - _WaveOffset) * _WaveAmplitude;
 
                 // Optional second softer wave for nicer motion
-                wave += sin(uv.x * (_WaveFrequency * 0.45) - _Time.y * (_WaveSpeed * 0.65)) * (_WaveAmplitude * 0.35);
+                wave += sin(uv.x * (_WaveFrequency * 0.45) - (_WaveOffset * 0.65)) * (_WaveAmplitude * 0.35);
 
                 // Shift rainbow bands up/down together
                 float rainbowY = uv.y + wave;

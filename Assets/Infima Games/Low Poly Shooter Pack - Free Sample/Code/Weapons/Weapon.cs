@@ -62,6 +62,8 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private Transform socket;
         [SerializeField] private AudioClip audioClipFire;
         public float reloadAnimationTime = 1f;
+        public bool peaPoison; 
+        public Material PoisonMat;
 
         [Header("Shotgun Settings")]
         [SerializeField] private int shotgunPellets = 8;
@@ -80,6 +82,8 @@ namespace InfimaGames.LowPolyShooterPack
         private float laserCooldownTimer;
         private bool laserOverheated;
 
+        public AudioSource beamLoopSource;
+        public AudioClip GunOverheatSFX;
 
 
         [Header("Charged Beam Settings")]
@@ -159,8 +163,14 @@ namespace InfimaGames.LowPolyShooterPack
 
         [SerializeField] private float rayGunBaseBeamWidth = 0.05f;
         [SerializeField] private float rayGunMaxBeamWidth = 0.25f;
+
+        [SerializeField] private float rayGunBaseBeamSpeed = 7f;
+        [SerializeField] private float rayGunMaxBeamSpeed = 14f;
         [SerializeField] private float rayGunBeamWidthIncreaseRate = 0.08f;
+        [SerializeField] private float rayGunBeamSpeedIncreaseRate = 1f;
+        public GameObject CloudVFX;
         private float currentRayGunBeamWidth;
+        private float currentRayGunBeamSpeed;
         private float currentRayGunDamage;
 
         [Header("Piercer Settings (Charged Beam Special)")]
@@ -205,12 +215,13 @@ namespace InfimaGames.LowPolyShooterPack
         private float laserTickTimer;
 
 
-        
+
 
 
         #endregion
 
         #region UNITY
+        private Material mat;
 
         protected override void Awake()
         {
@@ -222,6 +233,15 @@ namespace InfimaGames.LowPolyShooterPack
             characterBehaviour = gameModeService.GetPlayerCharacter();
             playerCamera = characterBehaviour.GetCameraWorld().transform;
             Character = characterBehaviour.GetComponent<Character>();
+            if(gunType == GunType.LaserBeam)
+             mat = beamRenderer.material;
+
+
+            if (peaPoison)
+            {
+                PoisonMat.SetFloat("_Fill", 0.07f);
+
+            }
         }
 
         protected override void Start()
@@ -361,8 +381,20 @@ namespace InfimaGames.LowPolyShooterPack
                         rayGunMaxBeamWidth
                     );
 
+                    // WaveSpeed ramp (independent rate)
+                    currentRayGunBeamSpeed += rayGunBeamSpeedIncreaseRate * Time.deltaTime;
+                    currentRayGunBeamSpeed = Mathf.Clamp(
+                         currentRayGunBeamSpeed,
+                        rayGunBaseBeamSpeed,
+                        rayGunMaxBeamSpeed
+                    );
+                   
+                   
+                    mat.SetFloat("_WaveSpeed", currentRayGunBeamSpeed);
+                     
                     beamRenderer.startWidth = currentRayGunBeamWidth;
                     beamRenderer.endWidth = currentRayGunBeamWidth;
+
                 }
 
             }
@@ -558,7 +590,11 @@ namespace InfimaGames.LowPolyShooterPack
 
             ApplyRecoil(gunType == GunType.Pistol ? pistolRecoil : automaticRecoil);
 
-           
+            if (peaPoison)
+            {
+              PoisonMat.SetFloat("_Fill", ammunitionCurrent * 0.01f);
+
+            }
             if (ammunitionCurrent == 0)
                 Character.PlayReloadAnimation();
         }
@@ -783,12 +819,14 @@ namespace InfimaGames.LowPolyShooterPack
 
             beamActive = true;
             laserTickTimer = 0f;
-
+            CloudVFX.SetActive(true);
             if (beamRenderer)
                 beamRenderer.enabled = true;
+            audioSource.PlayOneShot(audioClipFire, 1);
+            beamLoopSource.Play();
         }
 
-
+        public ObjectPool BulletImpactPool;
         private void UpdateLaserBeam()
         {
             // Track continuous usage
@@ -798,7 +836,7 @@ namespace InfimaGames.LowPolyShooterPack
                 OverheatLaser();
                 return;
             }
-
+            CameraShake.Instance.ShakeWithValue(0.1f, 0.05f);
             Vector3 origin = socket.position;
             Vector3 direction = playerCamera.forward;
 
@@ -825,6 +863,10 @@ namespace InfimaGames.LowPolyShooterPack
 
             laserTickTimer = 0f;
             laserUseTimer += Time.deltaTime;
+
+            Quaternion rotation = Quaternion.LookRotation(hit.normal);
+            BulletImpactPool.GetObject(endPoint, rotation);
+            CloudVFX.transform.position = endPoint;
 
             if (hasHit && ((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
             {
@@ -857,6 +899,10 @@ namespace InfimaGames.LowPolyShooterPack
 
             currentRayGunDamage = rayGunBaseDamage;
             currentRayGunBeamWidth = rayGunBaseBeamWidth;
+            currentRayGunBeamSpeed = 0;
+
+            if(mat != null)
+                mat.SetFloat("_WaveSpeed", rayGunBaseBeamSpeed);
 
             if (beamRenderer != null)
             {
@@ -867,6 +913,9 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void OverheatLaser()
         {
+
+            beamLoopSource.Stop();
+            audioSource.PlayOneShot(GunOverheatSFX, 1);
             laserOverheated = true;
             beamActive = false;
             laserUseTimer = 0f;
@@ -902,7 +951,9 @@ namespace InfimaGames.LowPolyShooterPack
         }
         public override void StopBeam()
         {
+            beamLoopSource.Stop();
             ResetRayGunState();
+            CloudVFX.SetActive(false);
 
             if (!beamActive) { return; }
 
@@ -970,7 +1021,18 @@ namespace InfimaGames.LowPolyShooterPack
         { 
             ammunitionCurrent = amount != 0 ? Mathf.Clamp(ammunitionCurrent + amount, 0, ammunitionTotal) : ammunitionTotal; 
             LeanTween.delayedCall(reloadAnimationTime, () => { GetAnimatorHands().SetBool("Empty", false); 
-                GetAnimatorHands().ResetTrigger("Reload"); }); 
+                GetAnimatorHands().ResetTrigger("Reload"); });
+
+            ResetRayGunState();
+
+            LeanTween.delayedCall(reloadAnimationTime - 0.5f, () => {
+                if (peaPoison)
+                {
+                    PoisonMat.SetFloat("_Fill", ammunitionCurrent * 0.07f);
+
+                }
+            });
+           
         }
 
         #endregion
