@@ -150,9 +150,9 @@ public class EnemyHealth : MonoBehaviour
       
 
 
-        //RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
-        ImpactFrameEffect.Instance.GoBlack();
-        LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        ///ImpactFrameEffect.Instance.GoBlack();
+        //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
         SFXManager.Instance.PlaySFX("Enemy/KillSound", 1f);
         AudioClip clip = SFXManager.Instance.GetAudioClip("Enemy/Destroy");

@@ -297,29 +297,29 @@ public class CharacterAbilities : MonoBehaviour
 
         target = FindFinisherTarget();
 
-        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)
-        {
-            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+        //if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)
+        //{
+        //    EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
 
-            if (enemyManager != lastIndicatorEnemy)
-            {
-                if (lastIndicatorEnemy != null)
-                    lastIndicatorEnemy.finisherIndicator.SetActive(false);
+        //    if (enemyManager != lastIndicatorEnemy)
+        //    {
+        //        if (lastIndicatorEnemy != null)
+        //            lastIndicatorEnemy.finisherIndicator.SetActive(false);
 
-                lastIndicatorEnemy = enemyManager;
-            }
+        //        lastIndicatorEnemy = enemyManager;
+        //    }
 
-            if (lastIndicatorEnemy != null)
-                lastIndicatorEnemy.finisherIndicator.SetActive(true);
-        }
-        else
-        {
-            if (lastIndicatorEnemy != null)
-            {
-                lastIndicatorEnemy.finisherIndicator.SetActive(false);
-                lastIndicatorEnemy = null;
-            }
-        }
+        //    if (lastIndicatorEnemy != null)
+        //        lastIndicatorEnemy.finisherIndicator.SetActive(true);
+        //}
+        //else
+        //{
+        //    if (lastIndicatorEnemy != null)
+        //    {
+        //        lastIndicatorEnemy.finisherIndicator.SetActive(false);
+        //        lastIndicatorEnemy = null;
+        //    }
+        //}
 
         if (!fovTransitionActive) return;
 
