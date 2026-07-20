@@ -451,13 +451,14 @@ public class PlayerMovement : MonoBehaviour
 
         // 🚨 CANCEL SLIDE FIRST
         if(isDashing)
-            kickAnimator[characterindex - 1].Play("Slide", 0, 0.75f);
+            kickAnimator[characterindex - 1].Play("Slide", 0, 0.85f);
         CancelSlideImmediately();
 
         readyToJump = false;
 
-        audioSource.PlayOneShot(jumpSFX, 0.7f);
+        //audioSource.PlayOneShot(jumpSFX, 0.7f);
 
+        SFXManager.Instance.PlaySFX("Player/Jump", 0.5f);
         Vector3 horizontalVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
         rb.velocity = horizontalVel * jumpMomentumBoost;
 
@@ -803,7 +804,7 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
         }
 
-        speedline.SetActive(false);
+       
         rb.velocity *= 1.1f;
 
         // -------- SLIDE UP --------
@@ -862,11 +863,12 @@ public class PlayerMovement : MonoBehaviour
         root.localPosition = originalRootLocalPos;
 
         // -------- RESET --------
+        speedline.SetActive(false);
         isDashing = false;
         isSliding = false;
         slideCancelled = false;
 
-        kickAnimator[characterindex - 1].gameObject.SetActive(false);
+       // kickAnimator[characterindex - 1].gameObject.SetActive(false);
 
         yield return new WaitForSeconds(dashCooldown);
         readyToDash = true;
@@ -1113,7 +1115,7 @@ public class PlayerMovement : MonoBehaviour
         
 
         canKick = false;
-        SFXManager.Instance.PlaySFX("Player/Kick", 0.6f);
+        SFXManager.Instance.PlaySFX("Player/Kick", 1f);
         StartCoroutine(KickCooldownRoutine());
 
         // Detect enemies using leg collider sphere

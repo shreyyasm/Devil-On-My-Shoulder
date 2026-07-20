@@ -759,7 +759,7 @@ public class EnemyManager : MonoBehaviour
         //Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
-
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackHitKey, 0.5f);
         PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
 
         if (pm != null)
@@ -1095,7 +1095,7 @@ public class EnemyManager : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(lookDir);
 
         // -------- Calculate jump arc --------
-
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 0.5f);
         Vector3 targetPos = player.position;
 
         Vector3 horizontalDir = targetPos - transform.position;
@@ -1341,7 +1341,7 @@ public class EnemyManager : MonoBehaviour
         isShooting = true;
 
         TryShoot();
-
+        
         yield return new WaitForSeconds(1f);
 
         SetRandomShootPosition();
@@ -1564,6 +1564,8 @@ public class EnemyManager : MonoBehaviour
 
             if (i < burstCount - 1)
                 yield return new WaitForSeconds(burstInterval);
+
+            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
         }
 
         isBursting = false;
@@ -1575,7 +1577,7 @@ public class EnemyManager : MonoBehaviour
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
 
-
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
         animator.SetTrigger("Attack");
         Vector3 targetPosition = player.position + Vector3.up * 2.3f; // Aim slightly above feet
 

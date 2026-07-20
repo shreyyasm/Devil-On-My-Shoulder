@@ -168,6 +168,7 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private float rayGunMaxBeamSpeed = 14f;
         [SerializeField] private float rayGunBeamWidthIncreaseRate = 0.08f;
         [SerializeField] private float rayGunBeamSpeedIncreaseRate = 1f;
+        public ObjectPool bloodPool;
         public GameObject CloudVFX;
         private float currentRayGunBeamWidth;
         private float currentRayGunBeamSpeed;
@@ -877,18 +878,19 @@ namespace InfimaGames.LowPolyShooterPack
                 {
                     damageToApply = currentRayGunDamage;
                 }
-
+                bloodPool.GetObject(hit.collider.transform.position);
                 Debug.Log("EnemyHit");
 
+                if (hit.collider.gameObject.GetComponent<EnemyHealth>() != null)
                 hit.collider.gameObject.GetComponent<EnemyHealth>().EnemyHit(damageToApply);
                 Debug.Log("Enemy Hit By " + damageToApply + "Damage");
 
 
-                hit.collider.SendMessage(
-                    "TakeDamage",
-                    damageToApply,
-                    SendMessageOptions.DontRequireReceiver
-                );
+                //hit.collider.SendMessage(
+                //    "TakeDamage",
+                //    damageToApply,
+                //    SendMessageOptions.DontRequireReceiver
+                //);
             }
 
         }

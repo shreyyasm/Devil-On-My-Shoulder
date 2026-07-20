@@ -366,13 +366,18 @@ public class ComboManager : MonoBehaviour
         //int index = Mathf.Clamp(multiplier / 2, 0, comboNames.Length - 1);
         // Replace your old line with this:
 
-        LocalizeStringEvent loc =  comboNameText.GetComponent<LocalizeStringEvent>();
+        LocalizeStringEvent loc = comboNameText.GetComponent<LocalizeStringEvent>();
+
+        loc.OnUpdateString.RemoveAllListeners();
+        loc.OnUpdateString.AddListener((localizedText) =>
+        {
+            comboNameText.text =
+    $"<size=130>{localizedText[0]}</size><space=0px><size=85>{localizedText.Substring(1)}</size>";
+        });
 
         string key = "Combo_" + (multiplier - 1);
-
         loc.StringReference.SetReference("Kill Meter", key);
         loc.RefreshString();
-
         RectTransform rect = comboNameText.rectTransform;
 
         rect.DOKill();
@@ -419,6 +424,13 @@ public class ComboManager : MonoBehaviour
         seq.Append(
             rect.DOPunchScale(Vector3.one * 0.2f, 0.2f, 5, 1f)
         );
+    }
+    public static string StylizeFirstLetter(string word, int firstSize, int restSize)
+    {
+        if (string.IsNullOrEmpty(word))
+            return "";
+
+        return $"<size={firstSize}>{word[0]}</size><size={restSize}>{word.Substring(1)}</size>";
     }
     void UpdateKillChainUI()
     {

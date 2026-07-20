@@ -89,6 +89,8 @@ public class EnemyProjectile : MonoBehaviour
         Sender.SetIndicator();
         bl_DamageDelegate.OnDamageEvent(info);
     }
+    public AudioSource attack3dAudioSource;
+    public string enemyName;
     private void OnTriggerEnter(Collider collision)
     {
         if (collision.CompareTag("Player"))
@@ -100,10 +102,11 @@ public class EnemyProjectile : MonoBehaviour
                 {
                     Vector3 directionAway = (collision.transform.position - transform.position).normalized;
                     playerRigidbody.AddForce(directionAway * forceMagnitude, ForceMode.Impulse);
-
+                    SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + "AttackHit", 1f);
                     ImpactFrameEffect.Instance.GoBlack();
                     LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
                     HurtPlayer();
+
                     collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
                     collision.gameObject.GetComponent<PlayerHealth>().hit = true;
                     Debug.Log("playerHit");
@@ -136,6 +139,7 @@ public class EnemyProjectile : MonoBehaviour
         {
             
             Debug.Log("Hit Enemy");
+            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + "AttackHit", 1f);
             ImpactFrameEffect.Instance.GoBlack();
             LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
             collision.GetComponent<EnemyHealth>().EnemyHit(playerDamage);

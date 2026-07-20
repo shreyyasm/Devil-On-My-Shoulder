@@ -107,7 +107,7 @@ public class PlayerHealth : MonoBehaviour
         if(amount < 0)
         {
             if (PlayerMovement.finisherActive) return;
-            SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
+            //SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
             // Apply combo penalty automatically
             ComboManager.Instance.ApplyDamagePenalty();
             //healthAnim.SetTrigger("HealthMinus");

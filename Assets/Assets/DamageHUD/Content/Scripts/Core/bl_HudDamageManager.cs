@@ -97,7 +97,7 @@ public class bl_HudDamageManager : MonoBehaviour {
     {
         //Calculate health
         Health -= info.Damage;
-        AudioSource.PlayClipAtPoint(hurtSound, player.transform.position, 0.6f);
+        //AudioSource.PlayClipAtPoint(hurtSound, player.transform.position, 0.6f);
         //Calculate the diference in health for apply to the alpha.
         Alpha = (MaxHealth - Health) / 100;
         //Ensure that alpha is never less than the minimum allowed
