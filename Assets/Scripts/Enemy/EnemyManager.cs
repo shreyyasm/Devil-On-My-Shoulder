@@ -240,6 +240,7 @@ public class EnemyManager : MonoBehaviour
 
     private float SpherecastRadius = 0.5f;
     private float LastAttackTime;
+    public bool SpwanerTombstone;
 
     #endregion
 
@@ -1774,7 +1775,11 @@ public class EnemyManager : MonoBehaviour
         // =========================
         if (!isSpawningPhase && !isChargingShot && !isRecovering)
         {
-            SpawnBatch();
+            if(SpwanerTombstone)
+            {
+                SpawnBatch();
+               
+            }
             isSpawningPhase = true;
             shootTimer = shootDelayAfterSpawn;
         }
@@ -1921,7 +1926,7 @@ public class EnemyManager : MonoBehaviour
         }
 
         DoThrow(throwData);
-
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
         yield return null;
 
         agent.isStopped = false;

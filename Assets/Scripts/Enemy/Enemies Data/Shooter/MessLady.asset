@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MessLady
   m_EditorClassIdentifier: 
   enemyName: MessLady
-  enemyType: 1
+  enemyType: 4
   coverType: 0
   shieldType: 1
   deathType: 0
@@ -58,11 +58,11 @@ MonoBehaviour:
   PeekRadius: 3
   CoverSearchRadius: 50
   VisionHeight: 1
-  spawnEnemyPrefab: {fileID: 0}
+  spawnEnemyPrefab: {fileID: 11400000, guid: e1c6cfa60c0416242ae61d3eb75a7be2, type: 2}
   spawnInterval: 3
   spawnLimit: 5
   useSpawnLimit: 0
-  isShooterTombstone: 0
+  isShooterTombstone: 1
   repositionInterval: 6
   spawnBatchCount: 3
   shootDelayAfterSpawn: 2
@@ -81,5 +81,5 @@ MonoBehaviour:
   GuardShootSpeed: 0
   GuardShootInterval: 0
   detonateDistance: 2.5
-  attackHitKey: 
-  attackTryKey: 
+  attackHitKey: AttackHit
+  attackTryKey: AttackTry

@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 2917619946721561735}
   - component: {fileID: 3855803145542286232}
   - component: {fileID: 7989416120366757902}
+  - component: {fileID: 1872547884735185531}
   m_Layer: 16
   m_Name: Janitor
   m_TagString: Blood
@@ -263,6 +264,7 @@ MonoBehaviour:
   enemyStats: {fileID: 11400000, guid: e07e4167a3b070a4eb68367fd12d6387, type: 2}
   enemyName: 
   After_DeathExplosion: {fileID: 0}
+  After_BloodExplosion: {fileID: 0}
   finisherTarget: {fileID: 7141780028286532622}
   finisherIndicator: {fileID: 7052662300432664181}
   finisherTime: 0
@@ -434,10 +436,10 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 0.6
-  MaxDistance: 15
-  Pan2D: 0
-  rolloffMode: 1
+  MinDistance: 10
+  MaxDistance: 40
+  Pan2D: -0.3
+  rolloffMode: 0
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -485,7 +487,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 0.027777778
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -545,6 +547,102 @@ MonoBehaviour:
     type: 3}
   zOffset: 0.3
   destroyTime: 20
+--- !u!82 &1872547884735185531
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93961789830979277}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 251ad798adca293459c0afe969e4775d, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 40
+  Pan2D: -0.3
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.027777778
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &146742862632223586
 GameObject:
   m_ObjectHideFlags: 0
@@ -38737,6 +38835,8 @@ MonoBehaviour:
   playerDamage: 25
   forceMagnitude: 10
   Sender: {fileID: 5007682505446828737}
+  attack3dAudioSource: {fileID: 0}
+  enemyName: 
 --- !u!1 &5041830202757647075
 GameObject:
   m_ObjectHideFlags: 0
@@ -66780,6 +66880,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4958991762520692238}
     m_Modifications:
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 924d9314952d5434c9b165703fc37a2e,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: f217b5a317cc3674488600d0bb50c5dd,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 2e440b172af838642aa755df10fa7fbe,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: d1e7222d80ec73149896ca0b333ccfa5,
+        type: 2}
     - target: {fileID: 335958433486309529, guid: 89207601446ace84aba6d7aba7eb7c8b,
         type: 3}
       propertyPath: playOnAwake
@@ -66865,6 +66985,30 @@ PrefabInstance:
       propertyPath: playOnAwake
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 924d9314952d5434c9b165703fc37a2e,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: f217b5a317cc3674488600d0bb50c5dd,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 2e440b172af838642aa755df10fa7fbe,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: d1e7222d80ec73149896ca0b333ccfa5,
+        type: 2}
     - target: {fileID: 7499280696054040098, guid: 89207601446ace84aba6d7aba7eb7c8b,
         type: 3}
       propertyPath: m_IsActive
@@ -69197,6 +69341,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4958991762520692238}
     m_Modifications:
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 924d9314952d5434c9b165703fc37a2e,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: f217b5a317cc3674488600d0bb50c5dd,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 2e440b172af838642aa755df10fa7fbe,
+        type: 2}
+    - target: {fileID: 7814883080878498, guid: 89207601446ace84aba6d7aba7eb7c8b, type: 3}
+      propertyPath: decalPrefabs.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: d1e7222d80ec73149896ca0b333ccfa5,
+        type: 2}
     - target: {fileID: 335958433486309529, guid: 89207601446ace84aba6d7aba7eb7c8b,
         type: 3}
       propertyPath: playOnAwake
@@ -69277,6 +69441,30 @@ PrefabInstance:
       propertyPath: playOnAwake
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 924d9314952d5434c9b165703fc37a2e,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: f217b5a317cc3674488600d0bb50c5dd,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 2e440b172af838642aa755df10fa7fbe,
+        type: 2}
+    - target: {fileID: 5568764463268628959, guid: 89207601446ace84aba6d7aba7eb7c8b,
+        type: 3}
+      propertyPath: decalPrefabs.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: d1e7222d80ec73149896ca0b333ccfa5,
+        type: 2}
     - target: {fileID: 7499280696054040098, guid: 89207601446ace84aba6d7aba7eb7c8b,
         type: 3}
       propertyPath: m_IsActive
