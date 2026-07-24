@@ -1,4 +1,5 @@
 ﻿using InfimaGames.LowPolyShooterPack;
+using QFSW.MOP2;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ public class PlayerHealth : MonoBehaviour
 
     public PowerUpSelect powerUpSelect;
     bool drain = true;
+    public ObjectPool bloodPool;
 
     // Start is called before the first frame update
     void Start()
@@ -111,6 +113,7 @@ public class PlayerHealth : MonoBehaviour
             // Apply combo penalty automatically
             ComboManager.Instance.ApplyDamagePenalty();
             //healthAnim.SetTrigger("HealthMinus");
+            bloodPool.GetObject(transform.position, Quaternion.identity);
             ScoreManager.Instance.hitsTakken++;
             CameraShake.Instance.Shake();
         }

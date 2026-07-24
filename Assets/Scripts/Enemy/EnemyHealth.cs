@@ -25,6 +25,7 @@ public class EnemyHealth : MonoBehaviour
     public EnemyStats.ShieldType shieldType;
     public EnemyStats.DeathType deathType;
     public float shieldHealth;
+    public GameObject Shield;
 
     public bool isInvincible;
     private NavMeshAgent agent;
@@ -81,11 +82,20 @@ public class EnemyHealth : MonoBehaviour
         // Shield check
         if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
         {
+            ShowShield(1f);
+            if (Shield != null)
+            {
+                Shield.SetActive(true);
+            }
+               
             shieldHealth -= amount;
-
+            //SFXManager.Instance.PlayNPC_SFX(audioSource, "Janitor/Shield", 1f);
+            SFXManager.Instance.PlaySFX("Janitor/Shield", 1f);
             // Overflow damage goes to health
             if (shieldHealth < 0)
             {
+                if(Shield!= null)
+                    Shield.SetActive(false);
                 float overflow = -shieldHealth;
                 shieldHealth = 0;
 
@@ -94,6 +104,7 @@ public class EnemyHealth : MonoBehaviour
         }
         else
         {
+            BloodPool.GetObject(transform.position, Quaternion.identity);
             ApplyHealthDamage(amount, info); // 🔥 pass info
         }
     }
@@ -112,6 +123,30 @@ public class EnemyHealth : MonoBehaviour
             Die(info.isEnvironmental, info.isFinisher, info.isAirKill, info.isHeadshot);
 
         }
+    }
+    private Coroutine shieldCoroutine;
+
+    public void ShowShield(float duration)
+    {
+        if (shieldCoroutine != null)
+        {
+            StopCoroutine(shieldCoroutine);
+        }
+
+        shieldCoroutine = StartCoroutine(ShieldRoutine(duration));
+    }
+
+    private IEnumerator ShieldRoutine(float duration)
+    {
+        if (Shield != null)
+            Shield.SetActive(true);
+
+        yield return new WaitForSeconds(duration);
+
+        if (Shield != null)
+            Shield.SetActive(false);
+
+        shieldCoroutine = null;
     }
     public IEnumerator SelfKnockback(float force)
     {
@@ -137,7 +172,7 @@ public class EnemyHealth : MonoBehaviour
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
         dead = true;
-        Transform bloodPoint = enemyManager.firePoint;
+        Transform bloodPoint = transform;
         GameObject bloodBlast = enemyManager.After_BloodExplosion.GetObject();
         bloodBlast.transform.position = bloodPoint.position + new Vector3(0, 0.6f, 0);
 
@@ -278,7 +313,7 @@ public class EnemyHealth : MonoBehaviour
             damage,
             transform
         );
-
+        
         SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
         ScoreManager.Instance.RegisterShotHit();
 
@@ -333,7 +368,7 @@ public class EnemyHealth : MonoBehaviour
                 damage,
                 transform
             );
-
+           
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
 
@@ -371,7 +406,7 @@ public class EnemyHealth : MonoBehaviour
                 damage,
                 transform
             );
-
+            
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
 

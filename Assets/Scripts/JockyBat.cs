@@ -13,6 +13,8 @@ public class JockyBat : MonoBehaviour
 
     public EnemyManager EnemyManager;
 
+    public GameObject Trail;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,10 +29,19 @@ public class JockyBat : MonoBehaviour
     public void ActivateBatCollider()
     {
         WeaponPrefab.SetActive(true);
+        if (Trail != null)
+            Trail.SetActive(true);
     }
     public void DisableBatCollider()
     {
         WeaponPrefab.SetActive(false);
+     
+    }
+    public void DisableTrail()
+    {
+       
+        if (Trail != null)
+            Trail.SetActive(false);
     }
     public void ScreenEffect()
     {

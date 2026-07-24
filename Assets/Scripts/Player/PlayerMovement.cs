@@ -1145,15 +1145,11 @@ public class PlayerMovement : MonoBehaviour
         
         foreach (Collider hit in hits)
         {
-            hit.GetComponent<EnemyManager>().kickOn = true;
-            //yield return new WaitForSeconds(0.13f);
-            //yield return new WaitForSeconds(0.13f);
-           
-            hit.GetComponent<EnemyManager>().animator.SetBool("Kicked",true);
 
             if (hit.gameObject.layer == 16)
             {
-               
+                hit.GetComponent<EnemyManager>().kickOn = true;
+                hit.GetComponent<EnemyManager>().animator.SetTrigger("Kicked");
                 if (hit.GetComponent<EnemyManager>() != null)
                 {
                     if (hit.GetComponent<EnemyManager>().isGrabbing)
@@ -1202,7 +1198,7 @@ public class PlayerMovement : MonoBehaviour
                     HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
                     hitstop.DoShake();
                     //hit.GetComponent<EnemyManager>().kickOn = false;
-                    //LeanTween.delayedCall(1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
+                   // LeanTween.delayedCall(0.1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
 
                 }
         
@@ -1344,25 +1340,32 @@ public class PlayerMovement : MonoBehaviour
         float groundCheckDelay = 1f;
         float timer = 0f;
 
+        float stillTime = 0f;
+        //enemyManager.animator.SetBool("Kicked", false);
         while (true)
         {
-            if (rb == null || enemyManager == null)
-                yield break;
-
             timer += Time.deltaTime;
 
-            // Don't start checking for landing yet
             if (timer < groundCheckDelay)
             {
                 yield return null;
                 continue;
             }
-
+           
             if (enemyManager.CheckGrounded())
-            {
-                Debug.Log("Enemy Landed");
-              
                 break;
+
+            
+            if (Mathf.Abs(rb.velocity.y) < 0.1f)
+            {
+                stillTime += Time.deltaTime;
+
+                if (stillTime > 0.1f)
+                    break;
+            }
+            else
+            {
+                stillTime = 0f;
             }
 
             yield return null;
@@ -1407,7 +1410,7 @@ public class PlayerMovement : MonoBehaviour
             rb.isKinematic = true;
 
             enemyManager.kickOn = false;
-            enemyManager.animator.SetBool("Kicked", false);
+           // enemyManager.animator.SetBool("Kicked", false);
 
         }
     }

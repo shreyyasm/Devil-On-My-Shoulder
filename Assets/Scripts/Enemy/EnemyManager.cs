@@ -31,6 +31,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     public Animator animator;
+    public GameObject shadow;
     public enum EnemyType { Melee, Shoot, Touch, Thrower, Tombstone, Guard, Jumper, Suicider, Spider }
     public enum CoverType { No, Yes }
     public enum SurfaceType { Ground, Air }
@@ -128,6 +129,9 @@ public class EnemyManager : MonoBehaviour
     public bool canShootMove;
     public float changePositionTime;   // Time before reposition
     public float moveRadius;           // Random move radius
+    public Animator muzzleFlash;
+    public ParticleSystem muzzleParticle;
+
 
     [Header("Burst Shooting")]
 
@@ -241,6 +245,7 @@ public class EnemyManager : MonoBehaviour
     private float SpherecastRadius = 0.5f;
     private float LastAttackTime;
     public bool SpwanerTombstone;
+    public ParticleSystem shootVFX;
 
     #endregion
 
@@ -1089,7 +1094,7 @@ public class EnemyManager : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
 
         // Face player
-        Vector3 lookDir = player.position - transform.position;
+        Vector3 lookDir = player.position- transform.position;
         lookDir.y = 0f;
 
         if (lookDir.sqrMagnitude > 0.01f)
@@ -1141,6 +1146,7 @@ public class EnemyManager : MonoBehaviour
                     landingCheckDistance
                 );
 
+          
             if (grounded && rb.velocity.y <= 0.1f)
                 break;
 
@@ -1578,6 +1584,11 @@ public class EnemyManager : MonoBehaviour
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
 
+        if(muzzleFlash!= null)
+            muzzleFlash.SetTrigger("shootFlash");
+        if (muzzleParticle != null)
+            muzzleParticle.Play();
+
         SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
         animator.SetTrigger("Attack");
         Vector3 targetPosition = player.position + Vector3.up * 2.3f; // Aim slightly above feet
@@ -1586,18 +1597,19 @@ public class EnemyManager : MonoBehaviour
 
         GameObject proj = projectilePrefab.GetObject(firePoint.position, Quaternion.LookRotation(direction));
 
-        Rigidbody rb = proj.GetComponent<Rigidbody>();
+        //Rigidbody rb = proj.GetComponent<Rigidbody>();
 
-        if (rb != null)
-        {
-            rb.velocity = Vector3.zero; // Clear anything
-            rb.angularVelocity = Vector3.zero;
+        //if (rb != null)
+        //{
+        //    rb.velocity = Vector3.zero; // Clear anything
+        //    rb.angularVelocity = Vector3.zero;
 
-            rb.useGravity = false; // VERY IMPORTANT for straight bullets
-            rb.drag = 0f;
+        //    rb.useGravity = false; // VERY IMPORTANT for straight bullets
+        //    rb.drag = 0f;
 
-            rb.velocity = direction * shootSpeed;
-        }
+        //    //rb.velocity = direction * shootSpeed;
+        //    Debug.Log("work");
+        //}
         //animator.SetTrigger("Attack");
         Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
     }
@@ -1801,7 +1813,7 @@ public class EnemyManager : MonoBehaviour
 
                 // EnemyThrow Data
 
-                Vector3 origin = transform.position + Vector3.up * 1.5f; // cast from chest height
+                Vector3 origin = firePoint.position + Vector3.up * 1.5f; // cast from chest height
                 Vector3 targetPoint = Target.position + Vector3.up * 1.0f; // aim at chest height
 
                 Vector3 direction = (targetPoint - origin).normalized;
@@ -1821,8 +1833,9 @@ public class EnemyManager : MonoBehaviour
                 {
                     LastAttackTime = Time.time;
                     AttackProjectile.GetComponent<EnemyProjectile>().enemyRigibody = GetComponent<Rigidbody>();
-                    AttackProjectile.transform.SetParent(transform, true);
-                    AttackProjectile.transform.localPosition = new Vector3(0, 0, 1f);
+                    AttackProjectile.transform.SetParent(firePoint, false);
+                    AttackProjectile.transform.localPosition = Vector3.zero;
+                    AttackProjectile.transform.localRotation = Quaternion.identity;
 
                     AttackProjectile.useGravity = false;
                     AttackProjectile.velocity = Vector3.zero;
@@ -1895,8 +1908,9 @@ public class EnemyManager : MonoBehaviour
 
         transform.LookAt(Target);
 
-        AttackProjectile.gameObject.SetActive(true);
+       
         AttackProjectile.transform.SetParent(null, true);
+        //AttackProjectile.transform.position = firePoint.position;
         yield return null;
 
         if (playerRb == null)
@@ -1910,21 +1924,24 @@ public class EnemyManager : MonoBehaviour
         }
 
         // Use collider bounds center if available, otherwise use position
-        Vector3 targetPoint = Target.position;
-
-        if (playerCollider != null)
-            targetPoint = playerCollider.bounds.center;
+        Vector3 targetPoint = playerCollider != null
+      ? playerCollider.bounds.center + Vector3.up * 0.5f
+      : Target.position + Vector3.up * 1.5f;
 
         ThrowData throwData = CalculateThrowData(
             targetPoint,
-            AttackProjectile.position
+            firePoint.position
         );
 
         if (UseMovementPrediction && playerRb != null)
         {
             throwData = GetPredictedPositionThrowData(throwData);
         }
+        animator.SetTrigger("Attack");
 
+        yield return new WaitForSeconds(0.5f);
+        shootVFX.Play();
+        AttackProjectile.gameObject.SetActive(true);
         DoThrow(throwData);
         SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
         yield return null;
@@ -1970,13 +1987,13 @@ public class EnemyManager : MonoBehaviour
         Vector3 baseTargetPosition = Target.position;
 
         if (playerCollider != null)
-            baseTargetPosition = playerCollider.bounds.center;
+            baseTargetPosition = playerCollider.bounds.center + new Vector3(0,1,0);
 
         Vector3 newTargetPosition = baseTargetPosition + playerMovement;
 
         ThrowData predictiveThrowData = CalculateThrowData(
             newTargetPosition,
-            AttackProjectile.position
+            firePoint.position
         );
 
         predictiveThrowData.ThrowVelocity = Vector3.ClampMagnitude(
@@ -2376,7 +2393,9 @@ public class EnemyManager : MonoBehaviour
             groundLayer,
             QueryTriggerInteraction.Ignore
         );
-
+        shadow.SetActive(IsGrounded);
+       animator.SetBool("Grounded", IsGrounded);
+        //animator.SetBool("Kicked", !IsGrounded);
         return IsGrounded;
     }
     private void OnDrawGizmosSelected()

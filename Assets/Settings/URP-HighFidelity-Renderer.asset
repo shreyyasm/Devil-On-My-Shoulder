@@ -62,7 +62,7 @@ MonoBehaviour:
     AfterOpaque: 1
     Source: 0
     NormalSamples: 1
-    Intensity: 0.7
+    Intensity: 2
     DirectLightingStrength: 0.25
     Radius: 1
     Samples: 0
@@ -98,7 +98,9 @@ MonoBehaviour:
   - {fileID: -1878332245247344467}
   - {fileID: -5097916478440351353}
   - {fileID: -7559694027061674808}
-  m_RendererFeatureMap: adc0de57c6d2eee587d9f307f98f40b9c8bc58da55921697
+  - {fileID: 6444565148831353451}
+  - {fileID: 8327937594738772459}
+  m_RendererFeatureMap: adc0de57c6d2eee587d9f307f98f40b9c8bc58da559216976b8af4abdbb16f59eb89067e1ec79273
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -147,3 +149,40 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &6444565148831353451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1bf42c897c344772a8dea9cae097da4, type: 3}
+  m_Name: FastOutline
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings: {fileID: 11400000, guid: 599d203a0c6f6ab429f2c2dee968a17f, type: 2}
+  shaders:
+    mask: {fileID: 4800000, guid: d6efd8a53bb54ff68576b38c066c3134, type: 3}
+    outline: {fileID: 4800000, guid: 981392195909457093e91e09efd412a1, type: 3}
+    outlineInstanced: {fileID: 4800000, guid: 43dbe363270164c96812acf35572a126, type: 3}
+    clear: {fileID: 4800000, guid: 9d6033fe8c48f4059a892093b5eec20b, type: 3}
+--- !u!114 &8327937594738772459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9377bada70366419aa6301068e988aa4, type: 3}
+  m_Name: EdgeDetection
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  settings: {fileID: 11400000, guid: c89b40ee37d8c4b41add6d96f80f058c, type: 2}
+  shaders:
+    section: {fileID: 4800000, guid: 555b69c4bab64af2aab316a4335ad6be, type: 3}
+    sectionMask: {fileID: 4800000, guid: 66bb1bcc44054ea3bf6082c4d4e9edf9, type: 3}
+    outline: {fileID: 4800000, guid: 0049e25744c864ee4916fc340cf7957f, type: 3}

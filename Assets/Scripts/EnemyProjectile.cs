@@ -95,14 +95,22 @@ public class EnemyProjectile : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            if(!collision.GetComponent<PlayerMovement>().isDashing)
+            if (!collision.GetComponent<PlayerMovement>().canKick || collision.GetComponent<PlayerMovement>().isDashing)
+            {
+                if(parryable)
+                {
+                    collision.GetComponent<PlayerMovement>().ParryProjectiles(this);
+                }
+               
+            }
+            else
             {
                 Rigidbody playerRigidbody = collision.GetComponent<Rigidbody>();
                 if (playerRigidbody != null)
                 {
                     Vector3 directionAway = (collision.transform.position - transform.position).normalized;
                     playerRigidbody.AddForce(directionAway * forceMagnitude, ForceMode.Impulse);
-                    SFXManager.Instance.PlaySFX(enemyName + "/" + "AttackHit",0.8f);
+                    SFXManager.Instance.PlaySFX(enemyName + "/" + "AttackHit", 0.8f);
                     ImpactFrameEffect.Instance.GoBlack();
                     LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
                     HurtPlayer();
@@ -115,15 +123,8 @@ public class EnemyProjectile : MonoBehaviour
                     else
                         gameObject.SetActive(false);
                 }
+
             }
-            else
-            {
-                if(parryable)
-                {
-                    collision.GetComponent<PlayerMovement>().ParryProjectiles(this);
-                }
-            }
-            
         }
         if (collision.CompareTag("Untagged"))
         {
@@ -131,7 +132,7 @@ public class EnemyProjectile : MonoBehaviour
             //Destroy(gameObject);
             if(!SpawnedProjectile)
                 bullet.Release(gameObject);
-
+            Debug.Log("Disable Bulet");
             //else
             //    gameObject.SetActive(false);
         }
@@ -140,7 +141,9 @@ public class EnemyProjectile : MonoBehaviour
             
             Debug.Log("Hit Enemy");
             SFXManager.Instance.PlaySFX(enemyName + "/" + "AttackHit", 0.8f);
-            ImpactFrameEffect.Instance.GoBlack();
+            
+            RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+            //ImpactFrameEffect.Instance.GoBlack();
             LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
             collision.GetComponent<EnemyHealth>().EnemyHit(playerDamage);
             collision.GetComponent<EnemyManager>().ResetParrayable();

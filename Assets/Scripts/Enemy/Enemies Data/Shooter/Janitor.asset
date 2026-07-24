@@ -27,7 +27,7 @@ MonoBehaviour:
   colliderHeight: 0
   health: 100
   gunHealth: 0
-  shieldHealth: 0
+  shieldHealth: 200
   speed: 10
   damage: 50
   AttackRange: 5
@@ -44,12 +44,12 @@ MonoBehaviour:
   DashLoadTime: 0.05
   DashDurationTime: 0.5
   DashStopTime: 1.5
-  projectilePrefab: {fileID: 11400000, guid: 2e53f6e09e23202498490778741f402b, type: 2}
+  projectilePrefab: {fileID: 11400000, guid: f202a9b404653704aa5743b0a1d1e36d, type: 2}
   ShootSpeed: 20
   ShootInterval: 4
   ChangePositionTime: 3
   MoveRadius: 10
-  canShootMove: 1
+  canShootMove: 0
   burstShooting: 0
   burstCount: 3
   burstInterval: 0.1

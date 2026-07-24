@@ -11,7 +11,6 @@ public class KickAnimationEvents : MonoBehaviour
     public float fovSmoothSpeed = 5f; // Smooth speed
     public bool isKicking = false;
 
-    public GameObject smokeDust;
     private void Awake()
     {
         playerMovement = GetComponentInParent<PlayerMovement>();
@@ -53,12 +52,5 @@ public class KickAnimationEvents : MonoBehaviour
     {
         isKicking = false;
     }
-    public void StartDust()
-    {
-        smokeDust.SetActive(true);
-    }
-    public void StopDust()
-    {
-        smokeDust.SetActive(false);
-    }
+   
 }
