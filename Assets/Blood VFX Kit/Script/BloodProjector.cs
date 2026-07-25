@@ -10,28 +10,28 @@ namespace Biostart.Blood
         public float zOffset = 0.1f;
         public float destroyTime = 25f; // Destroy time
 
-        private void OnCollisionEnter(Collision collision)
-        {
-            if (collision.collider != null)
-            {
-                ContactPoint contact = collision.contacts[0];
-                Vector3 hitPosition = contact.point;
-                Vector3 hitNormal = contact.normal;
-                AttachBloodProjector(hitPosition, hitNormal, collision.collider);
+        //private void OnCollisionEnter(Collision collision)
+        //{
+        //    if (collision.collider != null)
+        //    {
+        //        ContactPoint contact = collision.contacts[0];
+        //        Vector3 hitPosition = contact.point;
+        //        Vector3 hitNormal = contact.normal;
+        //        AttachBloodProjector(hitPosition, hitNormal, collision.collider);
               
-            }
-        }
+        //    }
+        //}
 
-        private void OnTriggerEnter(Collider other)
-        {
-            if (other != null)
-            {
-                Vector3 hitPosition = other.ClosestPointOnBounds(transform.position);
-                Vector3 hitNormal = other.transform.forward;
-                AttachBloodProjector(hitPosition, hitNormal, other);
+        //private void OnTriggerEnter(Collider other)
+        //{
+        //    if (other != null)
+        //    {
+        //        Vector3 hitPosition = other.ClosestPointOnBounds(transform.position);
+        //        Vector3 hitNormal = other.transform.forward;
+        //        AttachBloodProjector(hitPosition, hitNormal, other);
                
-            }
-        }
+        //    }
+        //}
 
         public void AttachBloodProjector(Vector3 position, Vector3 normal, Collider hitObject)
         {

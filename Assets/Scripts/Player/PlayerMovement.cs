@@ -504,8 +504,8 @@ public class PlayerMovement : MonoBehaviour
                 jumpTilt = new Vector3(-8f, 0f, 0f);
                 //StartCoroutine(
                 //LerpCameraZPosition(-0.2f, 0.5f, 8f, 0f));
-               jumpBackAnimator[characterindex - 1].gameObject.SetActive(true);
-               jumpBackAnimator[characterindex - 1].SetTrigger("BackJump");
+               //jumpBackAnimator[characterindex - 1].gameObject.SetActive(true);
+               //jumpBackAnimator[characterindex - 1].SetTrigger("BackJump");
             }
            
 

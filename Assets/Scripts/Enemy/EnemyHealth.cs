@@ -26,6 +26,9 @@ public class EnemyHealth : MonoBehaviour
     public EnemyStats.DeathType deathType;
     public float shieldHealth;
     public GameObject Shield;
+    private bool shieldBreakTriggered = false;
+    public GameObject shieldBreakVFX;
+   
 
     public bool isInvincible;
     private NavMeshAgent agent;
@@ -77,35 +80,55 @@ public class EnemyHealth : MonoBehaviour
         }
 
     }
+   
     public void TakeDamage(float amount, DamageInfo info)
     {
         // Shield check
         if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
         {
             ShowShield(1f);
+
             if (Shield != null)
-            {
                 Shield.SetActive(true);
-            }
-               
+
             shieldHealth -= amount;
-            //SFXManager.Instance.PlayNPC_SFX(audioSource, "Janitor/Shield", 1f);
+
             SFXManager.Instance.PlaySFX("Janitor/Shield", 1f);
+
             // Overflow damage goes to health
-            if (shieldHealth < 0)
+            if (shieldHealth <= 0)
             {
-                if(Shield!= null)
+                if (Shield != null)
                     Shield.SetActive(false);
+
+                // ===========================
+                // Shield Break (Only Once)
+                // Put shield break VFX, SFX,
+                // dialogue, camera shake, etc. here.
+                // ===========================
+                if (!shieldBreakTriggered)
+                {
+                    shieldBreakVFX.SetActive(true);
+                    SFXManager.Instance.PlaySFX("Janitor/ShieldBreak", 1f);
+                    shieldBreakTriggered = true;
+                   
+                    // TODO: Shield break effects
+                    // VFX
+                    // SFX
+                    // Dialogue
+                    // Camera Shake
+                }
+
                 float overflow = -shieldHealth;
                 shieldHealth = 0;
 
-                ApplyHealthDamage(overflow, info); // 🔥 pass info
+                ApplyHealthDamage(overflow, info);
             }
         }
         else
         {
             BloodPool.GetObject(transform.position, Quaternion.identity);
-            ApplyHealthDamage(amount, info); // 🔥 pass info
+            ApplyHealthDamage(amount, info);
         }
     }
     void ApplyHealthDamage(float amount, DamageInfo info)
@@ -340,6 +363,7 @@ public class EnemyHealth : MonoBehaviour
     }
     public DamageNumber DamageNumberPrefab;
     public DamageNumber KillTextPrefab;
+    public ObjectPool DecalPool;
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Bullet"))
@@ -381,6 +405,18 @@ public class EnemyHealth : MonoBehaviour
                 spriteRenderer.color = collisionColorRed;
             else
                 spriteRenderer.color = Color.white;
+        }
+        else
+        {
+            if (collision.gameObject.layer == 8)
+            {
+                ContactPoint contact = collision.GetContact(0);
+
+                Vector3 spawnPosition = contact.point;
+                Quaternion spawnRotation = Quaternion.LookRotation(contact.normal);
+
+                DecalPool.GetObject(spawnPosition, spawnRotation);
+            }
         }
     }
 

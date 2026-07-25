@@ -697,7 +697,18 @@ public class EnemyManager : MonoBehaviour
         if (enemyType == EnemyStats.EnemyType.Tombstone)
         {
             if (isShooterTombstone)
+            {
+
                 HandleShooterTombstone();
+                Vector3 direction = Target.position - transform.position;
+                direction.y = 0f; // ignore vertical difference
+
+                if (direction.sqrMagnitude > 0.0001f) // avoid zero-vector errors
+                {
+                    transform.rotation = Quaternion.LookRotation(direction);
+                }
+
+            }
             else
                 HandleTombstone();
 
@@ -1179,6 +1190,7 @@ public class EnemyManager : MonoBehaviour
         agent.isStopped = true;
 
         dashCoroutine = null;
+
 
         //Debug.Log("Spider Jump Finished");
     }
@@ -1772,15 +1784,15 @@ public class EnemyManager : MonoBehaviour
         // =========================
         // MOVEMENT PHASE
         // =========================
-        repositionTimer -= Time.deltaTime;
+        //repositionTimer -= Time.deltaTime;
 
-        if (repositionTimer <= 0f)
-        {
-            SetRandomTombstonePosition();
-            repositionTimer = repositionInterval;
-        }
-        if (agent.enabled)
-            agent.SetDestination(tombstoneTargetPos);
+        //if (repositionTimer <= 0f)
+        //{
+        //    SetRandomTombstonePosition();
+        //    repositionTimer = repositionInterval;
+        //}
+        //if (agent.enabled)
+        //    agent.SetDestination(tombstoneTargetPos);
 
         // =========================
         // SPAWN PHASE
@@ -1824,7 +1836,7 @@ public class EnemyManager : MonoBehaviour
                     SpherecastRadius,
                     direction,
                     out RaycastHit hit,
-                    distance,                // limit cast to target distance
+                    distance,                //limit cast to target distance
                     SightLayers,
                     QueryTriggerInteraction.Ignore
                 );
@@ -2393,7 +2405,8 @@ public class EnemyManager : MonoBehaviour
             groundLayer,
             QueryTriggerInteraction.Ignore
         );
-        shadow.SetActive(IsGrounded);
+        if(shadow!= null)
+            shadow.SetActive(IsGrounded);
        animator.SetBool("Grounded", IsGrounded);
         //animator.SetBool("Kicked", !IsGrounded);
         return IsGrounded;
