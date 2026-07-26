@@ -198,7 +198,10 @@ public class ProceduralGenerationManager : MonoBehaviour
             return false;
         }
 
-        Door entryDoor = doors[Random.Range(0, doors.Length)];
+        // Prefer the room's designated start door, fall back to random.
+        Door entryDoor = System.Array.Find(doors, d => d.IsStartDoor);
+        if (entryDoor == null)
+            entryDoor = doors[Random.Range(0, doors.Length)];
 
         // ---------- DOOR SNAP ----------
 
