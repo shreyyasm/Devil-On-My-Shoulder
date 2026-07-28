@@ -1,5 +1,7 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Unity.AI.Navigation;
+using UnityEditor;
+using UnityEngine;
 
 public class ProceduralGenerationManager : MonoBehaviour
 {
@@ -18,6 +20,7 @@ public class ProceduralGenerationManager : MonoBehaviour
     [Header("Presets")]
     public List<GenerationPreset> Presets;
 
+    public NavMeshSurface navMeshSurface;
     // ================= RUNTIME =================
 
     private List<RoomInstance> placedRooms = new();
@@ -29,6 +32,34 @@ public class ProceduralGenerationManager : MonoBehaviour
     {
         GenerateWithRetries();
     }
+    public void BakeNavMesh()
+    {
+        // Bakes the navmesh immediately
+        navMeshSurface.BuildNavMesh();
+        Debug.Log("NavMesh baked successfully!");
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Bake Occlusion")]
+    public static void BakeOcclusion()
+    {
+        if (!StaticOcclusionCulling.isRunning)
+        {
+            Debug.Log("🧱 Starting Occlusion Culling bake...");
+            StaticOcclusionCulling.Compute();
+            Debug.Log("✅ Occlusion Culling bake complete!");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Occlusion Culling is already running!");
+        }
+    }
+#else
+    public static void BakeOcclusion()
+    {
+        Debug.LogWarning("❌ BakeOcclusion is only available in the Unity Editor!");
+    }
+#endif
 
     // ================= ENTRY =================
 
@@ -49,6 +80,8 @@ public class ProceduralGenerationManager : MonoBehaviour
             {
                 CloseAllUnusedDoors();
                 Debug.Log($"[ProcGen] SUCCESS with Seed: {Seed}");
+                BakeNavMesh();
+                BakeOcclusion();
                 return;
             }
 
