@@ -973,7 +973,7 @@ public class PlayerMovement : MonoBehaviour
       
     }
 
-    private void TryKick()
+    public void TryKick()
     {
         if (!canKick) return;
 

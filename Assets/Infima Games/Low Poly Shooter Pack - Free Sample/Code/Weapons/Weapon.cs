@@ -64,6 +64,16 @@ namespace InfimaGames.LowPolyShooterPack
         public float reloadAnimationTime = 1f;
         public bool peaPoison; 
         public Material PoisonMat;
+        public GameObject FireLight;
+        [SerializeField] private float fireLightTime = 0.05f;
+
+       
+        private IEnumerator FireLightRoutine()
+        {
+            FireLight.SetActive(true);
+            yield return new WaitForSeconds(fireLightTime);
+            FireLight.SetActive(false);
+        }
 
         [Header("Shotgun Settings")]
         [SerializeField] private int shotgunPellets = 8;
@@ -567,6 +577,13 @@ namespace InfimaGames.LowPolyShooterPack
 
             audioSource.PlayOneShot(audioClipFire);
             animator.Play("Fire", 0, 0.0f);
+
+            if (FireLight != null)
+            {
+                StopCoroutine(nameof(FireLightRoutine));
+                StartCoroutine(nameof(FireLightRoutine));
+            }
+
             ammunitionCurrent--;
 
             Quaternion rotation = Quaternion.LookRotation(playerCamera.forward + new Vector3(0.01f,0,0)); 
@@ -608,6 +625,12 @@ namespace InfimaGames.LowPolyShooterPack
             // Play firing animation (same as pistol)
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
+
+            if (FireLight != null)
+            {
+                StopCoroutine(nameof(FireLightRoutine));
+                StartCoroutine(nameof(FireLightRoutine));
+            }
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
@@ -655,6 +678,13 @@ namespace InfimaGames.LowPolyShooterPack
             //Play firing animation.
             Character.crosshairAnim.SetTrigger("Fire");
             const string stateName = "Fire";
+
+            if (FireLight != null)
+            {
+                StopCoroutine(nameof(FireLightRoutine));
+                StartCoroutine(nameof(FireLightRoutine));
+            }
+
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
@@ -729,6 +759,13 @@ namespace InfimaGames.LowPolyShooterPack
             //Play firing animation.
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
+
+            if (FireLight != null)
+            {
+                StopCoroutine(nameof(FireLightRoutine));
+                StartCoroutine(nameof(FireLightRoutine));
+            }
+
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
@@ -825,6 +862,7 @@ namespace InfimaGames.LowPolyShooterPack
                 beamRenderer.enabled = true;
             audioSource.PlayOneShot(audioClipFire, 1);
             beamLoopSource.Play();
+            FireLight.SetActive(true);
         }
 
         public ObjectPool BulletImpactPool;
@@ -956,6 +994,7 @@ namespace InfimaGames.LowPolyShooterPack
             beamLoopSource.Stop();
             ResetRayGunState();
             CloudVFX.SetActive(false);
+            FireLight.SetActive(false);
 
             if (!beamActive) { return; }
 

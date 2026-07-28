@@ -101,7 +101,10 @@
             #pragma fragment frag
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -135,6 +138,7 @@
                 float3 positionWS  : TEXCOORD0;
                 float3 normalWS    : TEXCOORD1;
                 float2 uv          : TEXCOORD2;
+                float4 shadowCoord : TEXCOORD3; // ADDED: needed so GetMainLight() knows shadow attenuation
             };
 
             Varyings vert (Attributes v)
@@ -151,6 +155,10 @@
                 clipPos.xy = floor(clipPos.xy * snap) / snap;
 
                 o.positionHCS = clipPos;
+
+                // ADDED: shadow coordinate for the main light
+                o.shadowCoord = TransformWorldToShadowCoord(o.positionWS);
+
                 return o;
             }
 
@@ -158,7 +166,8 @@
             {
                 float3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv).rgb * _Color.rgb;
 
-                Light light = GetMainLight();
+                // CHANGED: pass shadow coord so shadowAttenuation is actually computed
+                Light light = GetMainLight(i.shadowCoord);
                 float3 lightDir = normalize(-light.direction);
                 float3 viewDir  = normalize(_WorldSpaceCameraPos - i.positionWS);
 
@@ -178,7 +187,26 @@
 
                 float lighting = saturate(cel - hatchMask);
 
-                return float4(albedo * lighting, 1);
+                // ADDED: fold in the main light's actual color and shadow/distance attenuation
+                // This is what makes the object respond to light intensity/color/shadows.
+                float3 mainLightAtten = light.color * light.shadowAttenuation * light.distanceAttenuation;
+                float3 finalColor = albedo * lighting * mainLightAtten;
+
+                // ADDED: additional lights (point/spot) contribution, additive on top of the toon base
+                #ifdef _ADDITIONAL_LIGHTS
+                float3 additionalColor = 0;
+                uint additionalLightsCount = GetAdditionalLightsCount();
+                for (uint lightIndex = 0u; lightIndex < additionalLightsCount; lightIndex++)
+                {
+                    Light addLight = GetAdditionalLight(lightIndex, i.positionWS);
+                    float addNdotL = saturate(dot(i.normalWS, addLight.direction));
+                    float addAtten = addLight.distanceAttenuation * addLight.shadowAttenuation;
+                    additionalColor += addLight.color * addNdotL * addAtten;
+                }
+                finalColor += albedo * additionalColor;
+                #endif
+
+                return float4(finalColor, 1);
             }
             ENDHLSL
         }

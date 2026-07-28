@@ -96415,7 +96415,6 @@ GameObject:
   - component: {fileID: 2089387300646442951}
   - component: {fileID: 6583254522181970490}
   - component: {fileID: 6288002058842578382}
-  - component: {fileID: 1189019990487070065}
   - component: {fileID: 9158752148069305421}
   - component: {fileID: 2516973893225809210}
   m_Layer: 16
@@ -96674,6 +96673,7 @@ MonoBehaviour:
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
     type: 3}
+  DecalPool: {fileID: 0}
 --- !u!114 &6583254522181970490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96787,25 +96787,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1189019990487070065
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4845092131225073547}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01e530bc4c3e2ea4580e29cb9358b11f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bloodEffectPrefabs:
-  - {fileID: 0}
-  bloodEffectPrefabsDestroy: 5
-  otherBloodEffectsData: []
-  destroy: 0
-  disabled: 0
-  disabledObjects: []
 --- !u!114 &9158752148069305421
 MonoBehaviour:
   m_ObjectHideFlags: 0
