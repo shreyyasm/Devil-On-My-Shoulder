@@ -85,7 +85,11 @@ public class PlayerHealth : MonoBehaviour
         if (PlayerMovement.characterAbilities.GetHealthModifier())
             return;
 
-        currentHealth -= healthDecreaseRate * Time.deltaTime;
+        if (currentHealth >= 0)
+        {
+            currentHealth -= healthDecreaseRate * Time.deltaTime;
+        }
+       
 
         //if (powerUpSelect.batteryDrain)
         //    healthDecreaseRate = 6;

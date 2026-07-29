@@ -120,9 +120,13 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         DungeonNode current = start;
 
+        List<RoomData> roomBag = new();
+        RoomData lastRoom = null;
+
         for (int i = 0; i < RoomsToEnd; i++)
         {
-            RoomData data = GetRandomRoomFromPreset(preset);
+            RoomData data = GetNextRoomFromBag(preset, roomBag, lastRoom);
+            lastRoom = data;
 
             DungeonNode next = new DungeonNode(NodeType.Room, data);
             current.Connections.Add(next);
@@ -140,12 +144,47 @@ public class ProceduralGenerationManager : MonoBehaviour
         return graph;
     }
 
-    RoomData GetRandomRoomFromPreset(GenerationPreset preset)
+    // ================= ROOM BAG (no consecutive repeats, full coverage before repeat) =================
+
+    RoomData GetNextRoomFromBag(GenerationPreset preset, List<RoomData> bag, RoomData lastRoom)
     {
-        RoomGroup group = preset.AllRooms[Random.Range(0, preset.AllRooms.Count)];
-        return group.Rooms[Random.Range(0, group.Rooms.Count)];
+        if (bag.Count == 0)
+        {
+            RefillBag(preset, bag);
+
+            // If the freshly shuffled bag would start with the same room that
+            // just ended the previous bag, swap it elsewhere in the bag.
+            if (lastRoom != null && bag.Count > 1 && bag[bag.Count - 1] == lastRoom)
+            {
+                int swapIndex = Random.Range(0, bag.Count - 1);
+                (bag[bag.Count - 1], bag[swapIndex]) = (bag[swapIndex], bag[bag.Count - 1]);
+            }
+        }
+
+        RoomData picked = bag[bag.Count - 1];
+        bag.RemoveAt(bag.Count - 1);
+        return picked;
     }
 
+    void RefillBag(GenerationPreset preset, List<RoomData> bag)
+    {
+        bag.Clear();
+
+        foreach (RoomGroup group in preset.AllRooms)
+            foreach (RoomData data in group.Rooms)
+                bag.Add(data);
+
+        ShuffleList(bag);
+    }
+
+    void ShuffleList<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
     // ================= GEOMETRY PASS =================
 
     bool BuildGeometry(DungeonGraph graph)
