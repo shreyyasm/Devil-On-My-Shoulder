@@ -12,6 +12,7 @@ public class Heartbeat : MonoBehaviour
     public TextMeshProUGUI healthText;
     public Image heartbeatBG;
     public Image heartbeatBGStrip;
+    public Image humanBodyUI;
 
     [Header("Colors")]
     public Color greenColor = Color.green;
@@ -70,6 +71,7 @@ public class Heartbeat : MonoBehaviour
         }
 
         heartbeatImage.color = targetColor;
+        humanBodyUI.color = targetColor;
         heartbeatBG.color = new Color(
       targetColor.r,
       targetColor.g,

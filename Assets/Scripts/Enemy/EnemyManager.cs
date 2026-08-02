@@ -24,6 +24,7 @@ public class EnemyManager : MonoBehaviour
     public Transform finisherTarget;
     public GameObject finisherIndicator;
     public float finisherTime;
+    public bool sawPlayer;
 
 
     // ================================
@@ -592,6 +593,11 @@ public class EnemyManager : MonoBehaviour
     private bool lastFinisherState;
     private void Update()
     {
+        if (!sawPlayer)
+            HasLineOfSight();
+
+        if (!sawPlayer) return;
+      
         CheckGrounded();
         if (kickOn) return;
         if (enemyHealth.dead) return;
@@ -1554,7 +1560,12 @@ public class EnemyManager : MonoBehaviour
         if (Physics.Raycast(origin, direction, out RaycastHit hit, distance))
         {
             if (hit.transform.CompareTag("Player"))
+            {
+                sawPlayer = true;
                 return true;
+            }
+                
+          
         }
 
         return false;

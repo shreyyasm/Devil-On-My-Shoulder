@@ -1,102 +1,192 @@
 using QFSW.MOP2;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Services.Analytics.Internal;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemySpawner : MonoBehaviour
 {
     [System.Serializable]
-    public class EnemyItem
+    public class EnemySpawn
     {
-        public string name;
-        public List<ObjectPool> enemies = new List<ObjectPool>();
+        public ObjectPool enemyPool;
+        [Min(1)]
+        public int count = 1;
     }
 
-    [Header("Enemies")]
-    public List<EnemyItem> enemyItems = new List<EnemyItem>();
+    [System.Serializable]
+    public class SetSpawnPoint
+    {
+        public Transform point;
+        public List<EnemySpawn> enemies = new List<EnemySpawn>();
+    }
 
-    [Header("Enemies")]
+    [System.Serializable]
+    public class SpawnSet
+    {
+        public string name = "Set";
+        public List<SetSpawnPoint> spawnPoints = new List<SetSpawnPoint>();
+    }
+
+    [Header("Spawn Sets")]
+    public List<SpawnSet> spawnSets = new List<SpawnSet>();
+
+    [Header("Spawned Enemies")]
     public List<GameObject> spawnedEnemies = new List<GameObject>();
 
-    [Header("Spawn Positions")]
-    public List<Transform> spawnPositions = new List<Transform>();
-    public GameObject player;
+    [Header("Spawn Settings")]
+    public float spawnRange = 100f;
+    public float spawnSpreadRadius = 1.5f;
+    public float navMeshSearchDistance = 2f;
+
+    [Header("Level Settings")]
+    public int levelsPerEntry = 3;
+    public int maxNumber = 10;
+
+    [HideInInspector]
     public int activeSet;
+
+    private GameObject player;
+    private bool activated;
 
     private void Start()
     {
         player = FindAnyObjectByType<PlayerMovement>().gameObject;
 
-
         activeSet = GetNumberForLevel();
-        
+
+        SpawnEnemies();
     }
 
-    [Header("Level Settings")]
-    public int levelsPerEntry = 3; // Number of levels per chunk
-    public int maxNumber = 10;     // Maximum number to return
+    private void Update()
+    {
+        if (activated)
+            return;
+
+        if (player == null)
+            return;
+
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+
+        if (distance <= spawnRange)
+        {
+            activated = true;
+
+            foreach (GameObject enemy in spawnedEnemies)
+            {
+                if (enemy != null)
+                    enemy.SetActive(true);
+            }
+        }
+    }
 
     public int GetNumberForLevel()
     {
         int playerLevel = ScoreManager.Instance.level;
 
         if (playerLevel < 0)
-            return 0; // fallback for negative levels
+            return 0;
 
-        // Calculate which "chunk" the level belongs to, starting from 0
         int number = playerLevel / levelsPerEntry;
-
-        // Clamp to maximum number
         number = Mathf.Clamp(number, 0, maxNumber);
 
         return number;
     }
-    private void Update()
-    {
-        SpawnWhenInRange();
-    }
-    private float spawnRange = 100f;
-    public bool spawned;
-    public void SpawnWhenInRange()
-    {
-        if (!spawned)
-        {
-            float distance = Vector3.Distance(transform.position, player.transform.position);
-            if (distance < spawnRange)
-            {
-                SpawnEnemies();
-                spawned = true;
-            }
-        }
 
-    }
     private void SpawnEnemies()
     {
-        if (enemyItems.Count == 0 || spawnPositions.Count == 0)
-        {
-            Debug.LogWarning("No enemies or spawn positions assigned!");
+        spawnedEnemies.Clear();
+
+        if (spawnSets.Count == 0)
             return;
-        }
 
-        // Loop through each spawn position
-        for (int i = 0; i < spawnPositions.Count; i++)
+        int setIndex = Mathf.Clamp(activeSet, 0, spawnSets.Count - 1);
+
+        SpawnSet currentSet = spawnSets[setIndex];
+
+        foreach (SetSpawnPoint spawnPoint in currentSet.spawnPoints)
         {
-            Transform spawnPos = spawnPositions[i];
-            if (spawnPos == null) continue;
+            if (spawnPoint.point == null)
+                continue;
 
-            // Choose a random EnemyItem
-            EnemyItem randomItem = enemyItems[activeSet];
-            if (randomItem.enemies.Count == 0) continue;
+            foreach (EnemySpawn enemySpawn in spawnPoint.enemies)
+            {
+                if (enemySpawn.enemyPool == null)
+                    continue;
 
-            // Choose a random enemy from that item
-            ObjectPool enemyPrefab = randomItem.enemies[Random.Range(0, randomItem.enemies.Count)];
-            if (enemyPrefab != null)
-            {               
-                GameObject enemy = enemyPrefab.GetObject();
-                enemy.transform.position = spawnPos.position;
-                spawnedEnemies.Add(enemy);
+                for (int i = 0; i < enemySpawn.count; i++)
+                {
+                    GameObject enemy = enemySpawn.enemyPool.GetObject();
+
+                    // Disable first so OnEnable doesn't run while repositioning.
+                    enemy.SetActive(false);
+
+                    Vector3 desiredPosition = spawnPoint.point.position;
+
+                    if (enemySpawn.count > 1)
+                    {
+                        Vector2 offset = Random.insideUnitCircle * spawnSpreadRadius;
+                        desiredPosition += new Vector3(offset.x, 0f, offset.y);
+                    }
+
+                    NavMeshHit hit;
+
+                    if (NavMesh.SamplePosition(desiredPosition, out hit, navMeshSearchDistance, NavMesh.AllAreas))
+                    {
+                        enemy.transform.position = hit.position;
+                    }
+                    else if (NavMesh.SamplePosition(spawnPoint.point.position, out hit, navMeshSearchDistance, NavMesh.AllAreas))
+                    {
+                        enemy.transform.position = hit.position;
+                    }
+                    else
+                    {
+                        enemy.transform.position = spawnPoint.point.position;
+                    }
+
+                    if (player != null)
+                    {
+                        Vector3 directionToPlayer = player.transform.position - enemy.transform.position;
+                        directionToPlayer.y = 0f;
+
+                        if (directionToPlayer.sqrMagnitude > 0.0001f)
+                        {
+                            enemy.transform.rotation = Quaternion.LookRotation(directionToPlayer);
+                        }
+                        else
+                        {
+                            enemy.transform.rotation = spawnPoint.point.rotation;
+                        }
+                    }
+                    else
+                    {
+                        enemy.transform.rotation = spawnPoint.point.rotation;
+                    }
+
+                    spawnedEnemies.Add(enemy);
+                }
             }
         }
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, spawnRange);
+
+        Gizmos.color = Color.red;
+
+        foreach (SpawnSet spawnSet in spawnSets)
+        {
+            foreach (SetSpawnPoint spawnPoint in spawnSet.spawnPoints)
+            {
+                if (spawnPoint.point == null)
+                    continue;
+
+                Gizmos.DrawSphere(spawnPoint.point.position, 0.2f);
+                Gizmos.DrawWireSphere(spawnPoint.point.position, spawnSpreadRadius);
+            }
+        }
+    }
+#endif
 }

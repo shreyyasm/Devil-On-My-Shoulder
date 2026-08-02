@@ -1099,46 +1099,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bcef18006391ae4fa6531897d610566, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyItems:
-  - name: Set 1
-    enemies:
-    - {fileID: 11400000, guid: 78ad66cdfc8327f4b8e769959f659abc, type: 2}
-    - {fileID: 11400000, guid: 1082877af1991be4d8e3b25e5b89962e, type: 2}
-  - name: Set 2
-    enemies:
-    - {fileID: 11400000, guid: 78ad66cdfc8327f4b8e769959f659abc, type: 2}
-    - {fileID: 11400000, guid: 1082877af1991be4d8e3b25e5b89962e, type: 2}
-    - {fileID: 11400000, guid: 225ce716acbedf6458b6936c5a496622, type: 2}
-  - name: Set 3
-    enemies:
-    - {fileID: 11400000, guid: 78ad66cdfc8327f4b8e769959f659abc, type: 2}
-    - {fileID: 11400000, guid: 1082877af1991be4d8e3b25e5b89962e, type: 2}
-    - {fileID: 11400000, guid: 225ce716acbedf6458b6936c5a496622, type: 2}
-    - {fileID: 11400000, guid: de47db3d036f0df4fa028fc73f235232, type: 2}
-  - name: Set 4
-    enemies:
-    - {fileID: 11400000, guid: 78ad66cdfc8327f4b8e769959f659abc, type: 2}
-    - {fileID: 11400000, guid: 1082877af1991be4d8e3b25e5b89962e, type: 2}
-    - {fileID: 11400000, guid: 225ce716acbedf6458b6936c5a496622, type: 2}
-    - {fileID: 11400000, guid: de47db3d036f0df4fa028fc73f235232, type: 2}
-    - {fileID: 11400000, guid: 759e01799d1b04b4e9940094c1e7508b, type: 2}
-  - name: Set 5
-    enemies:
-    - {fileID: 11400000, guid: 759e01799d1b04b4e9940094c1e7508b, type: 2}
-    - {fileID: 11400000, guid: 78ad66cdfc8327f4b8e769959f659abc, type: 2}
-    - {fileID: 11400000, guid: 1082877af1991be4d8e3b25e5b89962e, type: 2}
-    - {fileID: 11400000, guid: 759e01799d1b04b4e9940094c1e7508b, type: 2}
-    - {fileID: 11400000, guid: 225ce716acbedf6458b6936c5a496622, type: 2}
-    - {fileID: 11400000, guid: de47db3d036f0df4fa028fc73f235232, type: 2}
+  spawnPoints:
+  - point: {fileID: 0}
+    enemies: []
   spawnedEnemies: []
-  spawnPositions:
-  - {fileID: 668336596481937853}
-  - {fileID: 3060628440830991186}
-  player: {fileID: 0}
-  activeSet: 0
-  levelsPerEntry: 5
-  maxNumber: 25
-  spawned: 0
+  spawnRange: 100
+  spawnSpreadRadius: 1.2
+  navMeshSearchDistance: 2
 --- !u!1 &1915251297887874215
 GameObject:
   m_ObjectHideFlags: 0
