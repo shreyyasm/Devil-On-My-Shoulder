@@ -67,7 +67,10 @@ namespace InfimaGames.LowPolyShooterPack
         public GameObject FireLight;
         [SerializeField] private float fireLightTime = 0.05f;
 
-       
+        [SerializeField] private float maxAimDistance = 500f;
+        [SerializeField] private LayerMask aimLayerMask; // set this to everything EXCEPT the player's own layer
+
+
         private IEnumerator FireLightRoutine()
         {
             FireLight.SetActive(true);
@@ -564,54 +567,61 @@ namespace InfimaGames.LowPolyShooterPack
         private void FireSingle()
         {
             if (!HasAmmunition()) return;
-
             Character.lastShotTime = Time.time;
-           
-            //Play firing animation.
+
+            // Play firing animation.
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
-
             audioSource.PlayOneShot(audioClipFire);
             animator.Play("Fire", 0, 0.0f);
-
             if (FireLight != null)
             {
                 StopCoroutine(nameof(FireLightRoutine));
                 StartCoroutine(nameof(FireLightRoutine));
             }
-
             ammunitionCurrent--;
 
-            Quaternion rotation = Quaternion.LookRotation(playerCamera.forward + new Vector3(0.01f,0,0)); 
-            GameObject projectile = BulletPool.GetObject(socket.position, rotation); 
+            // --- Aim calculation: find where the crosshair (camera center) is actually pointing ---
+            Vector3 targetPoint;
+            Ray aimRay = new Ray(playerCamera.position, playerCamera.forward);
+
+            if (Physics.Raycast(aimRay, out RaycastHit aimHit, maxAimDistance, aimLayerMask, QueryTriggerInteraction.Ignore))
+            {
+                targetPoint = aimHit.point;
+            }
+            else
+            {
+                // Nothing hit — just aim far down the camera's forward direction.
+                targetPoint = aimRay.GetPoint(maxAimDistance);
+            }
+
+            // Direction from the muzzle socket to that exact point.
+            Vector3 aimDirection = (targetPoint - socket.position).normalized;
+            Quaternion rotation = Quaternion.LookRotation(aimDirection);
+            // --- end aim calculation ---
+
+            GameObject projectile = BulletPool.GetObject(socket.position, rotation);
             projectile.GetComponent<Rigidbody>().velocity = projectile.transform.forward * projectileImpulse;
 
-
             if (specialGun == SpecialGuns.Kinematic)
-            { 
+            {
                 if (Character.playerMovement.playerMoving)
                     projectile.GetComponent<Projectile>().SetDamage(decreasedDamage);
                 else
                 {
                     projectile.GetComponent<Projectile>().SetDamage(increasedDamage);
-                    //projectile.gameObject.transform.localScale =  new Vector3(20, 20, projectile.gameObject.transform.localScale.z);
                 }
-                   
             }
 
-
             MuzzleFlash.SetTrigger("Flash");
-
             ApplyRecoil(gunType == GunType.Pistol ? pistolRecoil : automaticRecoil);
-
             if (peaPoison)
             {
-              PoisonMat.SetFloat("_Fill", ammunitionCurrent * 0.01f);
-
+                PoisonMat.SetFloat("_Fill", ammunitionCurrent * 0.01f);
             }
             if (ammunitionCurrent == 0)
                 Character.PlayReloadAnimation();
@@ -619,13 +629,10 @@ namespace InfimaGames.LowPolyShooterPack
         private void FireThreesome()
         {
             if (!HasAmmunition()) return;
-
             Character.lastShotTime = Time.time;
-
             // Play firing animation (same as pistol)
             const string stateName = "Fire";
             Character.crosshairAnim.SetTrigger("Fire");
-
             if (FireLight != null)
             {
                 StopCoroutine(nameof(FireLightRoutine));
@@ -635,84 +642,89 @@ namespace InfimaGames.LowPolyShooterPack
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
-
             audioSource.PlayOneShot(audioClipFire);
             animator.Play("Fire", 0, 0.0f);
-
             ammunitionCurrent--;
+
+            // --- Find the exact point the crosshair (camera center) is aiming at ---
+            Vector3 targetPoint;
+            Ray aimRay = new Ray(playerCamera.position, playerCamera.forward);
+
+            if (Physics.Raycast(aimRay, out RaycastHit aimHit, maxAimDistance, aimLayerMask, QueryTriggerInteraction.Ignore))
+            {
+                targetPoint = aimHit.point;
+            }
+            else
+            {
+                targetPoint = aimRay.GetPoint(maxAimDistance);
+            }
+
+            // Direction from the muzzle socket to that exact point (parallax-corrected).
+            Vector3 baseDirection = (targetPoint - socket.position).normalized;
+            Quaternion baseRotation = Quaternion.LookRotation(baseDirection);
+            // --- end aim calculation ---
 
             for (int i = 0; i < threesomeBulletCount; i++)
             {
                 // Spread index: -1, 0, +1
                 float index = i - (threesomeBulletCount - 1) / 2f;
 
-                // Rotate left/right around Y axis (yaw)
+                // Fan left/right around the corrected base direction, using camera's up axis
+                // so the spread is relative to the player's view, not world space.
                 Quaternion rotation =
-                    Quaternion.AngleAxis(index * threesomeAngle, Vector3.up) *
-                    Quaternion.LookRotation(playerCamera.forward);
+                    Quaternion.AngleAxis(index * threesomeAngle, playerCamera.up) * baseRotation;
 
                 GameObject projectile = BulletPool.GetObject(socket.position, rotation);
-
                 projectile.GetComponent<Rigidbody>().velocity =
                     projectile.transform.forward * projectileImpulse;
             }
 
-
             MuzzleFlash.SetTrigger("Flash");
             ApplyRecoil(pistolRecoil);
-
             if (ammunitionCurrent == 0)
             {
                 Character.PlayReloadAnimation();
-              
             }
-              
         }
 
         private void FireShotgun()
         {
             if (!HasAmmunition()) return;
-
             Character.lastShotTime = Time.time;
-
             //Play firing animation.
             Character.crosshairAnim.SetTrigger("Fire");
             const string stateName = "Fire";
-
             if (FireLight != null)
             {
                 StopCoroutine(nameof(FireLightRoutine));
                 StartCoroutine(nameof(FireLightRoutine));
             }
-
             Character.characterAnimator.CrossFade(stateName, 0.05f, Character.layerOverlay, 0);
             CameraShake.Instance.Shake();
             if (Character.playerMovement.mainMenu) return;
             ScoreManager.Instance.RegisterShotFired();
-
             audioSource.PlayOneShot(audioClipFire);
             animator.Play("Fire", 0, 0.0f);
             ammunitionCurrent--;
 
+            // Parallax-corrected center direction (socket -> what the crosshair is actually looking at)
+            Vector3 baseDirection = (GetAimTargetPoint() - socket.position).normalized;
+
             for (int i = 0; i < shotgunPellets; i++)
             {
-                Vector3 dir = playerCamera.forward +
+                // Random scatter still applied, but centered on the corrected direction, not raw camera.forward
+                Vector3 dir = baseDirection +
                               UnityEngine.Random.insideUnitSphere * shotgunSpread * 0.01f;
-
                 GameObject pellet = BulletPool.GetObject(socket.position, Quaternion.LookRotation(dir));
                 pellet.GetComponent<Rigidbody>().velocity = pellet.transform.forward * projectileImpulse;
-
                 if (specialGun == SpecialGuns.Heatbloom)
                 {
                     pellet.GetComponent<Projectile>()
                           .SetDamage(currentHeatbloomDamage);
                 }
-
             }
-
             MuzzleFlash.SetTrigger("Flash");
             ApplyRecoil(shotgunRecoil);
-
             if (specialGun == SpecialGuns.Heatbloom)
             {
                 heatbloomTimer = 0f;
@@ -721,11 +733,15 @@ namespace InfimaGames.LowPolyShooterPack
             if (ammunitionCurrent == 0)
             {
                 Character.PlayReloadAnimation();
-
             }
-
         }
-
+        private Vector3 GetAimTargetPoint()
+        {
+            Ray aimRay = new Ray(playerCamera.position, playerCamera.forward);
+            if (Physics.Raycast(aimRay, out RaycastHit aimHit, maxAimDistance, aimLayerMask, QueryTriggerInteraction.Ignore))
+                return aimHit.point;
+            return aimRay.GetPoint(maxAimDistance);
+        }
         #endregion
 
         #region CHARGED BEAM
@@ -876,8 +892,21 @@ namespace InfimaGames.LowPolyShooterPack
                 return;
             }
             CameraShake.Instance.ShakeWithValue(0.1f, 0.05f);
+
+            // --- Step 1: find what the crosshair (camera center) is actually aiming at ---
+            Vector3 aimOrigin = playerCamera.position;
+            Vector3 aimDirection = playerCamera.forward;
+
+            RaycastHit aimHit;
+            bool aimHasHit = Physics.Raycast(aimOrigin, aimDirection, out aimHit, maximumDistance);
+            Vector3 targetPoint = aimHasHit
+                ? aimHit.point
+                : aimOrigin + aimDirection * maximumDistance;
+
+            // --- Step 2: raycast from the actual muzzle (socket) toward that point,
+            // so the visible beam originates from the gun but still ends up where the player is looking ---
             Vector3 origin = socket.position;
-            Vector3 direction = playerCamera.forward;
+            Vector3 direction = (targetPoint - origin).normalized;
 
             beamRenderer.SetPosition(0, origin);
 
@@ -888,29 +917,27 @@ namespace InfimaGames.LowPolyShooterPack
                 out hit,
                 maximumDistance
             );
-
             Vector3 endPoint = hasHit
                 ? hit.point
                 : origin + direction * maximumDistance;
-
             beamRenderer.SetPosition(1, endPoint);
 
             // Damage ticking
             laserTickTimer += Time.deltaTime;
             if (laserTickTimer < laserDamageInterval)
                 return;
-
             laserTickTimer = 0f;
             laserUseTimer += Time.deltaTime;
+
+            if (!hasHit) return; // guard: avoid using hit.normal/hit.collider when nothing was hit
 
             Quaternion rotation = Quaternion.LookRotation(hit.normal);
             BulletImpactPool.GetObject(endPoint, rotation);
             CloudVFX.transform.position = endPoint;
 
-            if (hasHit && ((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
+            if (((1 << hit.collider.gameObject.layer) & enemyLayer) != 0)
             {
                 float damageToApply = laserDamagePerTick;
-
                 // RayGun overrides laser damage
                 if (specialGun == SpecialGuns.RayGun)
                 {
@@ -918,19 +945,15 @@ namespace InfimaGames.LowPolyShooterPack
                 }
                 bloodPool.GetObject(hit.collider.transform.position);
                 Debug.Log("EnemyHit");
-
                 if (hit.collider.gameObject.GetComponent<EnemyHealth>() != null)
-                hit.collider.gameObject.GetComponent<EnemyHealth>().EnemyHit(damageToApply);
+                    hit.collider.gameObject.GetComponent<EnemyHealth>().EnemyHit(damageToApply);
                 Debug.Log("Enemy Hit By " + damageToApply + "Damage");
-
-
                 //hit.collider.SendMessage(
                 //    "TakeDamage",
                 //    damageToApply,
                 //    SendMessageOptions.DontRequireReceiver
                 //);
             }
-
         }
         private void ResetRayGunState()
         {

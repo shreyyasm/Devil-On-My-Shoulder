@@ -10,6 +10,7 @@ using UnityEngine.Rendering.PostProcessing;
 
 public class PlayerHealth : MonoBehaviour
 {
+    public static PlayerHealth Instance;
     public float healthDecreaseRate;
     [Header("Health UI")]
     public SpriteRenderer healthBarSprite;
@@ -34,6 +35,11 @@ public class PlayerHealth : MonoBehaviour
     bool drain = true;
     public ObjectPool bloodPool;
 
+    private void Awake()
+    {
+        
+        Instance = this;
+    }
     // Start is called before the first frame update
     void Start()
     {

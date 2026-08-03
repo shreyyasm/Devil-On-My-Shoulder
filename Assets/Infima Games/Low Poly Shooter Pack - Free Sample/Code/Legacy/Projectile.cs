@@ -380,18 +380,13 @@ public class Projectile : MonoBehaviour {
                     collision.collider
                 );
             }
-
+            bloodPool.GetObject(hitPoint, Quaternion.identity);
 
             bulletPool.Release(gameObject);
             //Destroy bullet object
             //Destroy(gameObject);
         }
-        IEnumerator DisableSplat()
-        {
-			yield return new WaitForSeconds(2f);
-			bloodPool.Release(bloodSplatter);
-		}
-
+      
 	}
     private void OnTriggerEnter(Collider other)
     {
@@ -523,17 +518,15 @@ public class Projectile : MonoBehaviour {
                         hit.collider
                     );
                 }
+
+                bloodPool.GetObject(hitPoint, Quaternion.identity);
             }
 
 
             bulletPool.Release(gameObject);
         }
 
-        IEnumerator DisableSplat()
-        {
-            yield return new WaitForSeconds(2f);
-            bloodPool.Release(bloodSplatter);
-        }
+   
     }
     private IEnumerator DestroyAfter () 
 	{

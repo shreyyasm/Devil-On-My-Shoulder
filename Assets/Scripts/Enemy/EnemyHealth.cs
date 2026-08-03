@@ -127,13 +127,20 @@ public class EnemyHealth : MonoBehaviour
         }
         else
         {
-            BloodPool.GetObject(transform.position, Quaternion.identity);
+            //BloodPool.GetObject(transform.position, Quaternion.identity);
             ApplyHealthDamage(amount, info);
         }
     }
     void ApplyHealthDamage(float amount, DamageInfo info)
     {
-        health -= amount;
+        if(info.isHeadshot)
+        {
+            health -= amount * 2;
+        }
+        else
+            health -= amount;
+
+
 
         if (health <= 0)
         {
@@ -244,7 +251,7 @@ public class EnemyHealth : MonoBehaviour
 
 
         ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
-
+        PlayerHealth.Instance.ManageHealth(30);
 
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();

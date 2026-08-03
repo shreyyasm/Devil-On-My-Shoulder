@@ -25833,6 +25833,134 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &968797457
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 968797458}
+  - component: {fileID: 968797459}
+  m_Layer: 0
+  m_Name: BG Music
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &968797458
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968797457}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -254.38177, y: 11.24184, z: -16.13282}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!82 &968797459
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968797457}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: 6514c5b2704871c41ba3b7316aed62aa, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1001 &977345333
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35961,7 +36089,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 2ab8149ec4775284bada96c1b85b4a09, type: 2}
+      objectReference: {fileID: 2100000, guid: 68d9464d0cd4fbf48a81abf378167c7f, type: 2}
     - target: {fileID: 919132149155446097, guid: 6e5dd595a03b8cd49b177b7a53fc5254,
         type: 3}
       propertyPath: m_Name
@@ -46482,7 +46610,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 981abf7a53e6a964fba6bc48555ec31a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -85891,6 +86019,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 2073173803}
   fireLightTime: 0.1
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -92218,6 +92350,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 1544814577}
   fireLightTime: 0.07
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -126474,6 +126610,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 0}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -166394,12 +166534,16 @@ MonoBehaviour:
   maximumDistance: 500
   ammunitionTotal: 10
   socket: {fileID: 6263884593907254309}
-  audioClipFire: {fileID: 8300000, guid: d26bdcf1c084cdd4fafb2c8fd4fddd74, type: 3}
+  audioClipFire: {fileID: 8300000, guid: f0a610c86e20d834d970336227c03302, type: 3}
   reloadAnimationTime: 1
   peaPoison: 0
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 554204048}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 3759667511
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -178957,7 +179101,7 @@ PrefabInstance:
     - target: {fileID: 8400122694768496265, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 115
+      value: 247
       objectReference: {fileID: 0}
     - target: {fileID: 8458831389379451440, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
@@ -178967,7 +179111,7 @@ PrefabInstance:
     - target: {fileID: 8458831389379451440, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 312
+      value: 444
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -217875,6 +218019,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 1959819819}
   fireLightTime: 0.1
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -248421,7 +248569,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &3036538611027667611
 GameObject:
   m_ObjectHideFlags: 0
@@ -248938,6 +249086,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 1404937700}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -258897,7 +259049,7 @@ PrefabInstance:
     - target: {fileID: 4610042651314817592, guid: f04ae8b6f3e1e8c46a4c51dcded9d7e8,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 337
+      value: 451
       objectReference: {fileID: 0}
     - target: {fileID: 6182243104275156977, guid: f04ae8b6f3e1e8c46a4c51dcded9d7e8,
         type: 3}
@@ -268575,7 +268727,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &3469165198138968576
 GameObject:
   m_ObjectHideFlags: 0
@@ -269861,6 +270013,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 0}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -298121,12 +298277,12 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6010464915138415622}
   - {fileID: 678712539676885780}
   - {fileID: 8307091720835499462}
   - {fileID: 2665731179431580411}
   - {fileID: 4603151608901042358}
   - {fileID: 3462163484899165145}
-  - {fileID: 6010464915138415622}
   - {fileID: 420372920198084904}
   - {fileID: 5668621651435561425}
   - {fileID: 6247439915871833981}
@@ -303148,7 +303304,7 @@ PrefabInstance:
     - target: {fileID: 2673218831727367593, guid: 973194568b779244c8f3862099d9434c,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 29
+      value: 50
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -321697,6 +321853,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 0}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -344763,7 +344923,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e02b5fd7dbd4044b88ec413a10f6877, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthDecreaseRate: 0.1
+  healthDecreaseRate: 5
   healthBarSprite: {fileID: 0}
   maxHealth: 100
   currentHealth: 100
@@ -355597,16 +355757,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1579586137}
     m_Modifications:
-    - target: {fileID: 2870185582280238750, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4919731089865475611, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6906368939399237040, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -362709,6 +362859,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 0}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -363193,6 +363347,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 1447888241}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -392225,6 +392383,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 2100000, guid: 0e9ff52247329af41be78efa4876eafa, type: 2}
   FireLight: {fileID: 1375155421}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -400125,6 +400287,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 76936239}
   fireLightTime: 0.1
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 5
   shotgunSpread: 20
   laserDamageInterval: 1.5
@@ -432416,6 +432582,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 0}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -435316,6 +435486,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 425760113}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -462231,6 +462405,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 1669292086}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 3
   shotgunSpread: 30
   laserDamageInterval: 1.5
@@ -476417,6 +476595,10 @@ MonoBehaviour:
   PoisonMat: {fileID: 0}
   FireLight: {fileID: 478886368}
   fireLightTime: 0.05
+  maxAimDistance: 500
+  aimLayerMask:
+    serializedVersion: 2
+    m_Bits: 1612183863
   shotgunPellets: 8
   shotgunSpread: 6
   laserDamageInterval: 0.1
@@ -493548,6 +493730,7 @@ SceneRoots:
   - {fileID: 1242333202}
   - {fileID: 557105213}
   - {fileID: 1406569226}
+  - {fileID: 1836699087}
   - {fileID: 1818026132}
   - {fileID: 1010299123}
   - {fileID: 1394751180}
@@ -493555,10 +493738,10 @@ SceneRoots:
   - {fileID: 1456593328}
   - {fileID: 1866620549502275637}
   - {fileID: 5905178519506119755}
-  - {fileID: 1836699087}
   - {fileID: 1594184950}
   - {fileID: 625303809}
   - {fileID: 1902901853}
   - {fileID: 1790321799}
   - {fileID: 76802244}
   - {fileID: 1579586137}
+  - {fileID: 968797458}

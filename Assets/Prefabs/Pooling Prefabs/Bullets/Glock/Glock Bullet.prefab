@@ -9741,13 +9741,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02ff3ea705a4a7244a59eef82e75c660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BulletImpactPool: {fileID: 11400000, guid: b78720f9b36a40841980678062a55577, type: 2}
   specialBullets: 0
   destroyAfter: 3
-  bloodPool: {fileID: 11400000, guid: 48239f62a29a5db42849f65fec5759ca, type: 2}
+  bloodPool: {fileID: 11400000, guid: cb8d9e1fd7b4bf94aabb9ce41763c746, type: 2}
   bulletPool: {fileID: 11400000, guid: ddf2c8debeb9ea14aabf0588b98708a3, type: 2}
   bulletDamage: 40
-  mortarExplosionPrefab: {fileID: 180128, guid: bb56edfb72e0f2848864180020d1ecda,
-    type: 3}
+  mortarExplosionPool: {fileID: 0}
   maxRicochetCount: 5
   ricochetSpeedMultiplier: 1.5
   maxRicochetSpeed: 200
@@ -9755,25 +9755,19 @@ MonoBehaviour:
   demoBullet: 0
   baseDemoDamage: 40
   multiplerDemoDamage: 10
-  BulletImpactPool: {fileID: 11400000, guid: b78720f9b36a40841980678062a55577, type: 2}
   ignorePrevRotation: 0
-  FirePrefab: {fileID: 8184484410135222229, guid: d127786cbd61959468e9ec066a7de60f,
-    type: 3}
+  FirePrefabPool: {fileID: 0}
   riftsawRotateSpeed: 1600
   riftsawDamageInterval: 1
   riftsawDamagePerTick: 8
   riftsawLifeTime: 4
-  riftsawExplosionPrefab: {fileID: 180128, guid: bb56edfb72e0f2848864180020d1ecda,
-    type: 3}
+  riftsawExplosionPrefabPool: {fileID: 0}
   cryoFreezeDuration: 5
   cryoFreezeColor: {r: 0.28773582, g: 0.76257885, b: 1, a: 1}
-  giggleConfettiPrefab: {fileID: 5146980182222423493, guid: 5dcb6f3e0e38d324fba0a8aea6e8c931,
-    type: 3}
-  giggleSmilePrefab: {fileID: 5764982301233188874, guid: d742e3e272fea7345a1dbe6dfdffb9c0,
-    type: 3}
+  giggleConfettiPrefabPool: {fileID: 0}
+  giggleSmilePrefabPool: {fileID: 0}
   giggleStunDuration: 3
-  stickyBombPrefab: {fileID: 6540859468334486760, guid: 66fa9c4c45ca8a144bf6d50408b8d4be,
-    type: 3}
+  stickyBombPrefabPool: {fileID: 0}
   stickyBombAttachForce: 10000
   mouthMelterRotationSpeed: 1000
   mouthMelterRotations: 1
