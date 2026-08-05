@@ -14860,8 +14860,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.8085074, y: 2.0590377, z: 1}
-  m_Center: {x: 0.014454556, y: -0.28407547, z: 0}
+  m_Size: {x: 0.8085074, y: 1.976166, z: 0.83200973}
+  m_Center: {x: 0.014454556, y: -0.32551226, z: -0.08399532}
 --- !u!54 &3211674957780236967
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -14930,6 +14930,7 @@ MonoBehaviour:
   finisherTarget: {fileID: 3051047969348873030}
   finisherIndicator: {fileID: 8898343956634336882}
   finisherTime: 0
+  sawPlayer: 0
   animator: {fileID: 9115087760769565892}
   shadow: {fileID: 5929013525437134546}
   enemyType: 0
@@ -15055,6 +15056,7 @@ MonoBehaviour:
   deathType: 0
   shieldHealth: 0
   Shield: {fileID: 0}
+  shieldBreakVFX: {fileID: 0}
   isInvincible: 0
   spriteRenderer: {fileID: 0}
   collisionColorRed: {r: 1, g: 0, b: 0, a: 1}
@@ -15067,6 +15069,7 @@ MonoBehaviour:
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
     type: 3}
+  DecalPool: {fileID: 0}
 --- !u!114 &1777195268358934377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -355042,8 +355045,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.3552043, y: 0.45620662, z: 0.49860144}
-  m_Center: {x: 0.00032714606, y: 0.967483, z: -0.0028258802}
+  m_Size: {x: 0.5072342, y: 0.5831589, z: 0.554423}
+  m_Center: {x: 0.0058353427, y: 0.96200067, z: -0.030736566}
 --- !u!1 &8522263162524275167
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using static CartoonFX.CFXR_Effect;
-using static UnityEditor.PlayerSettings;
+
 using static UnityEngine.Rendering.DebugUI.Table;
 
 namespace InfimaGames.LowPolyShooterPack

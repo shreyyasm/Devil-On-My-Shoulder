@@ -229,7 +229,7 @@ public class EnemyHealth : MonoBehaviour
         ScoreManager.Instance.Kills++;
 
 
-        CharacterAbilities.instance.AddKillValue(20);
+        CharacterAbilities.instance.AddKillValue(5);
 
         // Spawn damage number
         string localizedKilled =
@@ -251,7 +251,7 @@ public class EnemyHealth : MonoBehaviour
 
 
         ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
-        PlayerHealth.Instance.ManageHealth(30);
+        PlayerHealth.Instance.ManageHealth(5 * ComboManager.Instance.multiplier);
 
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
@@ -263,6 +263,7 @@ public class EnemyHealth : MonoBehaviour
         if (isHeadshot)
         {
             enemyManager.animator.SetBool("Headshot", true);
+            GetComponent<BoxCollider>().enabled = false;
             agent.isStopped = true;
             agent.ResetPath();                 // 🔥 removes path completely
             agent.velocity = Vector3.zero;

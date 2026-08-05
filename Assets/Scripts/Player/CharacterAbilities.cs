@@ -40,7 +40,8 @@ public class CharacterAbilities : MonoBehaviour
 
 
 
-    private bool abilityReady;
+    public bool abilityReady;
+    public bool finisherReady;
 
     private float targetSliderValue;
     private bool canFinisherGlow;
@@ -60,8 +61,8 @@ public class CharacterAbilities : MonoBehaviour
 
     public GameObject playerRightHand;
     public GameObject playerLeftHand;
-
-
+    public Character character;
+    public bool reloadIncomplete;
     private bool isFinishing = false;
 
     // Finisher cost (you can tweak per enemy later)
@@ -88,13 +89,11 @@ public class CharacterAbilities : MonoBehaviour
 
     [Header("Runtime Values (Cached From Scriptable)")]
     private float abilityDuration;
-    private float abilityRechargeTime;
 
     [Header("Runtime State")]
     [SerializeField] private float abilityTimer;
-    [SerializeField] private float rechargeTimer;
     [SerializeField] private bool abilityActive;
-    [SerializeField] private bool recharging;
+    [SerializeField] private bool FinisherActive;
 
     private bool abilityPressed;
     private Quaternion baseCameraRotation;
@@ -283,11 +282,11 @@ public class CharacterAbilities : MonoBehaviour
         {
             PerformFinisher();
         }
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            ActivateAbility();
-        }
-        
+        //if (Input.GetKeyDown(KeyCode.M))
+        //{
+        //    ActivateAbility();
+        //}
+
 
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
@@ -382,15 +381,17 @@ public class CharacterAbilities : MonoBehaviour
         {
             currentKillValue -= finisherCost;
             targetSliderValue = currentKillValue;
-
-            PerformFinisher();
             CheckStates();
+            PerformFinisher();
+            
         }
     }
 
     private void CheckStates()
     {
         abilityReady = currentKillValue >= maxKillValue;
+
+        finisherReady = currentKillValue >= 30;
     }
     private void UpdateKillUI()
     {
@@ -419,7 +420,7 @@ public class CharacterAbilities : MonoBehaviour
             {
                 finisherBoxes[i].color = normalColor;
             }
-
+            finisherReady = false;
             return;
         }
 
@@ -438,10 +439,12 @@ public class CharacterAbilities : MonoBehaviour
                     glowColor,
                     t
                 );
+               
             }
             else
             {
                 finisherBoxes[i].color = normalColor;
+               
             }
         }
     }
@@ -449,10 +452,9 @@ public class CharacterAbilities : MonoBehaviour
     private void PerformFinisher()
     {
 
-
+      
         if (isFinishing) return;
-
-
+        FinisherActive = true;
         Transform target = FindFinisherTarget();
 
         EnemyManager[] enemies =
@@ -473,7 +475,10 @@ public class CharacterAbilities : MonoBehaviour
             enemyHealthTemp = enemyHealth;
             enemyHealth.FinisherActive();
             Debug.Log("Finisher performed");
-
+            if(character.reloading)
+            {
+                reloadIncomplete = true;
+            }
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
@@ -486,7 +491,7 @@ public class CharacterAbilities : MonoBehaviour
 
             mainCameraTexture.SetActive(false);
             GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
-
+            Debug.Log("working ha ji");
         }
         // TODO: implement finisher logic later
     }
@@ -561,6 +566,7 @@ public class CharacterAbilities : MonoBehaviour
 
         return bestTarget;
     }
+
     IEnumerator FinisherRoutine(Transform target)
     {
         isFinishing = true;
@@ -587,7 +593,8 @@ public class CharacterAbilities : MonoBehaviour
             finisherPoint.right * destinationOffset.x +
             finisherPoint.forward * destinationOffset.z;
 
-        destination.y = transform.position.y;
+        // Match the finisher target's height
+        destination.y = finisherPoint.position.y;
 
         // Move player to finisher position
         while (timer < duration)
@@ -605,7 +612,11 @@ public class CharacterAbilities : MonoBehaviour
                 finisherPoint.right * destinationOffset.x +
                 finisherPoint.forward * destinationOffset.z;
 
-            destination.y = startPos.y;
+            // Match the finisher target's height
+            destination.y = finisherPoint.position.y - 3f;
+
+
+            rootCamera.localRotation = Quaternion.Euler(0f,rootCamera.localEulerAngles.y,rootCamera.localEulerAngles.z);
 
             transform.position =
                 Vector3.Lerp(
@@ -633,13 +644,13 @@ public class CharacterAbilities : MonoBehaviour
 
         if (!rb.isKinematic)
         {
-            enemyManager.GetComponent<Rigidbody>().velocity =
-           Vector3.zero;
+            Rigidbody enemyRb = enemyManager.GetComponent<Rigidbody>();
 
-
-            enemyManager.GetComponent<Rigidbody>().angularVelocity =
-                Vector3.zero;
-
+            if (enemyRb != null)
+            {
+                enemyRb.velocity = Vector3.zero;
+                enemyRb.angularVelocity = Vector3.zero;
+            }
         }
 
         enemyHealthTemp.FinisherAnimation();
@@ -666,9 +677,14 @@ public class CharacterAbilities : MonoBehaviour
                 finisherPoint.right * destinationOffset.x +
                 finisherPoint.forward * destinationOffset.z;
 
-            destination.y = startPos.y;
+            // Match the finisher target's height
+            destination.y = finisherPoint.position.y - 3f;
+
+            rootCamera.localRotation = Quaternion.Euler(0f, rootCamera.localEulerAngles.y, rootCamera.localEulerAngles.z);
 
             transform.position = destination;
+
+
 
             Vector3 lookDir =
                 enemyManager.transform.position -
@@ -690,7 +706,6 @@ public class CharacterAbilities : MonoBehaviour
                 rb.angularVelocity = Vector3.zero;
             }
 
-
             finisherTimer += Time.deltaTime;
             yield return null;
         }
@@ -709,8 +724,15 @@ public class CharacterAbilities : MonoBehaviour
 
         playerLeftHand.SetActive(true);
         playerRightHand.SetActive(true);
-        rb.isKinematic = false;
 
+        rb.isKinematic = false;
+        FinisherActive = false;
+        if(reloadIncomplete)
+        {
+            character.PlayReloadAnimation();
+          reloadIncomplete = false;
+
+        }
         Debug.Log("Finisher End");
     }
     private void OnDrawGizmos()
@@ -804,7 +826,10 @@ public class CharacterAbilities : MonoBehaviour
     // ================= INPUT =================
     public void OnAbility(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && abilityReady)
+            abilityPressed = true;
+
+        if (context.performed && finisherReady)
             abilityPressed = true;
     }
 
@@ -829,36 +854,13 @@ public class CharacterAbilities : MonoBehaviour
         if (currentAbilityData == null) return;
 
         abilityDuration = currentAbilityData.duration;
-        abilityRechargeTime = currentAbilityData.rechargeTime;
-
         abilityTimer = abilityDuration;
-        rechargeTimer = abilityRechargeTime;
+
     }
 
     // ================= CORE =================
     private void HandleAbilityLogic()
     {
-        if (abilityPressed)
-        {
-            abilityPressed = false;
-
-            if (!abilityActive && !recharging)
-            {
-                // 🔥 Ability requires FULL meter
-                if (currentKillValue >= maxKillValue)
-                {
-                    currentKillValue = 0f; // consume all
-                    targetSliderValue = currentKillValue;
-                    ActivateAbility();
-                }
-                else
-                {
-                    // 🔥 Try finisher instead
-                    TryFinisher();
-                }
-            }
-        }
-
         // ACTIVE: duration ↓
         if (abilityActive)
         {
@@ -868,24 +870,43 @@ public class CharacterAbilities : MonoBehaviour
                 EndAbility();
         }
 
-        // RECHARGE: cooldown ↑
-        if (recharging)
+        if (abilityPressed && abilityReady)
         {
-            rechargeTimer += Time.deltaTime;
+            abilityPressed = false;
 
-            if (rechargeTimer >= abilityRechargeTime)
+            if (!abilityActive)
             {
-                rechargeTimer = abilityRechargeTime;
-                recharging = false;
+                // 🔥 Ability requires FULL meter
+                if (currentKillValue >= maxKillValue)
+                {
+                    currentKillValue = 0f; // consume all
+                    targetSliderValue = currentKillValue;
+                    ActivateAbility();
+                    return;
+                }
+
             }
         }
+        if(abilityPressed && finisherReady)
+        {
+            abilityPressed = false;
+
+            if (!FinisherActive)
+            {
+                TryFinisher();
+               
+            }
+        }
+       
+
+       
     }
 
     private void ActivateAbility()
     {
 
         abilityActive = true;
-        recharging = false;
+      
         abilityTimer = abilityDuration;
 
         if (Ability == AbilityType.Ability1)
@@ -908,9 +929,7 @@ public class CharacterAbilities : MonoBehaviour
     private void EndAbility()
     {
         abilityActive = false;
-        recharging = true;
-        rechargeTimer = 0f;
-
+      
         if (Ability == AbilityType.Ability1)
             StopAbility1();
 
@@ -1192,8 +1211,6 @@ public class CharacterAbilities : MonoBehaviour
         if (abilityActive)
             return abilityTimer / abilityDuration;
 
-        if (recharging)
-            return rechargeTimer / abilityRechargeTime;
 
         return 1f;
     }

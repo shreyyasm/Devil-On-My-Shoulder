@@ -89,11 +89,15 @@ namespace InfimaGames.LowPolyShooterPack
 
         public PlayerMovement playerMovement;
 
+        private void Update()
+        {
+          
+        }
         private void LateUpdate()
         {
             //if (playerMovement.cameraLocked)
             //    return;
-
+           
             if (playerMovement.finisherActive) return;
             gamepadConnected = IsGamepadConnected();
 

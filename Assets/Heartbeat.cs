@@ -13,6 +13,7 @@ public class Heartbeat : MonoBehaviour
     public Image heartbeatBG;
     public Image heartbeatBGStrip;
     public Image humanBodyUI;
+    public Slider healthSlider;
 
     [Header("Colors")]
     public Color greenColor = Color.green;
@@ -34,6 +35,7 @@ public class Heartbeat : MonoBehaviour
     private void Start()
     {
         maxHealth = playerHealth.maxHealth;
+        healthSlider.maxValue = playerHealth.maxHealth;
         UpdateHeartbeat();
     }
 
@@ -46,7 +48,7 @@ public class Heartbeat : MonoBehaviour
     void UpdateHeartbeat()
     {
         float healthPercent = playerHealth.currentHealth / maxHealth;
-
+        healthSlider.value = playerHealth.currentHealth;
         Color targetColor;
         float targetSpeed;
         float targetYScale;

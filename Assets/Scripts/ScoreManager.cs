@@ -426,7 +426,7 @@ public class ScoreManager : MonoBehaviour
     
     public void CheckHighScore()
     {
-        FunticoSDKExample.SendScore(gameScore);
+       // FunticoSDKExample.SendScore(gameScore);
         if (gameScore > highScore)
         {
             highScore = gameScore;

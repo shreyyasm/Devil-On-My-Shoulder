@@ -11,7 +11,7 @@ using UnityEngine.ProBuilder;
 using UnityEngine.UIElements;
 using static ExplosionSystem;
 using static InfimaGames.LowPolyShooterPack.Weapon;
-using static UnityEditor.PlayerSettings;
+
 using static UnityEngine.EventSystems.EventTrigger;
 using Random = UnityEngine.Random;
 
