@@ -229,7 +229,7 @@ public class EnemyHealth : MonoBehaviour
         ScoreManager.Instance.Kills++;
 
 
-        CharacterAbilities.instance.AddKillValue(5);
+        CharacterAbilities.instance.AddKillValue(2);
 
         // Spawn damage number
         string localizedKilled =

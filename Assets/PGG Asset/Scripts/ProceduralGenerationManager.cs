@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class ProceduralGenerationManager : MonoBehaviour
 {
+    public int ActiveSet = 0;
     [Header("Generation Settings")]
     public int RoomsToEnd = 10;
     public float DistanceOffset = 0.2f;
@@ -20,10 +21,11 @@ public class ProceduralGenerationManager : MonoBehaviour
     [Header("Presets")]
     public List<GenerationPreset> Presets;
 
-    public NavMeshSurface navMeshSurface;
+    
     // ================= RUNTIME =================
 
     private List<RoomInstance> placedRooms = new();
+    private int roomIndexCounter = 0;
     private Dictionary<DungeonNode, RoomInstance> placedNodes = new();
 
     // ================= UNITY =================
@@ -32,34 +34,29 @@ public class ProceduralGenerationManager : MonoBehaviour
     {
         GenerateWithRetries();
     }
-    public void BakeNavMesh()
-    {
-        // Bakes the navmesh immediately
-        navMeshSurface.BuildNavMesh();
-        Debug.Log("NavMesh baked successfully!");
-    }
+   
 
-#if UNITY_EDITOR
-    [ContextMenu("Bake Occlusion")]
-    public static void BakeOcclusion()
-    {
-        if (!StaticOcclusionCulling.isRunning)
-        {
-            Debug.Log("🧱 Starting Occlusion Culling bake...");
-            StaticOcclusionCulling.Compute();
-            Debug.Log("✅ Occlusion Culling bake complete!");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ Occlusion Culling is already running!");
-        }
-    }
-#else
-    public static void BakeOcclusion()
-    {
-        Debug.LogWarning("❌ BakeOcclusion is only available in the Unity Editor!");
-    }
-#endif
+//#if UNITY_EDITOR
+//    [ContextMenu("Bake Occlusion")]
+//    public static void BakeOcclusion()
+//    {
+//        if (!StaticOcclusionCulling.isRunning)
+//        {
+//            Debug.Log("🧱 Starting Occlusion Culling bake...");
+//            StaticOcclusionCulling.Compute();
+//            Debug.Log("✅ Occlusion Culling bake complete!");
+//        }
+//        else
+//        {
+//            Debug.LogWarning("⚠️ Occlusion Culling is already running!");
+//        }
+//    }
+//#else
+//    public static void BakeOcclusion()
+//    {
+//        Debug.LogWarning("❌ BakeOcclusion is only available in the Unity Editor!");
+//    }
+//#endif
 
     // ================= ENTRY =================
 
@@ -71,7 +68,7 @@ public class ProceduralGenerationManager : MonoBehaviour
 
             ClearPrevious();
 
-            GenerationPreset preset = Presets[Random.Range(0, Presets.Count)];
+            GenerationPreset preset = Presets[ActiveSet];
             DungeonGraph graph = GenerateGraph(preset);
 
             bool success = BuildGeometry(graph);
@@ -79,9 +76,9 @@ public class ProceduralGenerationManager : MonoBehaviour
             if (success)
             {
                 CloseAllUnusedDoors();
-                Debug.Log($"[ProcGen] SUCCESS with Seed: {Seed}");
-                BakeNavMesh();
-                BakeOcclusion();
+                RoomVisibilityManager.Instance.Initialize(placedRooms);
+                RoomVisibilityManager.Instance.SetCurrentRoom(0);
+                Debug.Log($"[ProcGen] SUCCESS with Seed: {Seed}");                         
                 return;
             }
 
@@ -106,6 +103,7 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         placedRooms.Clear();
         placedNodes.Clear();
+        roomIndexCounter = 0;
     }
 
     // ================= GRAPH PASS =================
@@ -248,6 +246,24 @@ public class ProceduralGenerationManager : MonoBehaviour
     {
         GameObject obj = Instantiate(data.Prefab, pos, rot, transform);
         RoomInstance instance = new RoomInstance(obj);
+
+        instance.RoomIndex = roomIndexCounter++; Debug.Log($"Spawned room index: {instance.RoomIndex}");
+        RoomTrigger trigger = obj.GetComponentInChildren<RoomTrigger>();
+
+        if (trigger != null)
+        {
+            trigger.RoomIndex = instance.RoomIndex;
+
+            Debug.Log($"Assigned trigger index: {trigger.RoomIndex} to {obj.name}");
+        }
+        else
+        {
+            Debug.LogError($"No RoomTrigger found in {obj.name}");
+        }
+        if (trigger != null)
+        {
+            trigger.RoomIndex = instance.RoomIndex;
+        }
         placedRooms.Add(instance);
         return instance;
     }
@@ -293,6 +309,16 @@ public class ProceduralGenerationManager : MonoBehaviour
         // ------------------------------
 
         RoomInstance instance = new RoomInstance(obj);
+        instance.RoomIndex = roomIndexCounter++;
+
+        RoomTrigger trigger = obj.GetComponentInChildren<RoomTrigger>();
+
+        if (trigger != null)
+        {
+            trigger.RoomIndex = instance.RoomIndex;
+        }
+
+        Debug.Log($"Spawned room index: {instance.RoomIndex}");
 
         if (CheckOverlap(instance, fromRoom))
         {

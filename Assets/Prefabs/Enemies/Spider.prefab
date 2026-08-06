@@ -5529,6 +5529,7 @@ MonoBehaviour:
   finisherTarget: {fileID: 634891888844498369}
   finisherIndicator: {fileID: 1726046648130718944}
   finisherTime: 0
+  sawPlayer: 0
   animator: {fileID: 3926860335976368103}
   shadow: {fileID: 3206991457056971368}
   enemyType: 0
@@ -5654,6 +5655,7 @@ MonoBehaviour:
   deathType: 0
   shieldHealth: 0
   Shield: {fileID: 0}
+  shieldBreakVFX: {fileID: 0}
   isInvincible: 0
   spriteRenderer: {fileID: 0}
   collisionColorRed: {r: 1, g: 0, b: 0, a: 1}
@@ -5666,6 +5668,7 @@ MonoBehaviour:
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
     type: 3}
+  DecalPool: {fileID: 0}
 --- !u!114 &8569431405458010168
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44923,7 +44926,7 @@ Transform:
   m_GameObject: {fileID: 8139766579646362660}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0.589, z: 0.026}
+  m_LocalPosition: {x: -0, y: 1.385, z: 0.026}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

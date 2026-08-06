@@ -398,6 +398,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SnapPoint: {fileID: 548918465293330675}
   Blocker: {fileID: 371759278730817783}
+  IsStartDoor: 0
   IsUsed: 0
 --- !u!1 &371759278730817783
 GameObject:
@@ -2410,6 +2411,7 @@ GameObject:
   - component: {fileID: 8560467691745906541}
   - component: {fileID: 2283204407963919528}
   - component: {fileID: 8590229910102543227}
+  - component: {fileID: 5918293040690971813}
   m_Layer: 0
   m_Name: 'RoomBounds '
   m_TagString: RoomBounds
@@ -2503,6 +2505,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5918293040690971813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7980597362865077093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f224c8d9c42694d9d162aaa1a719fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RoomIndex: 0
 --- !u!1 &8112445531613240954
 GameObject:
   m_ObjectHideFlags: 0

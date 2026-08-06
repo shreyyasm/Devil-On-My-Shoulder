@@ -282,10 +282,10 @@ public class CharacterAbilities : MonoBehaviour
         {
             PerformFinisher();
         }
-        //if (Input.GetKeyDown(KeyCode.M))
-        //{
-        //    ActivateAbility();
-        //}
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            ActivateAbility();
+        }
 
 
         HandleAbilityLogic();
@@ -733,6 +733,7 @@ public class CharacterAbilities : MonoBehaviour
           reloadIncomplete = false;
 
         }
+        GetComponent<PlayerHealth>().ManageHealth(100);
         Debug.Log("Finisher End");
     }
     private void OnDrawGizmos()
@@ -1022,10 +1023,6 @@ public class CharacterAbilities : MonoBehaviour
     {
         Transform target = FindNearestEnemy();
 
-        // ❌ No enemy nearby -> don't shoot
-        if (target == null)
-            return;
-
         currentAbility1Target = target;
 
         bool fireLeft = fireLeftNext;
@@ -1033,6 +1030,7 @@ public class CharacterAbilities : MonoBehaviour
         Transform gun = fireLeft ? leftGun : rightGun;
         Transform socket = fireLeft ? SocketPointLeft : SocketPointRight;
         Animator flash = fireLeft ? flashLeft : flashRight;
+        targetIcon.gameObject.SetActive(true);
 
         if (fireLeft)
         {
@@ -1050,8 +1048,27 @@ public class CharacterAbilities : MonoBehaviour
         if (gun == null || socket == null)
             return;
 
-        // Always shoot at the locked target
-        Vector3 dir = (target.position - socket.position).normalized;
+        Vector3 dir;
+
+        if (target != null)
+        {
+            // Shoot at locked target
+            dir = (target.position - socket.position).normalized;
+        }
+        else
+        {
+            // Shoot where the crosshair is pointing
+            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            {
+                dir = (hit.point - socket.position).normalized;
+            }
+            else
+            {
+                dir = ray.direction;
+            }
+        }
 
         flash.SetTrigger("Flash");
 
@@ -1073,7 +1090,8 @@ public class CharacterAbilities : MonoBehaviour
 
     private Transform FindNearestEnemy()
     {
-        if (playerCamera == null) return null;
+        if (playerCamera == null)
+            return null;
 
         Collider[] hits = Physics.OverlapSphere(
             playerCamera.position,
@@ -1081,42 +1099,46 @@ public class CharacterAbilities : MonoBehaviour
             enemyLayer
         );
 
+        Camera cam = playerCamera.GetComponent<Camera>();
+
         float bestScore = float.MaxValue;
         Transform bestTarget = null;
 
-        Vector3 camPos = playerCamera.position;
-        Vector3 camForward = playerCamera.forward;
-
         foreach (Collider c in hits)
         {
-            Vector3 toEnemy = (c.transform.position - camPos);
-            float distance = toEnemy.magnitude;
-            Vector3 dir = toEnemy.normalized;
+            Vector3 worldPos = GetTargetWorldPos(c.transform);
+            Vector3 viewport = cam.WorldToViewportPoint(worldPos);
 
-            // 🔹 ANGLE CHECK (VISION CONE)
-            float angle = Vector3.Angle(camForward, dir);
-            if (angle > visionAngle * 0.5f)
+            // Behind camera
+            if (viewport.z <= 0f)
                 continue;
 
-            // 🔹 LINE OF SIGHT CHECK
+            // Must be on screen
+            if (viewport.x < 0f || viewport.x > 1f ||
+                viewport.y < 0f || viewport.y > 1f)
+                continue;
+
+            // Line of sight
             if (requireLineOfSight)
             {
-                if (Physics.Raycast(
-                    camPos,
-                    dir,
-                    out RaycastHit hit,
-                    autoAimRange
-                ))
+                Vector3 dir = (worldPos - playerCamera.position).normalized;
+
+                if (Physics.Raycast(playerCamera.position, dir, out RaycastHit hit, autoAimRange))
                 {
-                    if (hit.transform != c.transform)
-                        continue; // blocked by wall or other object
+                    if (!hit.transform.IsChildOf(c.transform) &&
+                        !c.transform.IsChildOf(hit.transform))
+                        continue;
                 }
             }
 
-            // 🔹 PICK NEAREST VALID
-            if (distance < bestScore)
+            // Distance from screen center
+            float dx = viewport.x - 0.5f;
+            float dy = viewport.y - 0.5f;
+            float score = dx * dx + dy * dy;
+
+            if (score < bestScore)
             {
-                bestScore = distance;
+                bestScore = score;
                 bestTarget = c.transform;
             }
         }
@@ -1127,41 +1149,45 @@ public class CharacterAbilities : MonoBehaviour
 
     private void UpdateAbility1TargetUI()
     {
-        if (!abilityActive || Ability != AbilityType.Ability1 || currentAbility1Target == null)
+        if (!abilityActive || Ability != AbilityType.Ability1)
         {
             targetIcon.gameObject.SetActive(false);
             return;
         }
 
+        
         Camera cam = playerCamera.GetComponent<Camera>();
 
-        Vector3 worldPos = GetTargetWorldPos(currentAbility1Target);
-        Vector3 viewportPos = cam.WorldToViewportPoint(worldPos);
+        // Default position = center of the screen
+        Vector3 targetScreenPos = new Vector3(
+            Screen.width * 0.5f,
+            Screen.height * 0.5f,
+            0f);
 
-        // Off-screen or behind camera
-        if (viewportPos.z <= 0f ||
-            viewportPos.x < 0f || viewportPos.x > 1f ||
-            viewportPos.y < 0f || viewportPos.y > 1f)
+        // Find the current best target every frame
+        currentAbility1Target = FindNearestEnemy();
+
+        if (currentAbility1Target != null)
         {
-            targetIcon.gameObject.SetActive(false);
-            return;
+            Vector3 worldPos = GetTargetWorldPos(currentAbility1Target);
+            Vector3 viewportPos = cam.WorldToViewportPoint(worldPos);
+
+            // If target is visible, move icon to it
+            if (viewportPos.z > 0f &&
+                viewportPos.x >= 0f && viewportPos.x <= 1f &&
+                viewportPos.y >= 0f && viewportPos.y <= 1f)
+            {
+                targetScreenPos = cam.WorldToScreenPoint(worldPos);
+            }
         }
 
-        Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
-
-        targetIcon.gameObject.SetActive(true);
-
-        // 🔥 Smooth but fast tracking
-        targetIcon.position = Vector3.SmoothDamp(
+        // Smoothly move to the target position
+        targetIcon.position = Vector3.Lerp(
             targetIcon.position,
-            screenPos,
-            ref targetIconVelocity,
-            targetIconSmoothTime,
-            Mathf.Infinity,
-            Time.deltaTime
+            targetScreenPos,
+            Time.deltaTime * 10f
         );
     }
-
     private Vector3 GetTargetWorldPos(Transform enemy)
     {
         Renderer r = enemy.GetComponentInChildren<Renderer>();

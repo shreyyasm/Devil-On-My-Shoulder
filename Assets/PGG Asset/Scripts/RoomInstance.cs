@@ -8,6 +8,7 @@ public class RoomInstance
     public List<Door> Doors;
 
     private const float BOUNDS_SHRINK = 0.5f;
+    public int RoomIndex;
 
     public RoomInstance(GameObject obj)
     {
