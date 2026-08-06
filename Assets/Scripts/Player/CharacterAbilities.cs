@@ -379,8 +379,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         if (currentKillValue >= finisherCost)
         {
-            currentKillValue -= finisherCost;
-            targetSliderValue = currentKillValue;
+           
             CheckStates();
             PerformFinisher();
             
@@ -491,7 +490,9 @@ public class CharacterAbilities : MonoBehaviour
 
             mainCameraTexture.SetActive(false);
             GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
-            Debug.Log("working ha ji");
+           
+            currentKillValue -= finisherCost;
+            targetSliderValue = currentKillValue;
         }
         // TODO: implement finisher logic later
     }
@@ -515,9 +516,15 @@ public class CharacterAbilities : MonoBehaviour
 
         foreach (var hit in hits)
         {
+            EnemyManager enemyManager = hit.GetComponentInParent<EnemyManager>();
+            EnemyHealth enemyHealth = enemyManager.GetComponent<EnemyHealth>();
+
+            // Ignore dead enemies
+            if (enemyHealth != null && enemyHealth.dead)
+                continue;
+
             // Aim at enemy chest instead of feet
-            Vector3 targetPos =
-            hit.GetComponentInParent<EnemyManager>().finisherTarget.position;
+            Vector3 targetPos = enemyManager.finisherTarget.position;
 
             // Range check from player
             float dist = Vector3.Distance(
@@ -549,7 +556,7 @@ public class CharacterAbilities : MonoBehaviour
                 Mathf.Abs(Mathf.Atan2(localDir.y, localDir.z) * Mathf.Rad2Deg);
 
             bool insideHorizontal =
-     horizontalAngleToTarget <= currentHorizontalAngle * 0.5f;
+                horizontalAngleToTarget <= currentHorizontalAngle * 0.5f;
 
             bool insideVertical =
                 verticalAngleToTarget <= currentVerticalAngle * 0.5f;
@@ -563,7 +570,6 @@ public class CharacterAbilities : MonoBehaviour
                 }
             }
         }
-
         return bestTarget;
     }
 

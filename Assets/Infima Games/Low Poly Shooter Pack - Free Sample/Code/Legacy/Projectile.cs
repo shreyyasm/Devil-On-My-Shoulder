@@ -271,6 +271,7 @@ public class Projectile : MonoBehaviour {
             }
             Vector3 pos = contact.point;
             BulletImpactPool.GetObject(pos, rot);
+            
             //Instantiate(impactPrefab, pos, rot);
             bulletPool.Release(gameObject);
         }
@@ -390,6 +391,7 @@ public class Projectile : MonoBehaviour {
 	}
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log(other.gameObject.name);
         if (specialBullets == SpecialBullets.Eliminator)
         {
             eliminatorHomingActive = false;
