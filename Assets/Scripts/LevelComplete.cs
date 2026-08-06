@@ -22,9 +22,10 @@ public class LevelComplete : MonoBehaviour
         {
             if(!other.GetComponent<PlayerHealth>().playerDead)
             {
+                ProceduralGenerationManager.Instance.ActiveSet++;
                 ScoreManager.Instance.IncreaseLevel();
                 SceneManager.LoadScene("Mad Dash Game");
-
+               
             }
 
         }

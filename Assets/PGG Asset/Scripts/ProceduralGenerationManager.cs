@@ -2,13 +2,23 @@
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ProceduralGenerationManager : MonoBehaviour
 {
+    public static ProceduralGenerationManager Instance;
+
+  
+
     public int ActiveSet = 0;
     [Header("Generation Settings")]
     public int RoomsToEnd = 10;
     public float DistanceOffset = 0.2f;
+
+    [Header("Difficulty Scaling")]
+    public int RoomsPerSetIncrease = 5;
+    private int baseRoomsToEnd;
+
 
     [Header("Seed Settings")]
     public bool RandomizeSeed = true;
@@ -29,35 +39,40 @@ public class ProceduralGenerationManager : MonoBehaviour
     private Dictionary<DungeonNode, RoomInstance> placedNodes = new();
 
     // ================= UNITY =================
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-    private void Start()
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        baseRoomsToEnd = RoomsToEnd;
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    // Replaces Start() as the trigger for generation.
+    // sceneLoaded fires for the very first scene too (after Awake/OnEnable,
+    // before Start), so this single path covers both the initial load
+    // and every subsequent scene load — no double-generation.
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         GenerateWithRetries();
     }
+    
    
-
-//#if UNITY_EDITOR
-//    [ContextMenu("Bake Occlusion")]
-//    public static void BakeOcclusion()
-//    {
-//        if (!StaticOcclusionCulling.isRunning)
-//        {
-//            Debug.Log("🧱 Starting Occlusion Culling bake...");
-//            StaticOcclusionCulling.Compute();
-//            Debug.Log("✅ Occlusion Culling bake complete!");
-//        }
-//        else
-//        {
-//            Debug.LogWarning("⚠️ Occlusion Culling is already running!");
-//        }
-//    }
-//#else
-//    public static void BakeOcclusion()
-//    {
-//        Debug.LogWarning("❌ BakeOcclusion is only available in the Unity Editor!");
-//    }
-//#endif
-
     // ================= ENTRY =================
 
     void GenerateWithRetries()
@@ -67,7 +82,7 @@ public class ProceduralGenerationManager : MonoBehaviour
             SetupSeed();
 
             ClearPrevious();
-
+            RoomsToEnd = baseRoomsToEnd + (ActiveSet * RoomsPerSetIncrease);
             GenerationPreset preset = Presets[ActiveSet];
             DungeonGraph graph = GenerateGraph(preset);
 
@@ -318,7 +333,7 @@ public class ProceduralGenerationManager : MonoBehaviour
             trigger.RoomIndex = instance.RoomIndex;
         }
 
-        Debug.Log($"Spawned room index: {instance.RoomIndex}");
+        //Debug.Log($"Spawned room index: {instance.RoomIndex}");
 
         if (CheckOverlap(instance, fromRoom))
         {
