@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 2917619946721561735}
   - component: {fileID: 7989416120366757902}
   - component: {fileID: 1872547884735185531}
+  - component: {fileID: 2716518025867300938}
   m_Layer: 16
   m_Name: Janitor
   m_TagString: Blood
@@ -35,7 +36,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.96, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.2499999, y: 1.25, z: 1.2499999}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 547203062276184157}
@@ -138,6 +139,7 @@ MonoBehaviour:
   finisherTarget: {fileID: 7141780028286532622}
   finisherIndicator: {fileID: 7052662300432664181}
   finisherTime: 0
+  sawPlayer: 0
   animator: {fileID: 4507661051046630443}
   shadow: {fileID: 2974679473344241778}
   enemyType: 0
@@ -272,10 +274,12 @@ MonoBehaviour:
   AfterDeath_ExplosionPrefab: {fileID: 0}
   dead: 0
   finisherActive: 0
+  hitstopShake: {fileID: 1494759937116098140}
   DamageNumberPrefab: {fileID: 4888194837565303189, guid: f750df5f3d61d564e8793d8846a0a903,
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
     type: 3}
+  DecalPool: {fileID: 0}
 --- !u!114 &5906664504788051702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -501,6 +505,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2716518025867300938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93961789830979277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503336a55057cdc4a990cc660cbc6e2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flashMaterial: {fileID: 2100000, guid: 26d6925f73001494f95a2b18ce9c48a9, type: 2}
+  flashDuration: 0.1
 --- !u!1 &193381124650641634
 GameObject:
   m_ObjectHideFlags: 0

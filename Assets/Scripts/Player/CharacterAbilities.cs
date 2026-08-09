@@ -20,11 +20,11 @@ public class CharacterAbilities : MonoBehaviour
     public static CharacterAbilities instance;
     [Header("Kill Meter System")]
     [SerializeField] private float maxKillValue = 100f;
-    [SerializeField] private float currentKillValue = 0f;
+    [SerializeField] public float currentKillValue = 0f;
     [SerializeField] private Slider AbilitySlider;
     [SerializeField] private Image sliderFill;
 
-    [SerializeField] private Image[] finisherBoxes; // size = 3 (30,60,90)
+    [SerializeField] private Image[] finisherBoxes; // size = 3 (35,70)
 
     [SerializeField] private float sliderSmoothSpeed = 8f;
 
@@ -64,7 +64,7 @@ public class CharacterAbilities : MonoBehaviour
     public Character character;
     public bool reloadIncomplete;
     private bool isFinishing = false;
-
+    public GameObject finisherCanvas;
     // Finisher cost (you can tweak per enemy later)
     [SerializeField] private float finisherCost = 30f;
 
@@ -296,30 +296,42 @@ public class CharacterAbilities : MonoBehaviour
 
         target = FindFinisherTarget();
 
-        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive)
+        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive && finisherReady)
         {
-            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+            //EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
 
-            if (enemyManager != lastIndicatorEnemy)
-            {
-                if (lastIndicatorEnemy != null)
-                    lastIndicatorEnemy.finisherIndicator.SetActive(false);
+            //if (enemyManager != lastIndicatorEnemy)
+            //{
+            //    if (lastIndicatorEnemy != null)
+            //        lastIndicatorEnemy.finisherIndicator.SetActive(false);
 
-                lastIndicatorEnemy = enemyManager;
-            }
+            //    lastIndicatorEnemy = enemyManager;
+            //}
 
-            if (lastIndicatorEnemy != null)
-                lastIndicatorEnemy.finisherIndicator.SetActive(true);
+            //if (lastIndicatorEnemy != null)
+            //    lastIndicatorEnemy.finisherIndicator.SetActive(true);
+
+            //finisherCanvas.SetActive(true); 
         }
         else
         {
-            if (lastIndicatorEnemy != null)
-            {
-                lastIndicatorEnemy.finisherIndicator.SetActive(false);
-                lastIndicatorEnemy = null;
-            }
+            //if (lastIndicatorEnemy != null)
+            //{
+            //    lastIndicatorEnemy.finisherIndicator.SetActive(false);
+            //    lastIndicatorEnemy = null;
+            //}
+            //finisherCanvas.SetActive(false);
         }
-
+        if (!playerMovement.finisherActive && finisherReady)
+        {
+           
+            finisherCanvas.SetActive(true);
+        }
+        else
+        {
+           
+            finisherCanvas.SetActive(false);
+        }
         if (!fovTransitionActive) return;
 
         playerCam.fieldOfView = Mathf.Lerp(
@@ -379,7 +391,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         if (currentKillValue >= finisherCost)
         {
-           
+            Debug.Log("chal teri ma ki chut");
             CheckStates();
             PerformFinisher();
             
@@ -390,7 +402,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         abilityReady = currentKillValue >= maxKillValue;
 
-        finisherReady = currentKillValue >= 30;
+        finisherReady = currentKillValue >= finisherCost;
     }
     private void UpdateKillUI()
     {
@@ -429,7 +441,7 @@ public class CharacterAbilities : MonoBehaviour
         // -------- FINISHER BOXES --------
         for (int i = 0; i < finisherBoxes.Length; i++)
         {
-            if (currentKillValue >= thresholds[i] && currentKillValue >= 30f)
+            if (currentKillValue >= thresholds[i] && currentKillValue >= finisherCost)
             {
                 float t = (Mathf.Sin(Time.time * boxGlowSpeed) + 1f) * 0.5f;
 
@@ -453,7 +465,7 @@ public class CharacterAbilities : MonoBehaviour
 
       
         if (isFinishing) return;
-        FinisherActive = true;
+       
         Transform target = FindFinisherTarget();
 
         EnemyManager[] enemies =
@@ -474,7 +486,8 @@ public class CharacterAbilities : MonoBehaviour
             enemyHealthTemp = enemyHealth;
             enemyHealth.FinisherActive();
             Debug.Log("Finisher performed");
-            if(character.reloading)
+            FinisherActive = true;
+            if (character.reloading)
             {
                 reloadIncomplete = true;
             }
@@ -901,6 +914,7 @@ public class CharacterAbilities : MonoBehaviour
             if (!FinisherActive)
             {
                 TryFinisher();
+               
                
             }
         }

@@ -81,7 +81,7 @@ public class ComboManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.L))
         {
-            SceneManager.LoadScene(4);
+            SceneManager.LoadScene(0);
         }
         if (!comboActive) return;
 

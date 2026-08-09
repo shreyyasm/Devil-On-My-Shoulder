@@ -53,6 +53,8 @@ public class EnemyHealth : MonoBehaviour
     public System.Action OnDeath;
     private AudioSource audioSource;
 
+    private HitFlashEffect hitFlashEffect;
+    
     private void Awake()
     {
         enemyStats = enemyManager.enemyStats;
@@ -78,7 +80,8 @@ public class EnemyHealth : MonoBehaviour
 
 
         }
-
+        
+        hitFlashEffect = GetComponent<HitFlashEffect>();
     }
    
     public void TakeDamage(float amount, DamageInfo info)
@@ -136,9 +139,18 @@ public class EnemyHealth : MonoBehaviour
         if(info.isHeadshot)
         {
             health -= amount * 2;
+            if (!enemyManager.kickOn)
+                hitFlashEffect.TriggerHitFlash();
+          
         }
         else
+        {
             health -= amount;
+            if (!enemyManager.kickOn)
+                hitFlashEffect.TriggerHitFlash();
+           
+        }
+           
 
 
 
@@ -473,4 +485,5 @@ public struct DamageInfo
     public bool isAirKill;
     public bool isFinisher;
     public bool isEnvironmental;
+
 }

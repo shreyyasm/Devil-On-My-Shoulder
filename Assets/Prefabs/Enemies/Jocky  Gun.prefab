@@ -14812,6 +14812,7 @@ GameObject:
   - component: {fileID: 1777195268358934377}
   - component: {fileID: 8227837746285838789}
   - component: {fileID: 7958238597177706228}
+  - component: {fileID: 8509886377639315097}
   m_Layer: 16
   m_Name: Jocky  Gun
   m_TagString: Blood
@@ -15065,6 +15066,7 @@ MonoBehaviour:
   AfterDeath_ExplosionPrefab: {fileID: 0}
   dead: 0
   finisherActive: 0
+  hitstopShake: {fileID: 7853126150747796500}
   DamageNumberPrefab: {fileID: 4888194837565303189, guid: f750df5f3d61d564e8793d8846a0a903,
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
@@ -15199,6 +15201,20 @@ MonoBehaviour:
     type: 3}
   zOffset: 0.3
   destroyTime: 20
+--- !u!114 &8509886377639315097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450466198673529385}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503336a55057cdc4a990cc660cbc6e2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flashMaterial: {fileID: 2100000, guid: 26d6925f73001494f95a2b18ce9c48a9, type: 2}
+  flashDuration: 0.1
 --- !u!1 &540574186476015835
 GameObject:
   m_ObjectHideFlags: 0

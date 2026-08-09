@@ -212,37 +212,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -629719859055844128, guid: 748fd87ab7cfd88488e23bcfba3131b0, type: 3}
---- !u!1 &660924617513879874
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3486522373360869464}
-  m_Layer: 0
-  m_Name: Position _4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &3486522373360869464
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 660924617513879874}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 19.55, y: 4.58, z: 23.42}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9090340015272057140}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &791918649380557212
 GameObject:
   m_ObjectHideFlags: 0
@@ -12052,7 +12021,7 @@ Transform:
   m_GameObject: {fileID: 4257478557212312386}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -21.28, y: 4.66, z: 27.43}
+  m_LocalPosition: {x: 3.44, y: 4.76, z: 31.32}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18610,7 +18579,6 @@ Transform:
   - {fileID: 7839735200017504535}
   - {fileID: 2325247273238259437}
   - {fileID: 63021020286550832}
-  - {fileID: 3486522373360869464}
   - {fileID: 8341609087192832030}
   m_Father: {fileID: 5833948331724028013}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -18641,17 +18609,13 @@ MonoBehaviour:
       enemies:
       - enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
         count: 1
-    - point: {fileID: 3486522373360869464}
-      enemies:
-      - enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-        count: 1
     - point: {fileID: 8341609087192832030}
       enemies:
       - enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
         count: 1
   spawnedEnemies: []
-  spawnRange: 50
-  spawnSpreadRadius: 1.5
+  spawnRange: 80
+  spawnSpreadRadius: 5
   navMeshSearchDistance: 2
   levelsPerEntry: 3
   maxNumber: 10
@@ -19393,7 +19357,7 @@ Transform:
   m_GameObject: {fileID: 8632904412779268544}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.31, y: 5.76, z: 33.37}
+  m_LocalPosition: {x: -3.03, y: 5.41, z: 30.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

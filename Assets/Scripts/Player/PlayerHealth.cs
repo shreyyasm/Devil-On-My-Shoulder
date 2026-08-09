@@ -91,6 +91,9 @@ public class PlayerHealth : MonoBehaviour
         if (PlayerMovement.characterAbilities.GetHealthModifier())
             return;
 
+        if (PlayerMovement.finisherActive)
+            return;
+
         if (currentHealth >= 0)
         {
             currentHealth -= healthDecreaseRate * Time.deltaTime;
@@ -132,7 +135,7 @@ public class PlayerHealth : MonoBehaviour
         if (amount > 0)
         {
             //healthAnim.SetTrigger("HealthAdd");
-            SFXManager.Instance.PlaySFX("Player/HealthAdd", 1f);
+            //SFXManager.Instance.PlaySFX("Player/HealthAdd", 1f);
 
             // Cancel countdown anytime
             StopCountdown();

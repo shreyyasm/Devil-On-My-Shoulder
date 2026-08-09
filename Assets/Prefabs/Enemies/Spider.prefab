@@ -5412,6 +5412,7 @@ GameObject:
   - component: {fileID: 8569431405458010168}
   - component: {fileID: 4604190449803997627}
   - component: {fileID: 4357654619267783700}
+  - component: {fileID: 2779571448703156310}
   m_Layer: 16
   m_Name: Spider
   m_TagString: Blood
@@ -5664,6 +5665,7 @@ MonoBehaviour:
   AfterDeath_ExplosionPrefab: {fileID: 0}
   dead: 0
   finisherActive: 0
+  hitstopShake: {fileID: 4927300045935191559}
   DamageNumberPrefab: {fileID: 4888194837565303189, guid: f750df5f3d61d564e8793d8846a0a903,
     type: 3}
   KillTextPrefab: {fileID: 1192120745535362886, guid: 93673a9b375f96a4ca575e11f2d5a90c,
@@ -5798,6 +5800,20 @@ MonoBehaviour:
     type: 3}
   zOffset: 0.3
   destroyTime: 20
+--- !u!114 &2779571448703156310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804628106154779753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503336a55057cdc4a990cc660cbc6e2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flashMaterial: {fileID: 2100000, guid: 26d6925f73001494f95a2b18ce9c48a9, type: 2}
+  flashDuration: 0.1
 --- !u!1 &1919130294747967927
 GameObject:
   m_ObjectHideFlags: 0

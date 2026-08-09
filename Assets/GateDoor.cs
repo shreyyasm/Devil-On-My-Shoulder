@@ -66,25 +66,28 @@ public class GateDoor : MonoBehaviour
     }
     private void OnCollisionEnter(Collision other)
     {
-        if (!isOpened)
-        {
-            if (other.gameObject.CompareTag("Player"))
-            {
-                other.gameObject.GetComponent<PlayerMovement>().TryKick();
-                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
-                Open();
-            }
-            if (other.gameObject.CompareTag("Bullet"))
-            {
-                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
-                Open();
-            }
-            if (other.gameObject.CompareTag("Blood"))
-            {
-                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
-                Open();
-            }
+        if (isOpened)
+            return;
 
+        if (other.gameObject.CompareTag("Player"))
+        {
+            PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
+
+            if (player != null)
+                player.TryKick();
+
+            if (SFXManager.Instance != null && audioSource != null)
+                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
+
+            Open();
+        }
+        else if (other.gameObject.CompareTag("Bullet") ||
+                 other.gameObject.CompareTag("Blood"))
+        {
+            if (SFXManager.Instance != null && audioSource != null)
+                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
+
+            Open();
         }
     }
     public void Open()
