@@ -26802,7 +26802,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &968797458
 Transform:
   m_ObjectHideFlags: 0
@@ -39003,6 +39003,14 @@ MonoBehaviour:
     - name: ShieldBreak
       clips:
       - {fileID: 8300000, guid: 43f9f2c2a845ace40b0d45a238e3e988, type: 3}
+    - name: ShieldHit
+      clips:
+      - {fileID: 8300000, guid: 6256a51b2bf508b4e8b61e6a4554eb9f, type: 3}
+      - {fileID: 8300000, guid: c865451a5a1b1b2428ef507d24f1dabf, type: 3}
+      - {fileID: 8300000, guid: 627f91d8a58134446afb3cfd876aa47c, type: 3}
+      - {fileID: 8300000, guid: e01a21fd36642fe49a855208138e597b, type: 3}
+      - {fileID: 8300000, guid: fe06a4d6345d3ec408254afdb170e0f2, type: 3}
+      - {fileID: 8300000, guid: c627759948a42444ab89230755045f35, type: 3}
   - categoryName: DemonicBook
     sounds:
     - name: AttackHit
@@ -179814,7 +179822,7 @@ PrefabInstance:
     - target: {fileID: 93961789830979277, guid: cb951ce644f73a446938d9773cf8b547,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2829129552524211401, guid: cb951ce644f73a446938d9773cf8b547,
         type: 3}
@@ -179865,6 +179873,31 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394868775074191278, guid: cb951ce644f73a446938d9773cf8b547,
+        type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394868775074191278, guid: cb951ce644f73a446938d9773cf8b547,
+        type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394868775074191278, guid: cb951ce644f73a446938d9773cf8b547,
+        type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6394868775074191278, guid: cb951ce644f73a446938d9773cf8b547,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6920663953601387145, guid: cb951ce644f73a446938d9773cf8b547,
+        type: 3}
+      propertyPath: m_TagString
+      value: Blood
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -357629,6 +357662,11 @@ PrefabInstance:
     - target: {fileID: 6906368939399237040, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7208230576428209266, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,
+        type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7731072620920364989, guid: 1ea3e6e3ed9ad534b9feb383cd1f5cc8,

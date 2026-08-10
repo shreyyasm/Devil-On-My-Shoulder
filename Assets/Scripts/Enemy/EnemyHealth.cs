@@ -22,13 +22,15 @@ public class EnemyHealth : MonoBehaviour
     public float gunHealth;
 
     [Header("Shield Settings")]
+   
     public EnemyStats.ShieldType shieldType;
     public EnemyStats.DeathType deathType;
     public float shieldHealth;
     public GameObject Shield;
+    public GameObject ShieldCollider;
     private bool shieldBreakTriggered = false;
     public GameObject shieldBreakVFX;
-   
+    public bool shieldBreak;
 
     public bool isInvincible;
     private NavMeshAgent agent;
@@ -87,52 +89,58 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(float amount, DamageInfo info)
     {
         // Shield check
-        if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
-        {
-            ShowShield(1f);
+        //if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
+        //{
+        //    ShowShield(1f);
 
-            if (Shield != null)
-                Shield.SetActive(true);
+        //    if (Shield != null)
+        //        Shield.SetActive(true);
 
-            shieldHealth -= amount;
+        //    shieldHealth -= amount;
 
-            SFXManager.Instance.PlaySFX("Janitor/Shield", 1f);
+        //    SFXManager.Instance.PlaySFX("Janitor/Shield", 1f);
 
-            // Overflow damage goes to health
-            if (shieldHealth <= 0)
-            {
-                if (Shield != null)
-                    Shield.SetActive(false);
+        //    // Overflow damage goes to health
+        //    if (shieldHealth <= 0)
+        //    {
+        //        if (Shield != null)
+        //            Shield.SetActive(false);
 
-                // ===========================
-                // Shield Break (Only Once)
-                // Put shield break VFX, SFX,
-                // dialogue, camera shake, etc. here.
-                // ===========================
-                if (!shieldBreakTriggered)
-                {
-                    shieldBreakVFX.SetActive(true);
-                    SFXManager.Instance.PlaySFX("Janitor/ShieldBreak", 1f);
-                    shieldBreakTriggered = true;
-                   
-                    // TODO: Shield break effects
-                    // VFX
-                    // SFX
-                    // Dialogue
-                    // Camera Shake
-                }
+        //        // ===========================
+        //        // Shield Break (Only Once)
+        //        // Put shield break VFX, SFX,
+        //        // dialogue, camera shake, etc. here.
+        //        // ===========================
+        //        if (!shieldBreakTriggered)
+        //        {
+        //            shieldBreakVFX.SetActive(true);
+        //            SFXManager.Instance.PlaySFX("Janitor/ShieldBreak", 1f);
 
-                float overflow = -shieldHealth;
-                shieldHealth = 0;
+        //            shieldBreakTriggered = true;
 
-                ApplyHealthDamage(overflow, info);
-            }
-        }
-        else
-        {
-            //BloodPool.GetObject(transform.position, Quaternion.identity);
-            ApplyHealthDamage(amount, info);
-        }
+        //            // TODO: Shield break effects
+        //            // VFX
+        //            // SFX
+        //            // Dialogue
+        //            // Camera Shake
+        //        }
+
+        //        float overflow = -shieldHealth;
+        //        shieldHealth = 0;
+
+        //        ApplyHealthDamage(overflow, info);
+        //    }
+        //    SFXManager.Instance.PlaySFX("Janitor/ShieldHit", 1f);
+        //}
+        //else
+        //{
+        //    //BloodPool.GetObject(transform.position, Quaternion.identity);
+        //    ApplyHealthDamage(amount, info);
+        //    SFXManager.Instance.PlaySFX("Janitor/ShieldHit", 1f);
+        //}
+
+        ApplyHealthDamage(amount, info);
+       
     }
     void ApplyHealthDamage(float amount, DamageInfo info)
     {
@@ -150,9 +158,7 @@ public class EnemyHealth : MonoBehaviour
                 hitFlashEffect.TriggerHitFlash();
            
         }
-           
-
-
+          
 
         if (health <= 0)
         {
@@ -189,6 +195,16 @@ public class EnemyHealth : MonoBehaviour
             Shield.SetActive(false);
 
         shieldCoroutine = null;
+    }
+    public void ShieldBreak()
+    {
+        shieldBreakVFX.SetActive(true);
+        SFXManager.Instance.PlaySFX("Janitor/ShieldBreak", 1f);
+        Shield.SetActive(false);
+        ShieldCollider.SetActive(false);
+        shieldBreak = true;
+
+        LeanTween.delayedCall(0.1f, () => { shieldBreakVFX.SetActive(false); });
     }
     public IEnumerator SelfKnockback(float force)
     {
@@ -241,7 +257,7 @@ public class EnemyHealth : MonoBehaviour
         ScoreManager.Instance.Kills++;
 
 
-        CharacterAbilities.instance.AddKillValue(2);
+        CharacterAbilities.instance.AddKillValue(3);
 
         // Spawn damage number
         string localizedKilled =
@@ -428,7 +444,7 @@ public class EnemyHealth : MonoBehaviour
         }
         else
         {
-            if (collision.gameObject.layer == 8)
+            if (collision.gameObject.layer == 8 && DecalPool != null)
             {
                 ContactPoint contact = collision.GetContact(0);
 

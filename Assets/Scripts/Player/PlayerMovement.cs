@@ -1150,6 +1150,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 hit.GetComponent<EnemyManager>().kickOn = true;
                 hit.GetComponent<EnemyManager>().animator.SetTrigger("Kicked");
+                if(hit.GetComponent<EnemyHealth>().shieldType == EnemyStats.ShieldType.Yes && !hit.GetComponent<EnemyHealth>().shieldBreak)
+                {
+                    hit.GetComponent<EnemyHealth>().ShieldBreak();
+                }
                 if (hit.GetComponent<EnemyManager>() != null)
                 {
                     if (hit.GetComponent<EnemyManager>().isGrabbing)

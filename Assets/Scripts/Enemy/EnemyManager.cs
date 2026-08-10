@@ -1339,9 +1339,12 @@ public class EnemyManager : MonoBehaviour
         if (player == null) return;
 
         shootTimer -= Time.deltaTime;
-
+       
+           
         if (shootTimer <= 0f)
         {
+            //if (enemyHealth.shieldType == EnemyStats.ShieldType.Yes)
+            //    animator.SetBool("ShieldOut", false);
             TryShoot();
             shootTimer = shootInterval;
         }
@@ -1587,7 +1590,8 @@ public class EnemyManager : MonoBehaviour
     IEnumerator BurstShoot()
     {
         isBursting = true;
-
+        if (!enemyHealth.shieldBreak)
+            StartCoroutine(shieldManager());
         for (int i = 0; i < burstCount; i++)
         {
             Shoot();
@@ -1602,8 +1606,7 @@ public class EnemyManager : MonoBehaviour
     }
     void Shoot()
     {
-
-
+       
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
 
@@ -1634,7 +1637,18 @@ public class EnemyManager : MonoBehaviour
         //    Debug.Log("work");
         //}
         //animator.SetTrigger("Attack");
+        
         Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
+    }
+    IEnumerator shieldManager()
+    {
+        yield return new WaitForSeconds(1f);
+        animator.SetBool("ShieldIn", true);
+        animator.SetBool("ShieldOut", false);
+
+        yield return new WaitForSeconds(shootInterval - 1.2f);
+        animator.SetBool("ShieldIn", false);
+        animator.SetBool("ShieldOut", true);
     }
     void SetRandomShootPosition()
     {
