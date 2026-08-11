@@ -62,6 +62,7 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private Transform socket;
         [SerializeField] private AudioClip audioClipFire;
         public float reloadAnimationTime = 1f;
+        public GameObject reloadCanvas;
         public bool peaPoison; 
         public Material PoisonMat;
         public GameObject FireLight;
@@ -283,6 +284,14 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void Update()
         {
+            if (ammunitionCurrent < 2 && !Character.reloading)
+            {
+                reloadCanvas.SetActive(true);
+            }
+            else
+            {
+                reloadCanvas.SetActive(false);
+            }
             if (gunType == GunType.ChargedBeam)
             {
                 if (isCharging)
@@ -1096,7 +1105,14 @@ namespace InfimaGames.LowPolyShooterPack
 
                 }
             });
-           
+            //GetAnimatorHands().Rebind();
+            //GetAnimatorHands().Update(0f);
+            //GetAnimatorHands().Play("Idle", 0, 0f);
+             
+        }
+       public void GoToIdle()
+        {
+            GetAnimatorHands().Play("Idle", 0, 0f);
         }
 
         #endregion

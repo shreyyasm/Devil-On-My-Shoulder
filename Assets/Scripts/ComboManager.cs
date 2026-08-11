@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
@@ -71,6 +72,8 @@ public class ComboManager : MonoBehaviour
         "BLOODBATH","GENOCIDE","OBLITERATION","APOCALYPSE","GODLIKE"
     };
 
+
+    public PlayerMovement playerMovement;
     void Awake()
     {
         Instance = this;
@@ -85,7 +88,8 @@ public class ComboManager : MonoBehaviour
         }
         if (!comboActive) return;
 
-        ApplyDecay();
+        if(!playerMovement.finisherActive)
+            ApplyDecay();
 
         // Kill chain reset
         if (Time.time - lastChainKillTime > killChainResetTime)
@@ -121,6 +125,8 @@ public class ComboManager : MonoBehaviour
 
         currentXP += amount;
 
+        LeanTween.delayedCall(0.5f, () => { AddScore(Mathf.RoundToInt(amount)); });
+       
         // 🔥 HANDLE OVERFLOW PROPERLY
         while (currentXP >= requiredXP)
         {
@@ -526,6 +532,63 @@ public class ComboManager : MonoBehaviour
 
     [Header("Combo Name Timing")]
     public float comboNameWaitBeforeMove = 0.25f;
+
+
+    [Header("Score UI")]
+    public TextMeshProUGUI scoreText;
+    public float scoreCountDuration = 0.75f;
+    public float scorePopScale = 1.3f;
+    public float scorePopDuration = 0.15f;
+
+    private int currentScore = 0;
+    public void AddScore(float amount)
+    {
+        if (scoreText == null)
+            return;
+
+        DOTween.Kill(scoreText);
+        scoreText.transform.DOKill();
+
+        int startScore = currentScore;
+        int targetScore = currentScore + Mathf.RoundToInt(amount);
+
+        CultureInfo indianCulture = new CultureInfo("en-IN");
+
+        // Start at normal scale
+        scoreText.transform.localScale = Vector3.one;
+
+        scoreText.text = currentScore.ToString("N0", indianCulture);
+
+        //// POP UP and stay popped while counting
+        scoreText.transform
+            .DOScale(scorePopScale, scorePopDuration)
+            .SetEase(Ease.OutBack);
+
+        // Count the score
+        DOTween.To(
+            () => startScore,
+            value =>
+            {
+                currentScore = value;
+
+                scoreText.text = currentScore.ToString(
+                    "N0",
+                    indianCulture
+                );
+            },
+            targetScore,
+            scoreCountDuration
+        )
+        .SetEase(Ease.Linear)
+        .SetTarget(scoreText)
+        .OnComplete(() =>
+        {
+            // Counting has finished → POP DOWN
+            scoreText.transform
+                .DOScale(1f, scorePopDuration)
+                .SetEase(Ease.InBack);
+        });
+    }
 }
 
 public enum EnemyType

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Analytics;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 
 public class PlayerHealth : MonoBehaviour
@@ -34,6 +35,7 @@ public class PlayerHealth : MonoBehaviour
     public PowerUpSelect powerUpSelect;
     bool drain = true;
     public ObjectPool bloodPool;
+    public bool dead;
 
     private void Awake()
     {
@@ -111,36 +113,51 @@ public class PlayerHealth : MonoBehaviour
    
     public PlayerMovement PlayerMovement;
     public Character character;
-   
-  
- 
+
+
+
 
     public void ManageHealth(float amount)
     {
-        currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
-        if(amount < 0)
+        float oldHealth = currentHealth;
+
+        // Apply health change and clamp between 0 and maxHealth
+        currentHealth = Mathf.Clamp(
+            currentHealth + amount,
+            0f,
+            maxHealth
+        );
+
+        if (amount < 0)
         {
-            if (PlayerMovement.finisherActive) return;
-            //SFXManager.Instance.PlaySFX("Player/HealthMinus", 1f);
+            if (PlayerMovement.finisherActive)
+                return;
+
+            SFXManager.Instance.PlaySFX(
+                "Player/HealthMinus",
+                1f
+            );
+
             // Apply combo penalty automatically
             ComboManager.Instance.ApplyDamagePenalty();
-            //healthAnim.SetTrigger("HealthMinus");
-            bloodPool.GetObject(transform.position, Quaternion.identity);
+
+            bloodPool.GetObject(
+                transform.position,
+                Quaternion.identity
+            );
+
             ScoreManager.Instance.hitsTakken++;
             CameraShake.Instance.Shake();
         }
-           
 
         if (amount > 0)
         {
-            //healthAnim.SetTrigger("HealthAdd");
-            //SFXManager.Instance.PlaySFX("Player/HealthAdd", 1f);
+            // Health was added
+            // Any healing beyond maxHealth is automatically discarded.
 
-            // Cancel countdown anytime
             StopCountdown();
+          
         }
-           
     }
 
     public void Heal(float amount)
@@ -165,6 +182,7 @@ public class PlayerHealth : MonoBehaviour
         isCancelled = false;
         countdownCoroutine = StartCoroutine(CountdownToStart());
         countdownDisplay.gameObject.SetActive(true);
+
     }
 
     public void StopCountdown()
@@ -178,6 +196,7 @@ public class PlayerHealth : MonoBehaviour
             countdownCoroutine = null;
             countdownAudioSource.Stop();
             countdownDisplay.text = ""; // Clear UI or handle however you like
+         
         }
     }
     public AudioSource countdownAudioSource;
@@ -195,6 +214,7 @@ public class PlayerHealth : MonoBehaviour
             yield return new WaitForSeconds(1f);
             timeLeft--;
         }
+        dead = true;
         ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         ScoreManager.Instance.CalculateOverallScore();
@@ -215,6 +235,7 @@ public class PlayerHealth : MonoBehaviour
     }
     public void PlayerDead()
     {
+       
         ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         ScoreManager.Instance.CalculateOverallScore();

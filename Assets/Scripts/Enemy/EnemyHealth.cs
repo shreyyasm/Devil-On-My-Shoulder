@@ -2,6 +2,7 @@
 using QFSW.MOP2;
 using System.Collections;
 using Unity.VisualScripting;
+
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Localization.Settings;
@@ -219,6 +220,7 @@ public class EnemyHealth : MonoBehaviour
 
         ragdollRB.isKinematic = false;
         ragdollRB.useGravity = true;
+        ragdollRB.useGravity = true;
 
         Vector3 launchVelocity =
             -transform.forward * force;
@@ -257,7 +259,7 @@ public class EnemyHealth : MonoBehaviour
         ScoreManager.Instance.Kills++;
 
 
-        CharacterAbilities.instance.AddKillValue(3);
+        
 
         // Spawn damage number
         string localizedKilled =
@@ -265,13 +267,7 @@ public class EnemyHealth : MonoBehaviour
         .StringDatabase
         .GetLocalizedString("Kill Meter", "KilledText");
 
-        DamageNumber killText = KillTextPrefab.Spawn(
-            transform.position + new Vector3(0, 2.5f, 0),
-            localizedKilled,
-            transform
-        );
-
-        killText.UpdateText();
+       
 
         //Debug.Log("Killed");
         //EnemyPool.Release(gameObject);
@@ -290,6 +286,14 @@ public class EnemyHealth : MonoBehaviour
         }
         if (isHeadshot)
         {
+            CharacterAbilities.instance.AddKillValue(500);
+            ComboManager.Instance.AddScore(500);
+            DamageNumber killText = KillTextPrefab.Spawn(
+           transform.position + new Vector3(0, 0f, 0),
+           "+500", transform);
+
+            killText.UpdateText();
+
             enemyManager.animator.SetBool("Headshot", true);
             GetComponent<BoxCollider>().enabled = false;
             agent.isStopped = true;
@@ -297,8 +301,34 @@ public class EnemyHealth : MonoBehaviour
             agent.velocity = Vector3.zero;
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
         }
+        else if (isAirKill)
+        {
+            CharacterAbilities.instance.AddKillValue(400);
+            ComboManager.Instance.AddScore(400);
+            DamageNumber killText = KillTextPrefab.Spawn(
+         transform.position + new Vector3(0, 0f, 0),
+         "+400", transform);
+
+            killText.UpdateText();
+
+            gameObject.SetActive(false);
+            if (ragdoll != null && !isFinisher)
+            {
+                ragdoll.SetActive(true);
+                ragdoll.transform.SetParent(null);
+            }
+
+        }
         else
         {
+            CharacterAbilities.instance.AddKillValue(300);
+            ComboManager.Instance.AddScore(300);
+            DamageNumber killText = KillTextPrefab.Spawn(
+       transform.position + new Vector3(0, 0f, 0),
+       "+300", transform);
+
+            killText.UpdateText();
+
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
             if (ragdoll != null && !isFinisher)

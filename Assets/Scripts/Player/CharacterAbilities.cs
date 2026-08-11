@@ -1,4 +1,5 @@
-﻿using InfimaGames.LowPolyShooterPack;
+﻿using Cysharp.Threading.Tasks.Triggers;
+using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System.Buffers.Text;
 using System.Collections;
@@ -105,6 +106,7 @@ public class CharacterAbilities : MonoBehaviour
     private float targetFOV;
     private bool fovTransitionActive;
     private PlayerMovement playerMovement;
+    private PlayerHealth playerHealth;
 
     #region Ability1_Fields
     // ================= ABILITY 1 : DEVIL DUAL GUNS =================
@@ -244,7 +246,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         playerMovement = GetComponent<PlayerMovement>();
-
+        playerHealth = GetComponent<PlayerHealth>();
         if (playerCam == null)
             playerCam = GetComponentInChildren<Camera>();
 
@@ -391,7 +393,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         if (currentKillValue >= finisherCost)
         {
-            Debug.Log("chal teri ma ki chut");
+           
             CheckStates();
             PerformFinisher();
             
@@ -489,8 +491,11 @@ public class CharacterAbilities : MonoBehaviour
             FinisherActive = true;
             if (character.reloading)
             {
+                character.equippedWeapon.GetAnimatorHands().Play("Idle", 0, 0f);
+                character.equippedWeapon.GetAnimatorHands().Update(0f);
                 reloadIncomplete = true;
             }
+            GetComponent<PlayerHealth>().ManageHealth(50);
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
@@ -498,8 +503,8 @@ public class CharacterAbilities : MonoBehaviour
             finisherCamera.transform.rotation = Quaternion.identity;
             rootCamera.GetComponent<CameraLook>().enabled = false;
 
-            playerLeftHand.SetActive(false);
-            playerRightHand.SetActive(false);
+            //playerLeftHand.SetActive(false);
+           // playerRightHand.SetActive(false);
 
             mainCameraTexture.SetActive(false);
             GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
@@ -749,10 +754,10 @@ public class CharacterAbilities : MonoBehaviour
         if(reloadIncomplete)
         {
             character.PlayReloadAnimation();
-          reloadIncomplete = false;
+            reloadIncomplete = false;
 
         }
-        GetComponent<PlayerHealth>().ManageHealth(100);
+        
         Debug.Log("Finisher End");
     }
     private void OnDrawGizmos()
@@ -881,6 +886,8 @@ public class CharacterAbilities : MonoBehaviour
     // ================= CORE =================
     private void HandleAbilityLogic()
     {
+        if (playerHealth.dead) return;
+
         // ACTIVE: duration ↓
         if (abilityActive)
         {

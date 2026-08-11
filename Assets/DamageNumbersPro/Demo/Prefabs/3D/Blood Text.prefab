@@ -53,7 +53,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
+  - {fileID: -341203415451291419, guid: d4a25e575a455e340984f018140d60fa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -140,11 +140,11 @@ MonoBehaviour:
   renderThroughWalls: 0
   consistentScreenSize: 1
   distanceScalingSettings:
-    baseDistance: 15
+    baseDistance: 12
     closeDistance: 5
     farDistance: 50
     closeScale: 2
-    farScale: 2
+    farScale: 1.5
   scaleWithFov: 0
   defaultFov: 60
   fovCamera: {fileID: 0}
@@ -184,9 +184,9 @@ MonoBehaviour:
     suffixDecimalChar: .
     suffixHideZeros: 0
   enableLeftText: 1
-  leftText: KILLED
+  leftText: 300
   leftTextSettings:
-    bold: 0
+    bold: 1
     italic: 0
     underline: 0
     strike: 0
@@ -558,7 +558,7 @@ MonoBehaviour:
   enablePooling: 1
   poolSize: 50
   disableOnSceneLoad: 0
-  editorLastFont: ShonenPunk custom bold SDF3D
+  editorLastFont: A001ff-Bold SDF3D
   position: {x: 0, y: 0, z: 0}
 --- !u!210 &1871610829092223643
 SortingGroup:
@@ -625,7 +625,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
+  - {fileID: -341203415451291419, guid: d4a25e575a455e340984f018140d60fa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -714,7 +714,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
+  - {fileID: -341203415451291419, guid: d4a25e575a455e340984f018140d60fa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -756,10 +756,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <size=+1.5>KILLED</size>
+  m_text: <size=+1.5><b>300</b></size>
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 973fbd5cd39a86949b1056fee8c1adef, type: 2}
-  m_sharedMaterial: {fileID: 6102155736171841417, guid: 973fbd5cd39a86949b1056fee8c1adef,
+  m_fontAsset: {fileID: 11400000, guid: d4a25e575a455e340984f018140d60fa, type: 2}
+  m_sharedMaterial: {fileID: -341203415451291419, guid: d4a25e575a455e340984f018140d60fa,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}

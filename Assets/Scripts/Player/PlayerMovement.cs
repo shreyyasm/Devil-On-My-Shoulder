@@ -1146,7 +1146,7 @@ public class PlayerMovement : MonoBehaviour
         foreach (Collider hit in hits)
         {
 
-            if (hit.gameObject.layer == 16)
+            if (hit.gameObject.layer == 16 && hit.GetComponent<EnemyManager>())
             {
                 hit.GetComponent<EnemyManager>().kickOn = true;
                 hit.GetComponent<EnemyManager>().animator.SetTrigger("Kicked");
