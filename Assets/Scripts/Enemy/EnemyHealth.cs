@@ -58,6 +58,7 @@ public class EnemyHealth : MonoBehaviour
 
     private HitFlashEffect hitFlashEffect;
     
+    private CharacterAbilities characterAbilities;
     private void Awake()
     {
         enemyStats = enemyManager.enemyStats;
@@ -80,7 +81,7 @@ public class EnemyHealth : MonoBehaviour
 
             if (agent != null)
                 agent.speed = enemyStats.speed;
-
+            characterAbilities = enemyManager.player.GetComponent<CharacterAbilities>();
 
         }
         
@@ -280,6 +281,10 @@ public class EnemyHealth : MonoBehaviour
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
 
+        if(characterAbilities.ability1Active)
+        {
+            characterAbilities.DoTimeSlow();
+        }
         if (deathType == EnemyStats.DeathType.Explosion)
         {
            // AfterDeath_ExplosionPrefab.GetObject(explosionPoint.position, Quaternion.identity);
@@ -300,6 +305,7 @@ public class EnemyHealth : MonoBehaviour
             agent.ResetPath();                 // 🔥 removes path completely
             agent.velocity = Vector3.zero;
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
+            enemyManager.enabled = false;
         }
         else if (isAirKill)
         {
@@ -339,6 +345,7 @@ public class EnemyHealth : MonoBehaviour
 
 
         }
+
         //Destroy(gameObject);
 
     }

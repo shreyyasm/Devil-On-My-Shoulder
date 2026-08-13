@@ -124,6 +124,8 @@ public class CharacterAbilities : MonoBehaviour
     public ParticleSystem rightGunSmoke;
     [SerializeField] private LayerMask enemyLayer;
 
+    public bool ability1Active;
+
     public ObjectPool BulletPool;
 
     [SerializeField] private float autoAimRange = 50f;
@@ -982,35 +984,168 @@ public class CharacterAbilities : MonoBehaviour
     }
 
     #region Ability1
+
+    public List<GameObject> abilityTargets = new List<GameObject>();
+
+    private int currentTargetIndex = 0;
+
+    public GameObject currentAbilityTarget;
+
+    private Coroutine moveToEnemyRoutine;
+    [SerializeField] private float abilityTurnSpeed = 15f;
+
+
+
     // ================= ABILITY 1 =================
 
     private void StartAbility1()
     {
-        LeanTween.delayedCall(0.3f, () => { if (leftGun != null) leftGun.gameObject.SetActive(true); });
+        LeanTween.delayedCall(0.3f, () =>
+        {
+            if (leftGun != null)
+                leftGun.gameObject.SetActive(true);
+        });
 
-        if (rightGun != null) rightGun.gameObject.SetActive(true);
+        if (rightGun != null)
+            rightGun.gameObject.SetActive(true);
 
-        currentFireInterval = startFireInterval; // RESET fire rate
+        currentFireInterval = startFireInterval;
+
         ability1Routine = StartCoroutine(Ability1FireLoop());
 
-        TargetIconCanvas.SetActive(true);
+        ability1Active = true;
+     
+    }
+    private void BuildAbilityTargetList()
+    {
+        abilityTargets.Clear();
 
+        if (RoomVisibilityManager.Instance == null)
+            return;
 
+        RoomInstance currentRoom =
+            RoomVisibilityManager.Instance.CurrentRoom;
+
+        if (currentRoom == null)
+            return;
+
+        EnemySpawner enemySpawner =
+            currentRoom.Instance.GetComponentInChildren<EnemySpawner>();
+
+        if (enemySpawner == null)
+            return;
+
+        // Get all active enemies in this room
+        foreach (GameObject enemy in enemySpawner.spawnedEnemies)
+        {
+            if (enemy == null)
+                continue;
+
+            if (!enemy.activeInHierarchy)
+                continue;
+
+            abilityTargets.Add(enemy);
+        }
+
+        // Sort by physical distance from PLAYER
+        abilityTargets.Sort((a, b) =>
+        {
+            float distanceA =
+                (a.transform.position - transform.position).sqrMagnitude;
+
+            float distanceB =
+                (b.transform.position - transform.position).sqrMagnitude;
+
+            return distanceA.CompareTo(distanceB);
+        });
+
+        // Debug
+        for (int i = 0; i < abilityTargets.Count; i++)
+        {
+            float distance =
+                Vector3.Distance(
+                    transform.position,
+                    abilityTargets[i].transform.position
+                );
+
+            Debug.Log(
+                $"Ability Target {i}: " +
+                abilityTargets[i].name +
+                " | Distance: " +
+                distance.ToString("F2")
+            );
+        }
+    }
+    private void SetNextAbilityTarget()
+    {
+        while (currentTargetIndex < abilityTargets.Count)
+        {
+            GameObject target = abilityTargets[currentTargetIndex];
+
+            if (target == null)
+            {
+                currentTargetIndex++;
+                continue;
+            }
+
+            EnemyManager enemyManager =
+                target.GetComponentInParent<EnemyManager>();
+
+            // EnemyManager is missing or disabled → skip this enemy
+            if (enemyManager == null || !enemyManager.enabled)
+            {
+                currentTargetIndex++;
+                continue;
+            }
+
+            // This is our next valid target
+            currentAbilityTarget = target;
+
+            Debug.Log("NEW TARGET: " + target.name);
+
+            if (moveToEnemyRoutine != null)
+            {
+                StopCoroutine(moveToEnemyRoutine);
+            }
+
+            moveToEnemyRoutine =
+                StartCoroutine(
+                    MoveToEnemy(target.transform)
+                );
+
+            return;
+        }
+
+        // No more valid enemies
+        currentAbilityTarget = null;
     }
     private IEnumerator Ability1FireLoop()
     {
         yield return new WaitForSeconds(1f);
+        playerMovement.finisherActive = true;
+
+        TargetIconCanvas.SetActive(true);
+
+        // Get all enemies from the room we're currently in
+        BuildAbilityTargetList();
+
+        currentTargetIndex = 0;
+
+        // Start moving to first enemy
+        SetNextAbilityTarget();
+        StartCoroutine(AbilityTargetLoop());
+
         SetTargetFOV(120f, 5f);
+
         while (abilityActive)
         {
+            UpdateFireRate();
 
-            UpdateFireRate();     // 🔥 UPDATE BASED ON TIMER
             FireAbility1Shot();
 
             yield return new WaitForSeconds(currentFireInterval);
         }
     }
-
     private void UpdateFireRate()
     {
         // Normalize ability time (1 → 0)
@@ -1042,22 +1177,82 @@ public class CharacterAbilities : MonoBehaviour
             rightGun.gameObject.SetActive(false);
         }
         TargetIconCanvas.SetActive(false);
+        ability1Active = false;
+
     }
 
+    private IEnumerator AbilityTargetLoop()
+    {
+        while (ability1Active)
+        {
+            // Check if there are any living enemies left in the room
+            if (!RoomHasLivingEnemies())
+            {
+                StopAbility1();
+                yield break;
+            }
 
+            // Current target is dead/disabled
+            if (currentAbilityTarget == null)
+            {
+                currentTargetIndex++;
+                SetNextAbilityTarget();
+            }
+            else
+            {
+                EnemyManager enemyManager =
+                    currentAbilityTarget.GetComponentInParent<EnemyManager>();
 
+                if (enemyManager == null || !enemyManager.enabled)
+                {
+                    currentTargetIndex++;
+                    SetNextAbilityTarget();
+                }
+            }
+
+            yield return null;
+        }
+    }
+    private bool RoomHasLivingEnemies()
+    {
+        if (RoomVisibilityManager.Instance == null)
+            return false;
+
+        RoomInstance currentRoom =
+            RoomVisibilityManager.Instance.CurrentRoom;
+
+        if (currentRoom == null)
+            return false;
+
+        EnemySpawner enemySpawner =
+            currentRoom.Instance.GetComponentInChildren<EnemySpawner>();
+
+        if (enemySpawner == null)
+            return false;
+
+        foreach (GameObject enemy in enemySpawner.spawnedEnemies)
+        {
+            if (enemy == null)
+                continue;
+
+            EnemyManager enemyManager =
+                enemy.GetComponentInParent<EnemyManager>();
+
+            if (enemyManager != null && enemyManager.enabled)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private void FireAbility1Shot()
     {
-        Transform target = FindNearestEnemy();
-
-        currentAbility1Target = target;
-
         bool fireLeft = fireLeftNext;
 
         Transform gun = fireLeft ? leftGun : rightGun;
         Transform socket = fireLeft ? SocketPointLeft : SocketPointRight;
         Animator flash = fireLeft ? flashLeft : flashRight;
-        targetIcon.gameObject.SetActive(true);
 
         if (fireLeft)
         {
@@ -1075,46 +1270,208 @@ public class CharacterAbilities : MonoBehaviour
         if (gun == null || socket == null)
             return;
 
+        // ==========================================
+        // ALWAYS SHOOT TOWARD SCREEN CENTER
+        // ==========================================
+
+        Ray ray = Camera.main.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f)
+        );
+
         Vector3 dir;
 
-        if (target != null)
+        if (Physics.Raycast(
+            ray,
+            out RaycastHit hit,
+            1000f))
         {
-            // Shoot at locked target
-            dir = (target.position - socket.position).normalized;
+            dir = (hit.point - socket.position).normalized;
         }
         else
         {
-            // Shoot where the crosshair is pointing
-            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
-            {
-                dir = (hit.point - socket.position).normalized;
-            }
-            else
-            {
-                dir = ray.direction;
-            }
+            dir = ray.direction;
         }
 
         flash.SetTrigger("Flash");
 
         GameObject projectile =
-            BulletPool.GetObject(socket.position, Quaternion.LookRotation(dir));
+            BulletPool.GetObject(
+                socket.position,
+                Quaternion.LookRotation(dir)
+            );
 
-        Rigidbody rb = projectile.GetComponent<Rigidbody>();
+        Rigidbody rb =
+            projectile.GetComponent<Rigidbody>();
+
         rb.velocity = dir * projectileImpulse;
 
-        Projectile proj = projectile.GetComponent<Projectile>();
+        Projectile proj =
+            projectile.GetComponent<Projectile>();
+
         if (proj != null)
-            proj.SetDamage(proj.bulletDamage * damageMultiplier);
+        {
+            proj.SetDamage(
+                proj.bulletDamage * damageMultiplier
+            );
+        }
 
         ApplyRecoil(Recoil);
+
         audioSource.PlayOneShot(audioClipFire);
 
         fireLeftNext = !fireLeftNext;
     }
+    private IEnumerator MoveToEnemy(Transform target)
+    {
+        playerMovement.CancelSlideImmediately();
 
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
+
+        //if (target == null || !target.gameObject.activeInHierarchy)
+        //{
+        //    rb.isKinematic = false;
+        //    yield break;
+        //}
+
+        EnemyManager enemyManager =
+            target.GetComponentInParent<EnemyManager>();
+
+        if (enemyManager == null)
+        {
+            rb.isKinematic = false;
+            yield break;
+        }
+
+        Transform finisherPoint =
+            enemyManager.finisherTarget;
+
+        float duration = 1f;
+        float timer = 0f;
+
+        Vector3 startPos = transform.position;
+
+        Quaternion startRotation = transform.rotation;
+
+        while (timer < duration)
+        {
+            if (target == null ||
+                !target.gameObject.activeInHierarchy ||
+                enemyManager == null)
+            {
+                rb.isKinematic = false;
+                yield break;
+            }
+
+            timer += Time.deltaTime;
+
+            float t = Mathf.SmoothStep(
+                0f,
+                1f,
+                timer / duration
+            );
+
+            // MOVE
+            Vector3 destination =
+                finisherPoint.position +
+                finisherPoint.right * destinationOffset.x +
+                finisherPoint.forward * destinationOffset.z;
+
+            destination.y = finisherPoint.position.y - 3f;
+
+            transform.position =
+                Vector3.Lerp(
+                    startPos,
+                    destination,
+                    t
+                );
+
+            // ROTATE TOWARD CURRENT TARGET
+            Vector3 lookDir =
+                enemyManager.transform.position -
+                transform.position;
+
+            lookDir.y = 0f;
+
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(lookDir);
+
+                transform.rotation =
+                    Quaternion.Slerp(
+                        transform.rotation,
+                        targetRotation,
+                        abilityTurnSpeed * Time.deltaTime
+                    );
+            }
+
+            yield return null;
+        }
+
+        // ==========================================
+        // FINISHER
+        // ==========================================
+
+        float finisherDuration =
+            enemyManager.finisherTime;
+
+        float finisherTimer = 0f;
+
+        while (finisherTimer < finisherDuration)
+        {
+            if (target == null ||
+                !target.gameObject.activeInHierarchy)
+            {
+                break;
+            }
+
+            Vector3 destination =
+                finisherPoint.position +
+                finisherPoint.right * destinationOffset.x +
+                finisherPoint.forward * destinationOffset.z;
+
+            destination.y =
+                finisherPoint.position.y - 3f;
+
+            transform.position = destination;
+
+            // Keep looking at current target
+            Vector3 lookDir =
+                enemyManager.transform.position -
+                transform.position;
+
+            lookDir.y = 0f;
+
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation =
+                    Quaternion.LookRotation(lookDir);
+            }
+
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            finisherTimer += Time.deltaTime;
+
+            yield return null;
+        }
+
+        playerMovement.finisherActive = false;
+
+        GetComponent<Character>()
+            .characterAnimator
+            .SetBool(
+                "FinisherUnholstered",
+                false
+            );
+
+        playerLeftHand.SetActive(true);
+        playerRightHand.SetActive(true);
+
+        rb.isKinematic = false;
+    }
     private Transform FindNearestEnemy()
     {
         if (playerCamera == null)
@@ -1712,4 +2069,6 @@ public class CharacterAbilities : MonoBehaviour
     //    );
     //}
     #endregion
+
+   
 }

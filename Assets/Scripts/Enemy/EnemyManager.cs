@@ -302,7 +302,7 @@ public class EnemyManager : MonoBehaviour
     // ================================
 
     private NavMeshAgent agent;
-    private Transform player;
+    public Transform player;
     private PlayerMovement playerMovement;
     private State currentState;
 

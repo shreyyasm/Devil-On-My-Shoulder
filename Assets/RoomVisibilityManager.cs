@@ -9,6 +9,9 @@ public class RoomVisibilityManager : MonoBehaviour
 
     private List<RoomInstance> rooms;
 
+    public int CurrentRoomIndex { get; private set; }
+    public RoomInstance CurrentRoom { get; private set; }
+
     private void Awake()
     {
         Instance = this;
@@ -21,9 +24,18 @@ public class RoomVisibilityManager : MonoBehaviour
 
     public void SetCurrentRoom(int currentRoom)
     {
+        CurrentRoomIndex = currentRoom;
+        CurrentRoom = null;
+
         foreach (RoomInstance room in rooms)
         {
-            bool active = Mathf.Abs(room.RoomIndex - currentRoom) <= visibleDistance;
+            if (room.RoomIndex == currentRoom)
+            {
+                CurrentRoom = room;
+            }
+
+            bool active =
+                Mathf.Abs(room.RoomIndex - currentRoom) <= visibleDistance;
 
             room.Instance.SetActive(active);
         }
