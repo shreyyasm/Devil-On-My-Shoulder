@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -170,6 +171,10 @@ public class CharacterAbilities : MonoBehaviour
     [SerializeField] private float targetIconSmoothTime = 0.06f; // lower = faster
     private Vector3 targetIconVelocity;
 
+
+    private Vignette vignette;
+    private Coroutine vignetteRoutine;
+
     #endregion
 
     #region Ability2_Fields
@@ -235,11 +240,17 @@ public class CharacterAbilities : MonoBehaviour
             Debug.LogError("Post Process Volume not assigned!");
             return;
         }
-
+        abilityAgent = GetComponent<NavMeshAgent>();
 
         if (!postProcessVolume.profile.TryGet(out motionBlur))
         {
             Debug.LogError("Motion Blur not found in Volume Profile!");
+        }
+        if (postProcessVolume != null)
+        {
+            postProcessVolume.profile.TryGet(
+                out vignette
+            );
         }
         AbilitySlider.maxValue = maxKillValue;
     }
@@ -490,6 +501,7 @@ public class CharacterAbilities : MonoBehaviour
             enemyHealthTemp = enemyHealth;
             enemyHealth.FinisherActive();
             Debug.Log("Finisher performed");
+            VoiceLineManager.instance.animator.SetTrigger("HeadOut");
             FinisherActive = true;
             if (character.reloading)
             {
@@ -992,8 +1004,14 @@ public class CharacterAbilities : MonoBehaviour
     public GameObject currentAbilityTarget;
 
     private Coroutine moveToEnemyRoutine;
-    [SerializeField] private float abilityTurnSpeed = 15f;
+    [SerializeField] private NavMeshAgent abilityAgent;
 
+    [SerializeField] private float abilityMoveSpeed = 20f;
+    [SerializeField] private float abilityTurnSpeed = 1080f;
+    [SerializeField] private float navMeshSampleDistance = 3f;
+
+    [SerializeField] private float abilityMovementSmoothing = 10f;
+    [SerializeField] private float abilityRotationSmoothing = 15f;
 
 
     // ================= ABILITY 1 =================
@@ -1004,62 +1022,93 @@ public class CharacterAbilities : MonoBehaviour
         {
             if (leftGun != null)
                 leftGun.gameObject.SetActive(true);
+            SFXManager.Instance.PlaySFX("DemonAbility/GunOut", 1f,-0.5f);
         });
 
         if (rightGun != null)
             rightGun.gameObject.SetActive(true);
-
+        SFXManager.Instance.PlaySFX("DemonAbility/GunOut", 1f, 0.5f);
         currentFireInterval = startFireInterval;
+        SetVignette(0.35f, 0.4f, 1f);
+        SetTargetFOV(120f, 20f);
 
         ability1Routine = StartCoroutine(Ability1FireLoop());
-
+        GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", true);
         ability1Active = true;
      
     }
+
     private void BuildAbilityTargetList()
     {
         abilityTargets.Clear();
 
         if (RoomVisibilityManager.Instance == null)
+        {
+            Debug.LogWarning("RoomVisibilityManager not found.");
             return;
+        }
 
         RoomInstance currentRoom =
             RoomVisibilityManager.Instance.CurrentRoom;
 
         if (currentRoom == null)
+        {
+            Debug.LogWarning("No current room found.");
             return;
+        }
 
         EnemySpawner enemySpawner =
             currentRoom.Instance.GetComponentInChildren<EnemySpawner>();
 
         if (enemySpawner == null)
-            return;
+        {
+            Debug.LogWarning(
+                "No EnemySpawner found in current room."
+            );
 
-        // Get all active enemies in this room
+            return;
+        }
+
+        // Get enemies from current room
         foreach (GameObject enemy in enemySpawner.spawnedEnemies)
         {
             if (enemy == null)
                 continue;
 
-            if (!enemy.activeInHierarchy)
+            EnemyManager enemyManager =
+                enemy.GetComponentInParent<EnemyManager>();
+
+            if (enemyManager == null)
+                continue;
+
+            // EnemyManager disabled = dead
+            if (!enemyManager.enabled)
                 continue;
 
             abilityTargets.Add(enemy);
         }
 
-        // Sort by physical distance from PLAYER
+        // Sort nearest → farthest
         abilityTargets.Sort((a, b) =>
         {
             float distanceA =
-                (a.transform.position - transform.position).sqrMagnitude;
+                (a.transform.position -
+                 transform.position).sqrMagnitude;
 
             float distanceB =
-                (b.transform.position - transform.position).sqrMagnitude;
+                (b.transform.position -
+                 transform.position).sqrMagnitude;
 
             return distanceA.CompareTo(distanceB);
         });
 
-        // Debug
+        Debug.Log(
+            "Ability found " +
+            abilityTargets.Count +
+            " enemies."
+        );
+
+        // Debug order
         for (int i = 0; i < abilityTargets.Count; i++)
         {
             float distance =
@@ -1069,7 +1118,7 @@ public class CharacterAbilities : MonoBehaviour
                 );
 
             Debug.Log(
-                $"Ability Target {i}: " +
+                $"Target {i}: " +
                 abilityTargets[i].name +
                 " | Distance: " +
                 distance.ToString("F2")
@@ -1080,8 +1129,10 @@ public class CharacterAbilities : MonoBehaviour
     {
         while (currentTargetIndex < abilityTargets.Count)
         {
-            GameObject target = abilityTargets[currentTargetIndex];
+            GameObject target =
+                abilityTargets[currentTargetIndex];
 
+            // Invalid object
             if (target == null)
             {
                 currentTargetIndex++;
@@ -1091,51 +1142,66 @@ public class CharacterAbilities : MonoBehaviour
             EnemyManager enemyManager =
                 target.GetComponentInParent<EnemyManager>();
 
-            // EnemyManager is missing or disabled → skip this enemy
-            if (enemyManager == null || !enemyManager.enabled)
+            // Enemy is dead / disabled
+            if (enemyManager == null ||
+                !enemyManager.enabled)
             {
                 currentTargetIndex++;
                 continue;
             }
 
-            // This is our next valid target
+            // Valid target
             currentAbilityTarget = target;
 
-            Debug.Log("NEW TARGET: " + target.name);
+            Debug.Log(
+                "NEW ABILITY TARGET: " +
+                target.name
+            );
 
+            // Stop previous movement
             if (moveToEnemyRoutine != null)
             {
                 StopCoroutine(moveToEnemyRoutine);
             }
 
+            // Start moving immediately
             moveToEnemyRoutine =
                 StartCoroutine(
-                    MoveToEnemy(target.transform)
+                    MoveToEnemy(
+                        target.transform
+                    )
                 );
 
             return;
         }
 
-        // No more valid enemies
+        // No targets remaining
         currentAbilityTarget = null;
     }
     private IEnumerator Ability1FireLoop()
     {
         yield return new WaitForSeconds(1f);
         playerMovement.finisherActive = true;
-
+        playerMovement.finisherActive = true;
+        playerMovement.speedline.SetActive(true);
         TargetIconCanvas.SetActive(true);
 
-        // Get all enemies from the room we're currently in
+        // Rigidbody should not fight the manual movement
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
+
+        // Get all enemies in current room
         BuildAbilityTargetList();
 
         currentTargetIndex = 0;
 
-        // Start moving to first enemy
+        // Select first target
         SetNextAbilityTarget();
+
         StartCoroutine(AbilityTargetLoop());
 
-        SetTargetFOV(120f, 5f);
+       
 
         while (abilityActive)
         {
@@ -1162,8 +1228,12 @@ public class CharacterAbilities : MonoBehaviour
     private void StopAbility1()
     {
         SetTargetFOV(90f, 10f);
+
         if (ability1Routine != null)
             StopCoroutine(ability1Routine);
+
+        if (moveToEnemyRoutine != null)
+            StopCoroutine(moveToEnemyRoutine);
 
         if (leftGun != null)
         {
@@ -1176,36 +1246,52 @@ public class CharacterAbilities : MonoBehaviour
             rightGun.localPosition = rightGunStartPos;
             rightGun.gameObject.SetActive(false);
         }
-        TargetIconCanvas.SetActive(false);
-        ability1Active = false;
 
+        if (abilityAgent != null &&
+            abilityAgent.enabled)
+        {
+            abilityAgent.ResetPath();
+            abilityAgent.enabled = false;
+        }
+       
+        playerMovement.speedline.SetActive(false);
+        
+        TargetIconCanvas.SetActive(false);
+        SetVignette(0.25f, 0.4f, 1f);
+        GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
+        ability1Active = false;
     }
 
     private IEnumerator AbilityTargetLoop()
     {
         while (ability1Active)
         {
-            // Check if there are any living enemies left in the room
+            // If absolutely no living enemies remain
             if (!RoomHasLivingEnemies())
             {
                 StopAbility1();
                 yield break;
             }
 
-            // Current target is dead/disabled
+            // Current target doesn't exist
             if (currentAbilityTarget == null)
             {
                 currentTargetIndex++;
+
                 SetNextAbilityTarget();
             }
             else
             {
                 EnemyManager enemyManager =
-                    currentAbilityTarget.GetComponentInParent<EnemyManager>();
+                    currentAbilityTarget
+                        .GetComponentInParent<EnemyManager>();
 
-                if (enemyManager == null || !enemyManager.enabled)
+                // Current enemy died
+                if (enemyManager == null ||
+                    !enemyManager.enabled)
                 {
                     currentTargetIndex++;
+
                     SetNextAbilityTarget();
                 }
             }
@@ -1238,7 +1324,8 @@ public class CharacterAbilities : MonoBehaviour
             EnemyManager enemyManager =
                 enemy.GetComponentInParent<EnemyManager>();
 
-            if (enemyManager != null && enemyManager.enabled)
+            if (enemyManager != null &&
+                enemyManager.enabled)
             {
                 return true;
             }
@@ -1321,98 +1408,243 @@ public class CharacterAbilities : MonoBehaviour
 
         fireLeftNext = !fireLeftNext;
     }
+    [SerializeField] private Vector3 destinationOffsetNew = new Vector3(0f, -3f, -1f);
     private IEnumerator MoveToEnemy(Transform target)
     {
-        playerMovement.CancelSlideImmediately();
-
-        rb.velocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.isKinematic = true;
-
-        //if (target == null || !target.gameObject.activeInHierarchy)
-        //{
-        //    rb.isKinematic = false;
-        //    yield break;
-        //}
+        if (target == null)
+            yield break;
 
         EnemyManager enemyManager =
             target.GetComponentInParent<EnemyManager>();
 
-        if (enemyManager == null)
-        {
-            rb.isKinematic = false;
+        if (enemyManager == null || !enemyManager.enabled)
             yield break;
-        }
 
         Transform finisherPoint =
             enemyManager.finisherTarget;
 
-        float duration = 1f;
-        float timer = 0f;
+        if (finisherPoint == null)
+            yield break;
 
-        Vector3 startPos = transform.position;
+        // Find desired finisher position
+        Vector3 desiredDestination =
+            finisherPoint.position +
+            finisherPoint.right * destinationOffset.x +
+            finisherPoint.forward * destinationOffset.z;
 
-        Quaternion startRotation = transform.rotation;
+        desiredDestination.y =
+            finisherPoint.position.y - 3f;
 
-        while (timer < duration)
+        // Find closest valid NavMesh position
+        if (!NavMesh.SamplePosition(
+            desiredDestination,
+            out NavMeshHit destinationHit,
+            navMeshSampleDistance,
+            NavMesh.AllAreas))
         {
+            Debug.LogWarning(
+                "Could not find NavMesh near target: " +
+                target.name
+            );
+
+            yield break;
+        }
+
+        Vector3 pathDestination =
+            destinationHit.position;
+
+        // Calculate path
+        NavMeshPath path = new NavMeshPath();
+
+        bool pathFound =
+            NavMesh.CalculatePath(
+                transform.position,
+                pathDestination,
+                NavMesh.AllAreas,
+                path
+            );
+
+        if (!pathFound ||
+            path.status != NavMeshPathStatus.PathComplete)
+        {
+            Debug.LogWarning(
+                "No complete NavMesh path to: " +
+                target.name
+            );
+
+            yield break;
+        }
+
+        // Agent only calculates paths; it does NOT move player
+        if (abilityAgent != null)
+        {
+            abilityAgent.ResetPath();
+            abilityAgent.enabled = false;
+        }
+
+        Vector3[] corners = path.corners;
+
+        int cornerIndex = 1;
+
+        Vector3 movementVelocity = Vector3.zero;
+
+        while (cornerIndex < corners.Length)
+        {
+            // Target died
             if (target == null ||
-                !target.gameObject.activeInHierarchy ||
-                enemyManager == null)
+                enemyManager == null ||
+                !enemyManager.enabled)
             {
-                rb.isKinematic = false;
                 yield break;
             }
 
-            timer += Time.deltaTime;
+            Vector3 nextCorner =
+                corners[cornerIndex];
 
-            float t = Mathf.SmoothStep(
-                0f,
-                1f,
-                timer / duration
-            );
+            nextCorner.y =
+                transform.position.y;
 
-            // MOVE
-            Vector3 destination =
-                finisherPoint.position +
-                finisherPoint.right * destinationOffset.x +
-                finisherPoint.forward * destinationOffset.z;
+            Vector3 direction =
+                nextCorner - transform.position;
 
-            destination.y = finisherPoint.position.y - 3f;
+            direction.y = 0f;
 
-            transform.position =
+            float distance =
+                direction.magnitude;
+
+            // Reached corner
+            if (distance < 0.15f)
+            {
+                cornerIndex++;
+                continue;
+            }
+            rootCamera.localRotation = Quaternion.Euler(0f, rootCamera.localEulerAngles.y, rootCamera.localEulerAngles.z);
+
+            // ==========================================
+            // SMOOTH MOVEMENT
+            // ==========================================
+
+            Vector3 desiredVelocity =
+                direction.normalized *
+                abilityMoveSpeed;
+
+            movementVelocity =
                 Vector3.Lerp(
-                    startPos,
-                    destination,
-                    t
+                    movementVelocity,
+                    desiredVelocity,
+                    abilityMovementSmoothing *
+                    Time.deltaTime
                 );
 
-            // ROTATE TOWARD CURRENT TARGET
-            Vector3 lookDir =
-                enemyManager.transform.position -
-                transform.position;
+            transform.position +=
+                movementVelocity *
+                Time.deltaTime;
 
-            lookDir.y = 0f;
+            // ==========================================
+            // SMOOTH ROTATION
+            // ==========================================
 
-            if (lookDir.sqrMagnitude > 0.001f)
+            if (movementVelocity.sqrMagnitude > 0.01f)
             {
                 Quaternion targetRotation =
-                    Quaternion.LookRotation(lookDir);
+                    Quaternion.LookRotation(
+                        movementVelocity.normalized
+                    );
 
                 transform.rotation =
                     Quaternion.Slerp(
                         transform.rotation,
                         targetRotation,
-                        abilityTurnSpeed * Time.deltaTime
+                        abilityRotationSmoothing *
+                        Time.deltaTime
                     );
             }
 
             yield return null;
         }
 
-        // ==========================================
+        // ==============================================
+        // FINAL FINISHER POSITION
+        // ==============================================
+
+        if (target == null ||
+            enemyManager == null ||
+            !enemyManager.enabled)
+        {
+            yield break;
+        }
+
+        Vector3 finalDestination =
+      finisherPoint.position +
+      finisherPoint.right * destinationOffsetNew.x +
+      finisherPoint.forward * destinationOffsetNew.z;
+
+        finalDestination.y =
+            finisherPoint.position.y - 3f;
+
+        Vector3 finalStart =
+            transform.position;
+
+        float finalDuration = 0.08f;
+        float finalTimer = 0f;
+
+        while (finalTimer < finalDuration)
+        {
+            if (target == null ||
+                enemyManager == null ||
+                !enemyManager.enabled)
+            {
+                yield break;
+            }
+
+            finalTimer += Time.deltaTime;
+
+            float t =
+                Mathf.Clamp01(
+                    finalTimer / finalDuration
+                );
+
+            t = Mathf.SmoothStep(
+                0f,
+                1f,
+                t
+            );
+
+            transform.position =
+                Vector3.Lerp(
+                    finalStart,
+                    finalDestination,
+                    t
+                );
+
+            Vector3 lookDirection =
+                enemyManager.transform.position -
+                transform.position;
+
+            lookDirection.y = 0f;
+
+            if (lookDirection.sqrMagnitude > 0.001f)
+            {
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(
+                        lookDirection
+                    );
+
+                transform.rotation =
+                    Quaternion.Slerp(
+                        transform.rotation,
+                        targetRotation,
+                        abilityRotationSmoothing *
+                        Time.deltaTime
+                    );
+            }
+
+            yield return null;
+        }
+
+        // ==============================================
         // FINISHER
-        // ==========================================
+        // ==============================================
 
         float finisherDuration =
             enemyManager.finisherTime;
@@ -1422,55 +1654,49 @@ public class CharacterAbilities : MonoBehaviour
         while (finisherTimer < finisherDuration)
         {
             if (target == null ||
-                !target.gameObject.activeInHierarchy)
+                enemyManager == null ||
+                !enemyManager.enabled)
             {
-                break;
+                yield break;
             }
 
-            Vector3 destination =
+            Vector3 currentFinisherPosition =
                 finisherPoint.position +
-                finisherPoint.right * destinationOffset.x +
-                finisherPoint.forward * destinationOffset.z;
+                finisherPoint.right * destinationOffsetNew.x +
+                finisherPoint.forward * destinationOffsetNew.z;
 
-            destination.y =
+            currentFinisherPosition.y =
                 finisherPoint.position.y - 3f;
 
-            transform.position = destination;
+            transform.position =
+                currentFinisherPosition;
 
-            // Keep looking at current target
-            Vector3 lookDir =
+            Vector3 lookDirection =
                 enemyManager.transform.position -
                 transform.position;
 
-            lookDir.y = 0f;
+            lookDirection.y = 0f;
 
-            if (lookDir.sqrMagnitude > 0.001f)
+            if (lookDirection.sqrMagnitude > 0.001f)
             {
-                transform.rotation =
-                    Quaternion.LookRotation(lookDir);
-            }
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(
+                        lookDirection
+                    );
 
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+                transform.rotation =
+                    Quaternion.Slerp(
+                        transform.rotation,
+                        targetRotation,
+                        abilityRotationSmoothing *
+                        Time.deltaTime
+                    );
+            }
 
             finisherTimer += Time.deltaTime;
 
             yield return null;
         }
-
-        playerMovement.finisherActive = false;
-
-        GetComponent<Character>()
-            .characterAnimator
-            .SetBool(
-                "FinisherUnholstered",
-                false
-            );
-
-        playerLeftHand.SetActive(true);
-        playerRightHand.SetActive(true);
-
-        rb.isKinematic = false;
     }
     private Transform FindNearestEnemy()
     {
@@ -1886,7 +2112,7 @@ public class CharacterAbilities : MonoBehaviour
 
         // IMPORTANT: use unscaled time
         yield return new WaitForSecondsRealtime(slowDuration);
-        speedLines.SetActive(false);
+        //speedLines.SetActive(false);
 
         // Restore normal time
         Time.timeScale = 1f;
@@ -2070,5 +2296,100 @@ public class CharacterAbilities : MonoBehaviour
     //}
     #endregion
 
-   
+    public void SetVignette(
+     float intensity,
+     float smoothness,
+     float duration
+ )
+    {
+        if (vignette == null)
+        {
+            Debug.LogWarning(
+                "Vignette override not found."
+            );
+
+            return;
+        }
+
+        if (vignetteRoutine != null)
+        {
+            StopCoroutine(vignetteRoutine);
+        }
+
+        vignetteRoutine =
+            StartCoroutine(
+                VignetteTransition(
+                    intensity,
+                    smoothness,
+                    duration
+                )
+            );
+    }
+    private IEnumerator VignetteTransition(
+    float targetIntensity,
+    float targetSmoothness,
+    float duration
+)
+    {
+        float startIntensity =
+            vignette.intensity.value;
+
+        float startSmoothness =
+            vignette.smoothness.value;
+
+        if (duration <= 0f)
+        {
+            vignette.intensity.value =
+                targetIntensity;
+
+            vignette.smoothness.value =
+                targetSmoothness;
+
+            yield break;
+        }
+
+        float timer = 0f;
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+
+            float t =
+                Mathf.Clamp01(
+                    timer / duration
+                );
+
+            // Smooth transition
+            t = Mathf.SmoothStep(
+                0f,
+                1f,
+                t
+            );
+
+            vignette.intensity.value =
+                Mathf.Lerp(
+                    startIntensity,
+                    targetIntensity,
+                    t
+                );
+
+            vignette.smoothness.value =
+                Mathf.Lerp(
+                    startSmoothness,
+                    targetSmoothness,
+                    t
+                );
+
+            yield return null;
+        }
+
+        // Guarantee exact final values
+        vignette.intensity.value =
+            targetIntensity;
+
+        vignette.smoothness.value =
+            targetSmoothness;
+
+        vignetteRoutine = null;
+    }
 }

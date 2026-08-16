@@ -17,6 +17,7 @@ public class KickAnimationEvents : MonoBehaviour
     }
     private void Update()
     {
+        if (playerMovement.finisherActive) return;
         float targetFOVKick = isKicking ? kickFOV : normalFOV;
 
         float newFOV = Mathf.Lerp(

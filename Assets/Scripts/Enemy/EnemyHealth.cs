@@ -281,7 +281,14 @@ public class EnemyHealth : MonoBehaviour
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
 
-        if(characterAbilities.ability1Active)
+        if(finisherActive)
+        {
+            VoiceLineManager.instance.PlayRandom("Finisher", 100f);
+        }
+        else
+            VoiceLineManager.instance.PlayRandom("Kill", 15f);
+       
+        if (characterAbilities.ability1Active)
         {
             characterAbilities.DoTimeSlow();
         }

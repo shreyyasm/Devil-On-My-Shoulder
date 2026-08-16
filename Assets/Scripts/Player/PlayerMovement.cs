@@ -287,6 +287,8 @@ public class PlayerMovement : MonoBehaviour
 
         float targetFOV = isDashing ? slideFOV : normalFOV;
 
+        if (finisherActive) return;
+
         if (Mathf.Abs(playerCameraMain.fieldOfView - targetFOV) > 0.05f)
         {
             playerCameraMain.fieldOfView = Mathf.Lerp(

@@ -145,7 +145,7 @@ public class PlayerHealth : MonoBehaviour
                 transform.position,
                 Quaternion.identity
             );
-
+            VoiceLineManager.instance.PlayRandom("Taking Damage", 20f);
             ScoreManager.Instance.hitsTakken++;
             CameraShake.Instance.Shake();
         }
@@ -217,6 +217,7 @@ public class PlayerHealth : MonoBehaviour
         dead = true;
         ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
+        VoiceLineManager.instance.PlayRandom("Player Dies", 30f);
         ScoreManager.Instance.CalculateOverallScore();
         //countdownDisplay.gameObject.SetActive(false);
         string sfxKey = $"Dead/GameOver";
