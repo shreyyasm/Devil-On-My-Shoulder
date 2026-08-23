@@ -56,7 +56,8 @@ public class ComboManager : MonoBehaviour
     private string delayedKillText;
 
     [Header("UI References")]
-    public TextMeshProUGUI multiplierText;
+    public Image multiplierImage;
+    public Sprite[] multiplierSprites = new Sprite[4];
     public Slider xpSlider;
     public TextMeshProUGUI comboNameText;
 
@@ -185,7 +186,8 @@ public class ComboManager : MonoBehaviour
         multiplier = 0;
         currentXP = 0;
 
-        if (multiplierText != null) multiplierText.text = "0x";
+        if (multiplierImage != null)
+            multiplierImage.enabled = false;
         if (xpSlider != null) xpSlider.value = 0;
         if (comboNameText != null) comboNameText.text = "";
 
@@ -220,10 +222,15 @@ public class ComboManager : MonoBehaviour
 
         currentXP -= fixedDamageXPLoss;
 
-        if (multiplierText != null)
+        if (multiplierImage != null)
         {
-            multiplierText.transform.DOKill();
-            multiplierText.transform.DOPunchScale(Vector3.one * 0.2f, 0.25f, 6, 1f);
+            multiplierImage.transform.DOKill();
+            multiplierImage.transform.DOPunchScale(
+                Vector3.one * 0.2f,
+                0.25f,
+                6,
+                1f
+            );
         }
 
         if (currentXP <= 0)
@@ -328,23 +335,33 @@ public class ComboManager : MonoBehaviour
 
     void UpdateMultiplierUI()
     {
-        if (multiplierText != null)
+        if (multiplierImage == null || multiplierSprites == null)
+            return;
+
+        // multiplier 1 → index 0
+        // multiplier 2 → index 1
+        // multiplier 3 → index 2
+        // multiplier 4 → index 3
+        int index = multiplier - 1;
+
+        if (index >= 0 && index < multiplierSprites.Length)
         {
-            multiplierText.text = multiplier + "x";
-
-            multiplierText.transform.DOKill();
-            multiplierText.transform.localScale = Vector3.one;
-
-            multiplierText.transform
-                .DOScale(multiplierPopScale, multiplierPopDuration)
-                .SetEase(Ease.OutBack)
-                .OnComplete(() =>
-                {
-                    multiplierText.transform
-                        .DOScale(1f, multiplierPopDuration)
-                        .SetEase(Ease.InBack);
-                });
+            multiplierImage.sprite = multiplierSprites[index];
+            multiplierImage.enabled = true;
         }
+
+        multiplierImage.transform.DOKill();
+        multiplierImage.transform.localScale = Vector3.one;
+
+        multiplierImage.transform
+            .DOScale(multiplierPopScale, multiplierPopDuration)
+            .SetEase(Ease.OutBack)
+            .OnComplete(() =>
+            {
+                multiplierImage.transform
+                    .DOScale(1f, multiplierPopDuration)
+                    .SetEase(Ease.InBack);
+            });
     }
 
     void UpdateXPUI()

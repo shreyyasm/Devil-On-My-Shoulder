@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks.Triggers;
+using DG.Tweening;
 using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System.Buffers.Text;
@@ -67,6 +68,7 @@ public class CharacterAbilities : MonoBehaviour
     public bool reloadIncomplete;
     private bool isFinishing = false;
     public GameObject finisherCanvas;
+
     // Finisher cost (you can tweak per enemy later)
     [SerializeField] private float finisherCost = 30f;
 
@@ -174,6 +176,10 @@ public class CharacterAbilities : MonoBehaviour
 
     private Vignette vignette;
     private Coroutine vignetteRoutine;
+
+    [SerializeField] private GameObject skullJaw;
+    [SerializeField] private GameObject SkullFire;
+
 
     #endregion
 
@@ -418,6 +424,10 @@ public class CharacterAbilities : MonoBehaviour
         abilityReady = currentKillValue >= maxKillValue;
 
         finisherReady = currentKillValue >= finisherCost;
+        if (abilityReady)
+            OpenSkullJaw();
+        else
+            CloseSkullJaw();
     }
     private void UpdateKillUI()
     {
@@ -2391,5 +2401,35 @@ public class CharacterAbilities : MonoBehaviour
             targetSmoothness;
 
         vignetteRoutine = null;
+    }
+    public void OpenSkullJaw()
+    {
+        if (skullJaw == null) return;
+
+        skullJaw.transform.DOLocalRotate(
+            new Vector3(
+                skullJaw.transform.localEulerAngles.x,
+                skullJaw.transform.localEulerAngles.y,
+                25f
+            ),
+            0.15f
+        ).SetEase(Ease.OutQuad);
+
+        SkullFire.SetActive(true);
+    }
+    public void CloseSkullJaw()
+    {
+        if (skullJaw == null) return;
+
+        skullJaw.transform.DOLocalRotate(
+            new Vector3(
+                skullJaw.transform.localEulerAngles.x,
+                skullJaw.transform.localEulerAngles.y,
+                0f
+            ),
+            0.15f
+        ).SetEase(Ease.OutQuad);
+
+        SkullFire.SetActive(false);
     }
 }
