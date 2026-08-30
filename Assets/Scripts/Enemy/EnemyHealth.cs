@@ -1,4 +1,5 @@
 ﻿using DamageNumbersPro;
+using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System.Collections;
 using Unity.VisualScripting;
@@ -298,6 +299,7 @@ public class EnemyHealth : MonoBehaviour
         }
         if (isHeadshot)
         {
+            CrosshairManager.instance.CrosshairHit();
             CharacterAbilities.instance.AddKillValue(500);
             ComboManager.Instance.AddScore(500);
             DamageNumber killText = KillTextPrefab.Spawn(

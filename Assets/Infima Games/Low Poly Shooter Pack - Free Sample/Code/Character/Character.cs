@@ -323,7 +323,8 @@ namespace InfimaGames.LowPolyShooterPack
         
         public void PlayReloadAnimation()
 		{
-            #region Animation
+			#region Animation
+			CrosshairManager.instance.ReloadCrosshair();
             LeanTween.delayedCall(1f, () => { equippedWeapon.GetAnimatorHands().ResetTrigger("Fire"); });
 
             Animator anim2 = equippedWeapon.GetAnimatorHands();
