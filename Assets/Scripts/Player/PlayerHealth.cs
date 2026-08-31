@@ -146,8 +146,10 @@ public class PlayerHealth : MonoBehaviour
                 Quaternion.identity
             );
             VoiceLineManager.instance.PlayRandom("Taking Damage", 20f);
+            ImpactFrameEffect.Instance.GoBlack();
+            LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
             ScoreManager.Instance.hitsTakken++;
-            CameraShake.Instance.Shake();
+            CameraShake.Instance.ShakeWithValue(0.3f,0.5f);
         }
 
         if (amount > 0)

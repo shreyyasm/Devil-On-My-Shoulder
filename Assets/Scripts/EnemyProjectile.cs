@@ -108,11 +108,22 @@ public class EnemyProjectile : MonoBehaviour
                 Rigidbody playerRigidbody = collision.GetComponent<Rigidbody>();
                 if (playerRigidbody != null)
                 {
-                    Vector3 directionAway = (collision.transform.position - transform.position).normalized;
-                    playerRigidbody.AddForce(directionAway * forceMagnitude, ForceMode.Impulse);
-                    SFXManager.Instance.PlaySFX(enemyName + "/" + "AttackHit", 0.8f);
-                    ImpactFrameEffect.Instance.GoBlack();
-                    LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
+                    PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
+
+                    if (pm != null)
+                    {
+                        Vector3 dir = (collision.transform.position - transform.position).normalized;
+                        dir.y = 0f;
+
+                        Vector3 force = dir * 30f + Vector3.up * 2f;
+
+                        pm.ApplyKnockback(force, 0.25f);
+                    }
+
+                    //Vector3 directionAway = (collision.transform.position - transform.position).normalized;
+                    //playerRigidbody.AddForce(directionAway * forceMagnitude, ForceMode.Impulse);
+                    SFXManager.Instance.PlaySFX(enemyName + "/" + "AttackHit", 1f);
+                   
                     HurtPlayer();
 
                     collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);

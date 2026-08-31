@@ -300,6 +300,7 @@ public class EnemyHealth : MonoBehaviour
         if (isHeadshot)
         {
             CrosshairManager.instance.CrosshairHit();
+            SFXManager.Instance.PlaySFX("Enemy/Headshot", 1f);
             CharacterAbilities.instance.AddKillValue(500);
             ComboManager.Instance.AddScore(500);
             DamageNumber killText = KillTextPrefab.Spawn(

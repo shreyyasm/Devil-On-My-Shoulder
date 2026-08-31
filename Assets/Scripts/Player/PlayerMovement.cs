@@ -269,10 +269,6 @@ public class PlayerMovement : MonoBehaviour
         CameraTiltSway();
         HandleFootsteps();
 
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            GetRandomItem();
-        }
 
         //if (kickPressed)
         //{
@@ -635,7 +631,6 @@ public class PlayerMovement : MonoBehaviour
         gameObject.GetComponent<CapsuleCollider>().providesContacts = false;
         hands.SetActive(false);
     }
-
     private void CameraTiltSway()
     {
         if (playerCameraMain == null) return;
@@ -643,13 +638,11 @@ public class PlayerMovement : MonoBehaviour
 
         float tiltZ = -x * swayTiltX;
         float tiltX = y * swayTiltY;
-
         Quaternion targetRot = Quaternion.Euler(
             initialCamRot.x + tiltX,
             initialCamRot.y,
             initialCamRot.z + tiltZ
         );
-
         playerCameraMain.transform.localRotation =
             Quaternion.Lerp(
                 playerCameraMain.transform.localRotation,
@@ -657,7 +650,7 @@ public class PlayerMovement : MonoBehaviour
                 Time.deltaTime * swaySmooth
             );
     }
-   
+
 
     private void HandleDashOrSlide()
     {
@@ -716,7 +709,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float slideDownY = 1.4f;
     [SerializeField] private float slideUpY = 1.8f;
     [SerializeField] private float heightLerpSpeed = 10f;
-    [SerializeField] private CameraLook cameraLook;
+    [SerializeField] public CameraLook cameraLook;
     public GameObject rootGameObject;
     public bool cameraLocked;
     private float standHeightY;

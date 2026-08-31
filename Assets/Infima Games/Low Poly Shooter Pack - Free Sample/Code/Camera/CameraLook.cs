@@ -185,7 +185,9 @@ namespace InfimaGames.LowPolyShooterPack
             }
             return false;
         }
-
+        // Add these two lines — expose the clean, sway-free aim direction
+        public Quaternion AimRotation => transform.rotation;
+        public Vector3 AimDirection => transform.forward;
         private void ApplyAimAssist(ref Quaternion rotationCameraLocal, Vector2 rawLookInput)
         {
             Camera cam = Camera.main;

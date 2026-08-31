@@ -345,16 +345,7 @@ namespace InfimaGames.LowPolyShooterPack
                 }
             }
 
-            if (gunType == GunType.LaserBeam && beamActive)
-            {
-                UpdateLaserBeam();
-
-                // Weapon vibration scales with laser usage
-                float laser01 = laserUseTimer / laserOverheatTime;
-                laser01 = Mathf.Clamp01(laser01);
-                ApplyWeaponVibration(laser01);
-
-            }
+           
             // Laser heat cooldown when not firing
             if (gunType == GunType.LaserBeam && !beamActive && !laserOverheated)
             {
@@ -377,6 +368,25 @@ namespace InfimaGames.LowPolyShooterPack
                 );
             }
 
+          
+
+
+            // Laser cooldown handling
+            if (laserOverheated)
+            {
+                laserCooldownTimer += Time.deltaTime;
+                if (laserCooldownTimer >= laserCooldownTime)
+                {
+                    laserOverheated = false;
+                    laserCooldownTimer = 0f;
+                    laserUseTimer = 0f;
+                }
+            }
+        }
+        private Quaternion baseCameraRotation;
+
+        private void LateUpdate()
+        {
             if (gunType == GunType.LaserBeam && beamActive)
             {
                 UpdateLaserBeam();
@@ -411,35 +421,16 @@ namespace InfimaGames.LowPolyShooterPack
                         rayGunBaseBeamSpeed,
                         rayGunMaxBeamSpeed
                     );
-                   
-                   
+
+
                     mat.SetFloat("_WaveSpeed", currentRayGunBeamSpeed);
-                     
+
                     beamRenderer.startWidth = currentRayGunBeamWidth;
                     beamRenderer.endWidth = currentRayGunBeamWidth;
 
                 }
 
             }
-
-
-            // Laser cooldown handling
-            if (laserOverheated)
-            {
-                laserCooldownTimer += Time.deltaTime;
-                if (laserCooldownTimer >= laserCooldownTime)
-                {
-                    laserOverheated = false;
-                    laserCooldownTimer = 0f;
-                    laserUseTimer = 0f;
-                }
-            }
-        }
-        private Quaternion baseCameraRotation;
-
-        private void LateUpdate()
-        {
-           
             // Smooth recoil return
             targetRecoil = Vector2.Lerp(
                 targetRecoil,
@@ -903,11 +894,12 @@ namespace InfimaGames.LowPolyShooterPack
             CameraShake.Instance.ShakeWithValue(0.1f, 0.05f);
 
             // --- Step 1: find what the crosshair (camera center) is actually aiming at ---
-            Vector3 aimOrigin = playerCamera.position;
-            Vector3 aimDirection = playerCamera.forward;
+            Vector3 aimOrigin = socket.position;
+
+            Vector3 aimDirection = PlayerMovement.Instance.cameraLook.AimDirection; // reference to your CameraLook component
 
             RaycastHit aimHit;
-            bool aimHasHit = Physics.Raycast(aimOrigin, aimDirection, out aimHit, maximumDistance);
+            bool aimHasHit = Physics.Raycast(aimOrigin, aimDirection, out aimHit, maximumDistance,aimLayerMask);
             Vector3 targetPoint = aimHasHit
                 ? aimHit.point
                 : aimOrigin + aimDirection * maximumDistance;
@@ -940,6 +932,7 @@ namespace InfimaGames.LowPolyShooterPack
 
             if (!hasHit) return; // guard: avoid using hit.normal/hit.collider when nothing was hit
 
+          
             Quaternion rotation = Quaternion.LookRotation(hit.normal);
             BulletImpactPool.GetObject(endPoint, rotation);
             CloudVFX.transform.position = endPoint;

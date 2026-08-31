@@ -782,7 +782,7 @@ public class EnemyManager : MonoBehaviour
         //Debug.Log("Player");
         if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
 
-        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackHitKey, 0.5f);
+        SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackHitKey, 1f);
         PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
 
         if (pm != null)
