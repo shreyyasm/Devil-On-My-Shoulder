@@ -22,6 +22,7 @@ public class EnemyManager : MonoBehaviour
     public ObjectPool After_DeathExplosion;
     public ObjectPool After_BloodExplosion;
     public Transform finisherTarget;
+    public Transform AbilityTarget;
     public GameObject finisherIndicator;
     public float finisherTime;
     public bool sawPlayer;
@@ -348,6 +349,11 @@ public class EnemyManager : MonoBehaviour
 
     public bool projectile_Parried;
     private EnemyHealth enemyHealth;
+
+    private void OnEnable()
+    {
+        AlertIndicator.gameObject.SetActive(true);
+    }
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -1550,7 +1556,7 @@ public class EnemyManager : MonoBehaviour
         // fallback
         peekPos = currentCover.position;
     }
-
+    public AlertManager AlertIndicator;
     bool HasLineOfSight()
     {
         Vector3 origin = transform.position + Vector3.up * visionHeight;
@@ -1564,7 +1570,11 @@ public class EnemyManager : MonoBehaviour
         {
             if (hit.transform.CompareTag("Player"))
             {
-                sawPlayer = true;
+                if (!sawPlayer)
+                {
+                    AlertIndicator.RevealAlert();
+                }
+                sawPlayer = true;               
                 return true;
             }
                 

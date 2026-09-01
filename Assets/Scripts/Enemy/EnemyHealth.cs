@@ -234,6 +234,7 @@ public class EnemyHealth : MonoBehaviour
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
         dead = true;
+        enemyManager.AlertIndicator.gameObject.SetActive(false);
         Transform bloodPoint = transform;
         GameObject bloodBlast = enemyManager.After_BloodExplosion.GetObject();
         bloodBlast.transform.position = bloodPoint.position + new Vector3(0, 0.6f, 0);
@@ -242,7 +243,7 @@ public class EnemyHealth : MonoBehaviour
         {
             Transform explosionPoint = enemyManager.firePoint;
             GameObject explosionBlast = enemyManager.After_DeathExplosion.GetObject();
-            explosionBlast.transform.position = explosionPoint.position + new Vector3(0.5f, 0.6f, 0);
+            explosionBlast.transform.position = explosionPoint.position + new Vector3(0f, 0.6f, 0) + transform.forward * -1f;
         }
       
 
@@ -279,6 +280,17 @@ public class EnemyHealth : MonoBehaviour
         ComboManager.Instance.RegisterKill(EnemyType.Basic, isEnvironmental, isFinisher, isAirKill, isHeadshot);
         PlayerHealth.Instance.ManageHealth(5 * ComboManager.Instance.multiplier);
 
+        DamageNumber killText = KillTextPrefab.Spawn(
+         transform.position + transform.forward * 2f, transform);
+
+        killText.UpdateText();
+        HPAdded hpAdded = killText.GetComponentInChildren<HPAdded>(true);
+
+        if (hpAdded != null)
+        {
+            hpAdded.SetMainSprite(ComboManager.Instance.multiplier - 1);
+        }
+
         enemyManager.RemoveAllGuardEffects();
         OnDeath?.Invoke();
 
@@ -303,17 +315,16 @@ public class EnemyHealth : MonoBehaviour
             SFXManager.Instance.PlaySFX("Enemy/Headshot", 1f);
             CharacterAbilities.instance.AddKillValue(500);
             ComboManager.Instance.AddScore(500);
-            DamageNumber killText = KillTextPrefab.Spawn(
-           transform.position + new Vector3(0, 0f, 0),
-           "+500", transform);
-
-            killText.UpdateText();
 
             enemyManager.animator.SetBool("Headshot", true);
             GetComponent<BoxCollider>().enabled = false;
-            agent.isStopped = true;
-            agent.ResetPath();                 // 🔥 removes path completely
-            agent.velocity = Vector3.zero;
+            if(agent.enabled)
+            {
+                agent.isStopped = true;
+                agent.ResetPath();                 // 🔥 removes path completely
+                agent.velocity = Vector3.zero;
+            }
+           
             LeanTween.delayedCall(1.8f, () => { gameObject.SetActive(false); });
             enemyManager.enabled = false;
         }
@@ -321,11 +332,6 @@ public class EnemyHealth : MonoBehaviour
         {
             CharacterAbilities.instance.AddKillValue(400);
             ComboManager.Instance.AddScore(400);
-            DamageNumber killText = KillTextPrefab.Spawn(
-         transform.position + new Vector3(0, 0f, 0),
-         "+400", transform);
-
-            killText.UpdateText();
 
             gameObject.SetActive(false);
             if (ragdoll != null && !isFinisher)
@@ -339,11 +345,6 @@ public class EnemyHealth : MonoBehaviour
         {
             CharacterAbilities.instance.AddKillValue(300);
             ComboManager.Instance.AddScore(300);
-            DamageNumber killText = KillTextPrefab.Spawn(
-       transform.position + new Vector3(0, 0f, 0),
-       "+300", transform);
-
-            killText.UpdateText();
 
             StartCoroutine(SelfKnockback(100));
             gameObject.SetActive(false);
@@ -469,13 +470,18 @@ public class EnemyHealth : MonoBehaviour
             // Apply damage with info
             TakeDamage(damage, info);
 
-            // Spawn damage number
+            // Spawn damage number on the object's local RIGHT side
+            Vector3 spawnPosition =
+                transform.position +
+                transform.right * -1f +
+                Vector3.up * 2f;
+
             DamageNumber damageNumber = DamageNumberPrefab.Spawn(
-                transform.position + new Vector3(1, 2f, 0),
+                spawnPosition,
                 damage,
                 transform
             );
-           
+
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
 
@@ -519,13 +525,18 @@ public class EnemyHealth : MonoBehaviour
             // Apply damage with info
             TakeDamage(damage, info);
 
-            // Spawn damage number
+            // Spawn damage number on the object's local RIGHT side
+            Vector3 spawnPosition =
+                transform.position +
+                transform.right * -1f +
+                Vector3.up * 2f;
+
             DamageNumber damageNumber = DamageNumberPrefab.Spawn(
-                transform.position + new Vector3(1, 2f, 0),
+                spawnPosition,
                 damage,
                 transform
             );
-            
+
             SFXManager.Instance.PlaySFX("Enemy/BulletHit", 1f);
             ScoreManager.Instance.RegisterShotHit();
 

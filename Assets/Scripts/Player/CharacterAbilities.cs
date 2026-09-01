@@ -301,7 +301,7 @@ public class CharacterAbilities : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.X) && !playerMovement.isDashing && playerMovement.grounded)
         {
-            PerformFinisher();
+           // PerformFinisher();
         }
         if (Input.GetKeyDown(KeyCode.M))
         {
@@ -912,15 +912,7 @@ public class CharacterAbilities : MonoBehaviour
     {
         if (playerHealth.dead) return;
 
-        // ACTIVE: duration ↓
-        if (abilityActive)
-        {
-            abilityTimer -= Time.deltaTime;
-
-            if (abilityTimer <= 0f)
-                EndAbility();
-        }
-
+       
         if (abilityPressed && abilityReady)
         {
             abilityPressed = false;
@@ -982,8 +974,8 @@ public class CharacterAbilities : MonoBehaviour
     {
         abilityActive = false;
       
-        if (Ability == AbilityType.Ability1)
-            StopAbility1();
+        //if (Ability == AbilityType.Ability1)
+        //    StopAbility1();
 
         if (Ability == AbilityType.Ability2)
             StopAbility2();
@@ -1192,7 +1184,6 @@ public class CharacterAbilities : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         playerMovement.finisherActive = true;
-        playerMovement.finisherActive = true;
         playerMovement.speedline.SetActive(true);
         TargetIconCanvas.SetActive(true);
 
@@ -1265,7 +1256,8 @@ public class CharacterAbilities : MonoBehaviour
         }
        
         playerMovement.speedline.SetActive(false);
-        
+        playerMovement.finisherActive = false;
+        rb.isKinematic = false;
         TargetIconCanvas.SetActive(false);
         SetVignette(0.25f, 0.4f, 1f);
         GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
@@ -1351,45 +1343,79 @@ public class CharacterAbilities : MonoBehaviour
         Transform socket = fireLeft ? SocketPointLeft : SocketPointRight;
         Animator flash = fireLeft ? flashLeft : flashRight;
 
-        if (fireLeft)
-        {
-            leftGun.GetComponent<Animator>().SetTrigger("Fire");
-            leftGunFlash.Play();
-            leftGunSmoke.Play();
-        }
-        else
-        {
-            rightGun.GetComponent<Animator>().SetTrigger("Fire");
-            rightGunFlash.Play();
-            rightGunSmoke.Play();
-        }
-
         if (gun == null || socket == null)
             return;
 
-        // ==========================================
-        // ALWAYS SHOOT TOWARD SCREEN CENTER
-        // ==========================================
+        // =========================================================
+        // GUN ANIMATION
+        // =========================================================
 
-        Ray ray = Camera.main.ViewportPointToRay(
+        if (fireLeft)
+        {
+            if (leftGun != null)
+                leftGun.GetComponent<Animator>().SetTrigger("Fire");
+
+            if (leftGunFlash != null)
+                leftGunFlash.Play();
+
+            if (leftGunSmoke != null)
+                leftGunSmoke.Play();
+        }
+        else
+        {
+            if (rightGun != null)
+                rightGun.GetComponent<Animator>().SetTrigger("Fire");
+
+            if (rightGunFlash != null)
+                rightGunFlash.Play();
+
+            if (rightGunSmoke != null)
+                rightGunSmoke.Play();
+        }
+
+        // =========================================================
+        // ALWAYS AIM AT SCREEN CENTER / CROSSHAIR
+        // =========================================================
+
+        Camera cam = Camera.main;
+
+        if (cam == null)
+            return;
+
+        Ray ray = cam.ViewportPointToRay(
             new Vector3(0.5f, 0.5f, 0f)
         );
 
-        Vector3 dir;
+        Vector3 aimPoint;
 
         if (Physics.Raycast(
             ray,
             out RaycastHit hit,
             1000f))
         {
-            dir = (hit.point - socket.position).normalized;
+            aimPoint = hit.point;
         }
         else
         {
-            dir = ray.direction;
+            aimPoint =
+                ray.origin +
+                ray.direction * 1000f;
         }
 
-        flash.SetTrigger("Flash");
+        // Direction from gun socket toward crosshair
+        Vector3 dir =
+            (aimPoint - socket.position).normalized;
+
+        // =========================================================
+        // MUZZLE FLASH
+        // =========================================================
+
+        if (flash != null)
+            flash.SetTrigger("Flash");
+
+        // =========================================================
+        // SPAWN PROJECTILE
+        // =========================================================
 
         GameObject projectile =
             BulletPool.GetObject(
@@ -1397,10 +1423,25 @@ public class CharacterAbilities : MonoBehaviour
                 Quaternion.LookRotation(dir)
             );
 
-        Rigidbody rb =
+        if (projectile == null)
+            return;
+
+        // =========================================================
+        // PROJECTILE VELOCITY
+        // =========================================================
+
+        Rigidbody projectileRb =
             projectile.GetComponent<Rigidbody>();
 
-        rb.velocity = dir * projectileImpulse;
+        if (projectileRb != null)
+        {
+            projectileRb.velocity =
+                dir * projectileImpulse;
+        }
+
+        // =========================================================
+        // DAMAGE
+        // =========================================================
 
         Projectile proj =
             projectile.GetComponent<Projectile>();
@@ -1408,13 +1449,30 @@ public class CharacterAbilities : MonoBehaviour
         if (proj != null)
         {
             proj.SetDamage(
-                proj.bulletDamage * damageMultiplier
+                proj.bulletDamage *
+                damageMultiplier
             );
         }
 
+        // =========================================================
+        // RECOIL
+        // =========================================================
+
         ApplyRecoil(Recoil);
 
-        audioSource.PlayOneShot(audioClipFire);
+        // =========================================================
+        // SOUND
+        // =========================================================
+
+        if (audioSource != null &&
+            audioClipFire != null)
+        {
+            audioSource.PlayOneShot(audioClipFire);
+        }
+
+        // =========================================================
+        // NEXT GUN
+        // =========================================================
 
         fireLeftNext = !fireLeftNext;
     }
@@ -1431,21 +1489,20 @@ public class CharacterAbilities : MonoBehaviour
             yield break;
 
         Transform finisherPoint =
-            enemyManager.finisherTarget;
+            enemyManager.AbilityTarget;
 
         if (finisherPoint == null)
             yield break;
 
-        // Find desired finisher position
+        // =========================================================
+        // FIND INITIAL DESTINATION
+        // =========================================================
+
         Vector3 desiredDestination =
             finisherPoint.position +
             finisherPoint.right * destinationOffset.x +
             finisherPoint.forward * destinationOffset.z;
 
-        desiredDestination.y =
-            finisherPoint.position.y - 3f;
-
-        // Find closest valid NavMesh position
         if (!NavMesh.SamplePosition(
             desiredDestination,
             out NavMeshHit destinationHit,
@@ -1463,8 +1520,12 @@ public class CharacterAbilities : MonoBehaviour
         Vector3 pathDestination =
             destinationHit.position;
 
-        // Calculate path
-        NavMeshPath path = new NavMeshPath();
+        // =========================================================
+        // CALCULATE PATH
+        // =========================================================
+
+        NavMeshPath path =
+            new NavMeshPath();
 
         bool pathFound =
             NavMesh.CalculatePath(
@@ -1485,18 +1546,25 @@ public class CharacterAbilities : MonoBehaviour
             yield break;
         }
 
-        // Agent only calculates paths; it does NOT move player
-        if (abilityAgent != null)
+        // Agent only calculates paths.
+        // It does NOT move the player.
+        if (abilityAgent != null && abilityAgent.enabled)
         {
             abilityAgent.ResetPath();
             abilityAgent.enabled = false;
         }
 
-        Vector3[] corners = path.corners;
+        Vector3[] corners =
+            path.corners;
 
         int cornerIndex = 1;
 
-        Vector3 movementVelocity = Vector3.zero;
+        Vector3 movementVelocity =
+            Vector3.zero;
+
+        // =========================================================
+        // FOLLOW NAVMESH PATH
+        // =========================================================
 
         while (cornerIndex < corners.Length)
         {
@@ -1511,16 +1579,18 @@ public class CharacterAbilities : MonoBehaviour
             Vector3 nextCorner =
                 corners[cornerIndex];
 
-            nextCorner.y =
-                transform.position.y;
+            // =====================================================
+            // PLAYER MOVEMENT DIRECTION
+            // =====================================================
 
-            Vector3 direction =
+            Vector3 lookDirection =
                 nextCorner - transform.position;
 
-            direction.y = 0f;
+            // Player movement stays horizontal.
+            lookDirection.y = 0f;
 
             float distance =
-                direction.magnitude;
+                lookDirection.magnitude;
 
             // Reached corner
             if (distance < 0.15f)
@@ -1528,14 +1598,59 @@ public class CharacterAbilities : MonoBehaviour
                 cornerIndex++;
                 continue;
             }
-            rootCamera.localRotation = Quaternion.Euler(0f, rootCamera.localEulerAngles.y, rootCamera.localEulerAngles.z);
 
-            // ==========================================
-            // SMOOTH MOVEMENT
-            // ==========================================
+            // =====================================================
+            // ROOT CAMERA → FINISHER TARGET
+            // =====================================================
+
+            if (rootCamera != null &&
+                finisherPoint != null)
+            {
+                Vector3 cameraLookDirection =
+                    finisherPoint.position -
+                    rootCamera.position;
+
+                float horizontalDistance =
+                    new Vector2(
+                        cameraLookDirection.x,
+                        cameraLookDirection.z
+                    ).magnitude;
+
+                float cameraXRotation =
+                    Mathf.Atan2(
+                        cameraLookDirection.y,
+                        horizontalDistance
+                    ) * Mathf.Rad2Deg;
+
+                // Camera pitch
+                cameraXRotation =
+                    -cameraXRotation;
+
+                Vector3 cameraEuler =
+                    rootCamera.localEulerAngles;
+
+                Quaternion cameraTargetRotation =
+                    Quaternion.Euler(
+                        cameraXRotation,
+                        cameraEuler.y,
+                        cameraEuler.z
+                    );
+
+                rootCamera.localRotation =
+                    Quaternion.Slerp(
+                        rootCamera.localRotation,
+                        cameraTargetRotation,
+                        abilityRotationSmoothing *
+                        Time.deltaTime
+                    );
+            }
+
+            // =====================================================
+            // SMOOTH HORIZONTAL MOVEMENT
+            // =====================================================
 
             Vector3 desiredVelocity =
-                direction.normalized *
+                lookDirection.normalized *
                 abilityMoveSpeed;
 
             movementVelocity =
@@ -1546,13 +1661,31 @@ public class CharacterAbilities : MonoBehaviour
                     Time.deltaTime
                 );
 
-            transform.position +=
+            Vector3 newPosition =
+                transform.position +
                 movementVelocity *
                 Time.deltaTime;
 
-            // ==========================================
-            // SMOOTH ROTATION
-            // ==========================================
+            // =====================================================
+            // GROUND THE PLAYER
+            // =====================================================
+
+            if (NavMesh.SamplePosition(
+                newPosition,
+                out NavMeshHit groundHit,
+                1.5f,
+                NavMesh.AllAreas))
+            {
+                newPosition.y =
+                    groundHit.position.y;
+            }
+
+            transform.position =
+                newPosition;
+
+            // =====================================================
+            // SMOOTH PLAYER ROTATION
+            // =====================================================
 
             if (movementVelocity.sqrMagnitude > 0.01f)
             {
@@ -1573,9 +1706,9 @@ public class CharacterAbilities : MonoBehaviour
             yield return null;
         }
 
-        // ==============================================
+        // =========================================================
         // FINAL FINISHER POSITION
-        // ==============================================
+        // =========================================================
 
         if (target == null ||
             enemyManager == null ||
@@ -1585,18 +1718,30 @@ public class CharacterAbilities : MonoBehaviour
         }
 
         Vector3 finalDestination =
-      finisherPoint.position +
-      finisherPoint.right * destinationOffsetNew.x +
-      finisherPoint.forward * destinationOffsetNew.z;
+            finisherPoint.position +
+            finisherPoint.right * destinationOffsetNew.x +
+            finisherPoint.forward * destinationOffsetNew.z;
 
-        finalDestination.y =
-            finisherPoint.position.y - 3f;
+        // Find actual ground under final position
+        if (NavMesh.SamplePosition(
+            finalDestination,
+            out NavMeshHit finalGroundHit,
+            navMeshSampleDistance,
+            NavMesh.AllAreas))
+        {
+            finalDestination.y =
+                finalGroundHit.position.y;
+        }
 
         Vector3 finalStart =
             transform.position;
 
         float finalDuration = 0.08f;
         float finalTimer = 0f;
+
+        // =========================================================
+        // MOVE TO FINAL FINISHER POSITION
+        // =========================================================
 
         while (finalTimer < finalDuration)
         {
@@ -1607,7 +1752,8 @@ public class CharacterAbilities : MonoBehaviour
                 yield break;
             }
 
-            finalTimer += Time.deltaTime;
+            finalTimer +=
+                Time.deltaTime;
 
             float t =
                 Mathf.Clamp01(
@@ -1620,12 +1766,30 @@ public class CharacterAbilities : MonoBehaviour
                 t
             );
 
-            transform.position =
+            Vector3 finalPosition =
                 Vector3.Lerp(
                     finalStart,
                     finalDestination,
                     t
                 );
+
+            // Keep final movement grounded
+            if (NavMesh.SamplePosition(
+                finalPosition,
+                out NavMeshHit finalHit,
+                1.5f,
+                NavMesh.AllAreas))
+            {
+                finalPosition.y =
+                    finalHit.position.y;
+            }
+
+            transform.position =
+                finalPosition;
+
+            // =====================================================
+            // PLAYER LOOK DIRECTION
+            // =====================================================
 
             Vector3 lookDirection =
                 enemyManager.transform.position -
@@ -1649,12 +1813,57 @@ public class CharacterAbilities : MonoBehaviour
                     );
             }
 
+            // =====================================================
+            // ROOT CAMERA → FINISHER TARGET
+            // =====================================================
+
+            if (rootCamera != null &&
+                finisherPoint != null)
+            {
+                Vector3 cameraLookDirection =
+                    finisherPoint.position -
+                    rootCamera.position;
+
+                float horizontalDistance =
+                    new Vector2(
+                        cameraLookDirection.x,
+                        cameraLookDirection.z
+                    ).magnitude;
+
+                float cameraXRotation =
+                    Mathf.Atan2(
+                        cameraLookDirection.y,
+                        horizontalDistance
+                    ) * Mathf.Rad2Deg;
+
+                cameraXRotation =
+                    -cameraXRotation;
+
+                Vector3 cameraEuler =
+                    rootCamera.localEulerAngles;
+
+                Quaternion cameraTargetRotation =
+                    Quaternion.Euler(
+                        cameraXRotation,
+                        cameraEuler.y,
+                        cameraEuler.z
+                    );
+
+                rootCamera.localRotation =
+                    Quaternion.Slerp(
+                        rootCamera.localRotation,
+                        cameraTargetRotation,
+                        abilityRotationSmoothing *
+                        Time.deltaTime
+                    );
+            }
+
             yield return null;
         }
 
-        // ==============================================
+        // =========================================================
         // FINISHER
-        // ==============================================
+        // =========================================================
 
         float finisherDuration =
             enemyManager.finisherTime;
@@ -1670,16 +1879,32 @@ public class CharacterAbilities : MonoBehaviour
                 yield break;
             }
 
+            // =====================================================
+            // FINISHER POSITION
+            // =====================================================
+
             Vector3 currentFinisherPosition =
                 finisherPoint.position +
                 finisherPoint.right * destinationOffsetNew.x +
                 finisherPoint.forward * destinationOffsetNew.z;
 
-            currentFinisherPosition.y =
-                finisherPoint.position.y - 3f;
+            // Ground the finisher position
+            if (NavMesh.SamplePosition(
+                currentFinisherPosition,
+                out NavMeshHit finisherGroundHit,
+                navMeshSampleDistance,
+                NavMesh.AllAreas))
+            {
+                currentFinisherPosition.y =
+                    finisherGroundHit.position.y;
+            }
 
             transform.position =
                 currentFinisherPosition;
+
+            // =====================================================
+            // PLAYER LOOK DIRECTION
+            // =====================================================
 
             Vector3 lookDirection =
                 enemyManager.transform.position -
@@ -1703,7 +1928,53 @@ public class CharacterAbilities : MonoBehaviour
                     );
             }
 
-            finisherTimer += Time.deltaTime;
+            // =====================================================
+            // ROOT CAMERA → FINISHER TARGET
+            // =====================================================
+
+            if (rootCamera != null &&
+                finisherPoint != null)
+            {
+                Vector3 cameraLookDirection =
+                    finisherPoint.position -
+                    rootCamera.position;
+
+                float horizontalDistance =
+                    new Vector2(
+                        cameraLookDirection.x,
+                        cameraLookDirection.z
+                    ).magnitude;
+
+                float cameraXRotation =
+                    Mathf.Atan2(
+                        cameraLookDirection.y,
+                        horizontalDistance
+                    ) * Mathf.Rad2Deg;
+
+                cameraXRotation =
+                    -cameraXRotation;
+
+                Vector3 cameraEuler =
+                    rootCamera.localEulerAngles;
+
+                Quaternion cameraTargetRotation =
+                    Quaternion.Euler(
+                        cameraXRotation,
+                        cameraEuler.y,
+                        cameraEuler.z
+                    );
+
+                rootCamera.localRotation =
+                    Quaternion.Slerp(
+                        rootCamera.localRotation,
+                        cameraTargetRotation,
+                        abilityRotationSmoothing *
+                        Time.deltaTime
+                    );
+            }
+
+            finisherTimer +=
+                Time.deltaTime;
 
             yield return null;
         }

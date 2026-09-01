@@ -1,4 +1,5 @@
-﻿using InfimaGames.LowPolyShooterPack;
+﻿using DamageNumbersPro;
+using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System;
 using System.Collections;
@@ -116,7 +117,7 @@ public class PlayerHealth : MonoBehaviour
 
 
 
-
+   
     public void ManageHealth(float amount)
     {
         float oldHealth = currentHealth;
@@ -127,7 +128,7 @@ public class PlayerHealth : MonoBehaviour
             0f,
             maxHealth
         );
-
+       
         if (amount < 0)
         {
             if (PlayerMovement.finisherActive)
