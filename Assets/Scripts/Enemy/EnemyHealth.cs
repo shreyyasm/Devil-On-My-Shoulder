@@ -248,7 +248,7 @@ public class EnemyHealth : MonoBehaviour
       
 
 
-        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.25f);
+        RedVisionToggle.Instance.EnableRedVisionForSeconds(0.15f);
         ///ImpactFrameEffect.Instance.GoBlack();
         //LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 

@@ -91,6 +91,8 @@ public class CharacterAbilities : MonoBehaviour
 
     private CharacterData currentAbilityData;
 
+    public GameObject AbilityCanvas;
+
     [Header("Runtime Values (Cached From Scriptable)")]
     private float abilityDuration;
 
@@ -295,6 +297,8 @@ public class CharacterAbilities : MonoBehaviour
     }
     private EnemyManager lastIndicatorEnemy;
     Transform target;
+
+   
     private void Update()
     {
 
@@ -317,33 +321,36 @@ public class CharacterAbilities : MonoBehaviour
 
         target = FindFinisherTarget();
 
-        if (target != null && !playerMovement.isDashing && playerMovement.grounded && !playerMovement.finisherActive && finisherReady)
+        if (target != null && !FinisherActive && !abilityActive && (finisherReady || abilityReady))
         {
-            //EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
 
-            //if (enemyManager != lastIndicatorEnemy)
-            //{
-            //    if (lastIndicatorEnemy != null)
-            //        lastIndicatorEnemy.finisherIndicator.SetActive(false);
+            if (enemyManager != lastIndicatorEnemy)
+            {
+                if (lastIndicatorEnemy != null)
+                    lastIndicatorEnemy.finisherAbilityIcon.SetActive(false);
 
-            //    lastIndicatorEnemy = enemyManager;
-            //}
+                lastIndicatorEnemy = enemyManager;
+            }
 
-            //if (lastIndicatorEnemy != null)
-            //    lastIndicatorEnemy.finisherIndicator.SetActive(true);
+            if (lastIndicatorEnemy != null)
+                lastIndicatorEnemy.finisherAbilityIcon.SetActive(true);
 
-            //finisherCanvas.SetActive(true); 
+            lastIndicatorEnemy.alertIcon.SetActive(false);
         }
         else
         {
-            //if (lastIndicatorEnemy != null)
-            //{
-            //    lastIndicatorEnemy.finisherIndicator.SetActive(false);
-            //    lastIndicatorEnemy = null;
-            //}
-            //finisherCanvas.SetActive(false);
+            if (lastIndicatorEnemy != null && !FinisherActive && !abilityActive)
+            {
+                lastIndicatorEnemy.finisherAbilityIcon.SetActive(false);
+                lastIndicatorEnemy.alertIcon.SetActive(true);
+                lastIndicatorEnemy = null;
+            }
+     
         }
-        if (!playerMovement.finisherActive && finisherReady)
+
+        //Canvas
+        if (!playerMovement.finisherActive && finisherReady && !abilityReady)
         {
            
             finisherCanvas.SetActive(true);
@@ -352,6 +359,17 @@ public class CharacterAbilities : MonoBehaviour
         {
            
             finisherCanvas.SetActive(false);
+        }
+
+        if (!playerMovement.finisherActive && abilityReady)
+        {
+
+            AbilityCanvas.SetActive(true);
+        }
+        else
+        {
+
+            AbilityCanvas.SetActive(false);
         }
         if (!fovTransitionActive) return;
 
@@ -511,6 +529,8 @@ public class CharacterAbilities : MonoBehaviour
             enemyHealthTemp = enemyHealth;
             enemyHealth.FinisherActive();
             Debug.Log("Finisher performed");
+            enemyManager.finisherAbilityIcon.SetActive(false);
+            enemyManager.alertIcon.SetActive(false);
             VoiceLineManager.instance.animator.SetTrigger("HeadOut");
             FinisherActive = true;
             if (character.reloading)

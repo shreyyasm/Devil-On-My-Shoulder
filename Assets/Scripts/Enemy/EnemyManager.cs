@@ -23,7 +23,8 @@ public class EnemyManager : MonoBehaviour
     public ObjectPool After_BloodExplosion;
     public Transform finisherTarget;
     public Transform AbilityTarget;
-    public GameObject finisherIndicator;
+    public GameObject alertIcon;
+    public GameObject finisherAbilityIcon;
     public float finisherTime;
     public bool sawPlayer;
 
