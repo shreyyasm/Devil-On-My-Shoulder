@@ -6,9 +6,14 @@ public class GenerationPreset : ScriptableObject
 {
     public string PresetName;
 
-    public RoomData StartRoom;
+    [Header("Start Rooms")]
+    public RoomData StartRoomFirstSet;
+    public RoomData StartRoomRegular;
     public RoomData EndRoom;
     public RoomData RewardRoom;
 
-    public List<RoomGroup> AllRooms;
+    [HideInInspector] public List<RoomGroup> AllRooms;
+
+    [Header("Rooms Unlocked In This Set")]
+    public List<RoomGroup> NewlyUnlockedRooms;
 }

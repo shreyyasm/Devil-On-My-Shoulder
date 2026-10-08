@@ -1621,6 +1621,12 @@ public class EnemyManager : MonoBehaviour
         if (projectilePrefab == null || firePoint == null || player == null)
             return;
 
+        // Seeing the player once is enough to wake this enemy, but it must
+        // have a clear shot every time it fires. This stops it shooting
+        // through room walls after the player moves out of sight.
+        if (!HasLineOfSight())
+            return;
+
         if(muzzleFlash!= null)
             muzzleFlash.SetTrigger("shootFlash");
         if (muzzleParticle != null)

@@ -23,8 +23,19 @@ public class EnemySpawner : MonoBehaviour
     [System.Serializable]
     public class SpawnSet
     {
-        public string name = "Set";
+        public string name = "Set 0";
         public List<SetSpawnPoint> spawnPoints = new List<SetSpawnPoint>();
+        [Tooltip("Enemies available in this game set. Their weights determine how often they are chosen.")]
+        public List<WeightedEnemy> enemyChoices = new List<WeightedEnemy>();
+    }
+
+    [System.Serializable]
+    public class WeightedEnemy
+    {
+        public string name;
+        public ObjectPool enemyPool;
+        [Min(0f)]
+        public float weight = 1f;
     }
 
     [Header("Spawn Sets")]
@@ -39,8 +50,7 @@ public class EnemySpawner : MonoBehaviour
     public float navMeshSearchDistance = 2f;
 
     [Header("Level Settings")]
-    public int levelsPerEntry = 3;
-    public int maxNumber = 10;
+    public int maxNumber = 9;
 
     [HideInInspector]
     public int activeSet;
@@ -51,7 +61,6 @@ public class EnemySpawner : MonoBehaviour
     private void Start()
     {
         player = FindAnyObjectByType<PlayerMovement>().gameObject;
-
         activeSet = GetNumberForLevel();
 
         SpawnEnemies();
@@ -81,15 +90,18 @@ public class EnemySpawner : MonoBehaviour
 
     public int GetNumberForLevel()
     {
+        if (ProceduralGenerationManager.Instance != null)
+            return Mathf.Clamp(ProceduralGenerationManager.Instance.ActiveSet, 0, maxNumber);
+
+        if (ScoreManager.Instance == null)
+            return 0;
+
         int playerLevel = ScoreManager.Instance.level;
 
         if (playerLevel < 0)
             return 0;
 
-        int number = playerLevel / levelsPerEntry;
-        number = Mathf.Clamp(number, 0, maxNumber);
-
-        return number;
+        return Mathf.Clamp(playerLevel, 0, maxNumber);
     }
 
     private void SpawnEnemies()
@@ -102,6 +114,7 @@ public class EnemySpawner : MonoBehaviour
         int setIndex = Mathf.Clamp(activeSet, 0, spawnSets.Count - 1);
 
         SpawnSet currentSet = spawnSets[setIndex];
+        List<ObjectPool> distinctPools = new List<ObjectPool>();
 
         foreach (SetSpawnPoint spawnPoint in currentSet.spawnPoints)
         {
@@ -110,12 +123,21 @@ public class EnemySpawner : MonoBehaviour
 
             foreach (EnemySpawn enemySpawn in spawnPoint.enemies)
             {
-                if (enemySpawn.enemyPool == null)
-                    continue;
-
                 for (int i = 0; i < enemySpawn.count; i++)
                 {
-                    GameObject enemy = enemySpawn.enemyPool.GetObject();
+                    // The first two placements use different pools whenever this set has at least two choices.
+                    // This keeps a room from becoming a single-enemy encounter.
+                    ObjectPool enemyPool = GetWeightedEnemyPool(currentSet, distinctPools);
+                    if (enemyPool == null)
+                        enemyPool = enemySpawn.enemyPool;
+
+                    if (enemyPool == null)
+                        continue;
+
+                    if (distinctPools.Count < 2 && !distinctPools.Contains(enemyPool))
+                        distinctPools.Add(enemyPool);
+
+                    GameObject enemy = enemyPool.GetObject();
 
                     // Disable first so OnEnable doesn't run while repositioning.
                     enemy.SetActive(false);
@@ -166,6 +188,46 @@ public class EnemySpawner : MonoBehaviour
                 }
             }
         }
+    }
+
+    private ObjectPool GetWeightedEnemyPool(SpawnSet spawnSet, List<ObjectPool> excludedPools)
+    {
+        if (spawnSet.enemyChoices == null || spawnSet.enemyChoices.Count == 0)
+            return null;
+
+        bool requireDifferentEnemy = excludedPools.Count < 2 && spawnSet.enemyChoices.Count > excludedPools.Count;
+        float totalWeight = 0f;
+
+        foreach (WeightedEnemy choice in spawnSet.enemyChoices)
+        {
+            if (choice.enemyPool == null || choice.weight <= 0f)
+                continue;
+
+            if (requireDifferentEnemy && excludedPools.Contains(choice.enemyPool))
+                continue;
+
+            totalWeight += choice.weight;
+        }
+
+        if (totalWeight <= 0f)
+            return null;
+
+        float roll = Random.value * totalWeight;
+
+        foreach (WeightedEnemy choice in spawnSet.enemyChoices)
+        {
+            if (choice.enemyPool == null || choice.weight <= 0f)
+                continue;
+
+            if (requireDifferentEnemy && excludedPools.Contains(choice.enemyPool))
+                continue;
+
+            roll -= choice.weight;
+            if (roll <= 0f)
+                return choice.enemyPool;
+        }
+
+        return null;
     }
 
 #if UNITY_EDITOR

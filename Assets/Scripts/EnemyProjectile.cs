@@ -17,6 +17,10 @@ public class EnemyProjectile : MonoBehaviour
     public bool parryable;
     public Rigidbody enemyRigibody;
 
+    [Header("World Collision")]
+    [SerializeField, Min(0.01f)] private float collisionSweepRadius = 0.1f;
+    [SerializeField] private LayerMask blockingLayers = ~0;
+
     private PlayerMovement playerMovement;
 
     public bool SpawnedProjectile;
@@ -25,6 +29,9 @@ public class EnemyProjectile : MonoBehaviour
     {
         playerMovement = FindObjectOfType<PlayerMovement>();
         rb = GetComponent<Rigidbody>();
+        SphereCollider sphereCollider = GetComponent<SphereCollider>();
+        if (sphereCollider != null)
+            collisionSweepRadius = Mathf.Max(0.01f, sphereCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
         //LeanTween.delayedCall(5f, () => { enemyRigibody.GetComponent<EnemyManager>().ResetParrayable(); });
     }
     public Transform eliminatorTarget;
@@ -60,11 +67,14 @@ public class EnemyProjectile : MonoBehaviour
 
         if (flame != null)
         {
-            // Calculate the direction away from the flame
-            Vector3 directionAway = (transform.position - flame.position).normalized;
+            Vector3 movement = flame.forward * projSpeed * Time.deltaTime;
+            if (HitsWorldBeforeMoving(movement))
+            {
+                ReleaseProjectile();
+                return;
+            }
 
-            // Move the GameObject away from the flame
-            transform.position += flame.forward * projSpeed * Time.deltaTime;
+            transform.position += movement;
         }
         else
         {
@@ -78,6 +88,45 @@ public class EnemyProjectile : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
       
+    }
+
+    private bool HitsWorldBeforeMoving(Vector3 movement)
+    {
+        float distance = movement.magnitude;
+        if (distance <= Mathf.Epsilon)
+            return false;
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            transform.position,
+            collisionSweepRadius,
+            movement.normalized,
+            distance,
+            blockingLayers,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (RaycastHit hit in hits)
+        {
+            Collider hitCollider = hit.collider;
+            if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+                continue;
+
+            // The bullet originates inside its shooter and player contact is
+            // handled by OnTriggerEnter, so neither should count as a wall.
+            if (hitCollider.CompareTag("Player") || hitCollider.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ReleaseProjectile()
+    {
+        if (!SpawnedProjectile && bullet != null)
+            bullet.Release(gameObject);
+        else
+            gameObject.SetActive(false);
     }
     [SerializeField] GameObject Sender;
     public void HurtPlayer()

@@ -1,4 +1,4 @@
-﻿using DamageNumbersPro;
+using DamageNumbersPro;
 using InfimaGames.LowPolyShooterPack;
 using QFSW.MOP2;
 using System;
@@ -34,7 +34,7 @@ public class PlayerHealth : MonoBehaviour
     public Animator healthAnim;
 
     public PowerUpSelect powerUpSelect;
-    bool drain = true;
+    public bool isTick;
     public ObjectPool bloodPool;
     public bool dead;
 
@@ -50,7 +50,6 @@ public class PlayerHealth : MonoBehaviour
         //volume.profile.TryGetSettings(out chromaticAberration);
         displayedHealth = currentHealth;
         powerUpSelect = FindFirstObjectByType<PowerUpSelect>();
-        LeanTween.delayedCall(2f, () => { drain = false; });
 
         currentBPM = Mathf.Clamp(currentBPM, 0f, maxBPM);
         OnBPMChanged?.Invoke(currentBPM);
@@ -89,7 +88,7 @@ public class PlayerHealth : MonoBehaviour
 
 
        
-        if(drain) return;
+        if (!isTick) return;
 
         if (PlayerMovement.characterAbilities.GetHealthModifier())
             return;

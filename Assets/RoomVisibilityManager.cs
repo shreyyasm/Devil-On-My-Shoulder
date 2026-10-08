@@ -24,6 +24,11 @@ public class RoomVisibilityManager : MonoBehaviour
 
     public void SetCurrentRoom(int currentRoom)
     {
+        // Start-room triggers can run while procedural generation is still
+        // placing rooms. Visibility is initialized only after a complete map.
+        if (rooms == null)
+            return;
+
         CurrentRoomIndex = currentRoom;
         CurrentRoom = null;
 

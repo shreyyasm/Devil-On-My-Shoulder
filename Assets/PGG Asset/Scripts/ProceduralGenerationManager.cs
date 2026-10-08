@@ -12,11 +12,11 @@ public class ProceduralGenerationManager : MonoBehaviour
 
     public int ActiveSet = 0;
     [Header("Generation Settings")]
-    public int RoomsToEnd = 10;
+    public int RoomsToEnd = 8;
     public float DistanceOffset = 0.2f;
 
     [Header("Difficulty Scaling")]
-    public int RoomsPerSetIncrease = 5;
+    public int RoomsPerSetIncrease = 3;
     private int baseRoomsToEnd;
 
 
@@ -37,6 +37,7 @@ public class ProceduralGenerationManager : MonoBehaviour
     private List<RoomInstance> placedRooms = new();
     private int roomIndexCounter = 0;
     private Dictionary<DungeonNode, RoomInstance> placedNodes = new();
+    private int currentSetIndex;
 
     // ================= UNITY =================
     private void Awake()
@@ -77,14 +78,25 @@ public class ProceduralGenerationManager : MonoBehaviour
 
     void GenerateWithRetries()
     {
+        if (Presets == null || Presets.Count == 0)
+        {
+            Debug.LogError("[ProcGen] No generation presets are configured.");
+            return;
+        }
+
+        currentSetIndex = Mathf.Clamp(ActiveSet, 0, Presets.Count - 1);
+
         for (int attempt = 0; attempt < MaxGlobalRetries; attempt++)
         {
             SetupSeed();
 
             ClearPrevious();
-            RoomsToEnd = baseRoomsToEnd + (ActiveSet * RoomsPerSetIncrease);
-            GenerationPreset preset = Presets[ActiveSet];
+            RoomsToEnd = baseRoomsToEnd + (currentSetIndex * RoomsPerSetIncrease);
+            GenerationPreset preset = Presets[currentSetIndex];
             DungeonGraph graph = GenerateGraph(preset);
+
+            if (graph == null)
+                return;
 
             bool success = BuildGeometry(graph);
 
@@ -127,7 +139,19 @@ public class ProceduralGenerationManager : MonoBehaviour
     {
         DungeonGraph graph = new();
 
-        DungeonNode start = new DungeonNode(NodeType.Start, preset.StartRoom);
+        RoomData startRoom = currentSetIndex == 0
+            ? preset.StartRoomFirstSet
+            : preset.StartRoomRegular;
+
+        Debug.Log($"[ProcGen] Active Set {currentSetIndex} selected start room '{startRoom?.RoomName ?? "None"}'.");
+
+        if (startRoom == null)
+        {
+            Debug.LogError($"[ProcGen] Missing start room for active set {currentSetIndex} in preset '{preset.name}'.");
+            return null;
+        }
+
+        DungeonNode start = new DungeonNode(NodeType.Start, startRoom);
         graph.StartNode = start;
         graph.AllNodes.Add(start);
 
@@ -138,7 +162,7 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         for (int i = 0; i < RoomsToEnd; i++)
         {
-            RoomData data = GetNextRoomFromBag(preset, roomBag, lastRoom);
+            RoomData data = GetNextRoomFromBag(roomBag, lastRoom);
             lastRoom = data;
 
             DungeonNode next = new DungeonNode(NodeType.Room, data);
@@ -159,11 +183,11 @@ public class ProceduralGenerationManager : MonoBehaviour
 
     // ================= ROOM BAG (no consecutive repeats, full coverage before repeat) =================
 
-    RoomData GetNextRoomFromBag(GenerationPreset preset, List<RoomData> bag, RoomData lastRoom)
+    RoomData GetNextRoomFromBag(List<RoomData> bag, RoomData lastRoom)
     {
         if (bag.Count == 0)
         {
-            RefillBag(preset, bag);
+            RefillBag(bag);
 
             // If the freshly shuffled bag would start with the same room that
             // just ended the previous bag, swap it elsewhere in the bag.
@@ -179,13 +203,41 @@ public class ProceduralGenerationManager : MonoBehaviour
         return picked;
     }
 
-    void RefillBag(GenerationPreset preset, List<RoomData> bag)
+    void RefillBag(List<RoomData> bag)
     {
         bag.Clear();
 
-        foreach (RoomGroup group in preset.AllRooms)
-            foreach (RoomData data in group.Rooms)
-                bag.Add(data);
+        // Existing presets already have a tested AllRooms list. Keep using it
+        // so the original Set 0 layout continues to generate as before.
+        GenerationPreset activePreset = Presets[currentSetIndex];
+        if (activePreset.AllRooms != null && activePreset.AllRooms.Count > 0)
+        {
+            foreach (RoomGroup group in activePreset.AllRooms)
+                foreach (RoomData data in group.Rooms)
+                    if (data != null)
+                        bag.Add(data);
+        }
+        else
+        {
+            for (int setIndex = 0; setIndex <= currentSetIndex; setIndex++)
+            {
+                GenerationPreset preset = Presets[setIndex];
+
+                if (preset.NewlyUnlockedRooms == null)
+                    continue;
+
+                foreach (RoomGroup group in preset.NewlyUnlockedRooms)
+                    foreach (RoomData data in group.Rooms)
+                        if (data != null)
+                            bag.Add(data);
+            }
+        }
+
+        if (bag.Count == 0)
+        {
+            Debug.LogError($"[ProcGen] No room prefabs are unlocked for active set {currentSetIndex}.");
+            return;
+        }
 
         ShuffleList(bag);
     }
@@ -210,7 +262,22 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         placedNodes[graph.StartNode] = startRoom;
 
+        if (currentSetIndex > 0)
+            StartRegularGameplay();
+
         return PlaceChildren(graph.StartNode);
+    }
+
+    private void StartRegularGameplay()
+    {
+        PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+
+        if (playerHealth != null)
+            playerHealth.isTick = true;
+        else
+            Debug.LogWarning("[ProcGen] Regular spawn room could not find PlayerHealth to start health drain.");
+
+        BackgroundMusic.Instance?.StartGameplayMusicImmediately();
     }
 
     bool PlaceChildren(DungeonNode node)
@@ -226,7 +293,7 @@ public class ProceduralGenerationManager : MonoBehaviour
 
             for (int attempt = 0; attempt < MaxAttachAttempts; attempt++)
             {
-                if (TryAttachRoom(parentRoom, child.RoomData, out RoomInstance childRoom))
+                if (TryAttachRoom(parentRoom, child.RoomData, child.Type == NodeType.End, out RoomInstance childRoom))
                 {
                     placedNodes[child] = childRoom;
 
@@ -262,7 +329,8 @@ public class ProceduralGenerationManager : MonoBehaviour
         GameObject obj = Instantiate(data.Prefab, pos, rot, transform);
         RoomInstance instance = new RoomInstance(obj);
 
-        instance.RoomIndex = roomIndexCounter++; Debug.Log($"Spawned room index: {instance.RoomIndex}");
+        instance.RoomIndex = roomIndexCounter++;
+        Debug.Log($"[ProcGen] Spawned room {instance.RoomIndex}: '{data.RoomName}' from '{data.Prefab.name}'.");
         RoomTrigger trigger = obj.GetComponentInChildren<RoomTrigger>();
 
         if (trigger != null)
@@ -283,7 +351,7 @@ public class ProceduralGenerationManager : MonoBehaviour
         return instance;
     }
 
-    bool TryAttachRoom(RoomInstance fromRoom, RoomData data, out RoomInstance newRoom)
+    bool TryAttachRoom(RoomInstance fromRoom, RoomData data, bool isEndRoom, out RoomInstance newRoom)
     {
         newRoom = null;
 
@@ -343,6 +411,11 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         exitDoor.Open();
         entryDoor.Open();
+
+        // The End Room already contains the lift doors. Remove the ordinary
+        // room door used for this final connection so it cannot overlap them.
+        if (isEndRoom)
+            exitDoor.gameObject.SetActive(false);
 
         placedRooms.Add(instance);
         newRoom = instance;
