@@ -1,4 +1,4 @@
-﻿// Copyright 2021, Infima Games. All Rights Reserved.
+// Copyright 2021, Infima Games. All Rights Reserved.
 
 using InfimaGames.LowPolyShooterPack.Interface;
 using System;
@@ -191,7 +191,9 @@ namespace InfimaGames.LowPolyShooterPack
 			//Cache a reference to the overlay layer's index.
 			layerOverlay = characterAnimator.GetLayerIndex("Layer Overlay");
 		}
-		public PlayerMovement playerMovement;
+		
+		private bool shopFiringLocked;
+public PlayerMovement playerMovement;
 		protected override void Update()
 		{
 			
@@ -503,23 +505,22 @@ namespace InfimaGames.LowPolyShooterPack
 		/// <summary>
 		/// Can Fire.
 		/// </summary>
-		private bool CanPlayAnimationFire()
-		{
-			//Block.
-			if (holstered || holstering)
-				return false;
+        private bool CanPlayAnimationFire()
+        {
+            if (shopFiringLocked)
+                return false;
 
-			//Block.
-			if (reloading)
-				return false;
+            if (holstered || holstering)
+                return false;
 
-			//Block.
-			if (inspecting)
-				return false;
+            if (reloading)
+                return false;
 
-			//Return.
-			return true;
-		}
+            if (inspecting)
+                return false;
+
+            return true;
+        }
 
 		/// <summary>
 		/// Determines if we can play the reload animation.
@@ -987,5 +988,21 @@ namespace InfimaGames.LowPolyShooterPack
 		#endregion
 
 		#endregion
-	}
+	
+
+public void SetShopFiringLocked(bool locked)
+        {
+            shopFiringLocked = locked;
+            if (!locked)
+                return;
+
+            holdingButtonFire = false;
+            if (equippedWeapon != null)
+            {
+                Animator animator = equippedWeapon.GetAnimatorHands();
+                if (animator != null && HasAnimatorBool(animator, "Shooting"))
+                    animator.SetBool("Shooting", false);
+            }
+        }
+}
 }

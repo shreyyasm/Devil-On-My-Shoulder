@@ -43,6 +43,18 @@ public class RoomVisibilityManager : MonoBehaviour
                 Mathf.Abs(room.RoomIndex - currentRoom) <= visibleDistance;
 
             room.Instance.SetActive(active);
+
+            // The End Room becomes visible one room before the player reaches
+            // it. Open its lift at that point and leave it open for approach.
+            // Do not issue this command once the player is inside the End
+            // Room, because LevelComplete then owns the closing sequence.
+            if (active && room.RoomIndex != currentRoom)
+            {
+                LevelComplete[] endLifts = room.Instance.GetComponentsInChildren<LevelComplete>(true);
+                foreach (LevelComplete endLift in endLifts)
+                    if (!endLift.IsTransitionInProgress)
+                        endLift.OpenLiftForPlayer();
+            }
         }
     }
 }

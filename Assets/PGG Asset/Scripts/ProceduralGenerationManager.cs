@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using InfimaGames.LowPolyShooterPack;
 
 public class ProceduralGenerationManager : MonoBehaviour
 {
@@ -38,10 +39,34 @@ public class ProceduralGenerationManager : MonoBehaviour
     private int roomIndexCounter = 0;
     private Dictionary<DungeonNode, RoomInstance> placedNodes = new();
     private int currentSetIndex;
+    private static bool creatingPreviewGenerator;
+    private bool previewGenerator;
+    private Transform activeLevelRoot;
+    private ProceduralGenerationManager preparedGenerator;
+    private Vector3 playerSpawnOffset = new Vector3(1.46f, -1.66f, .01f);
+    private Quaternion playerSpawnRotation = Quaternion.Euler(0f, 270f, 0f);
+    private const float PreparedLevelYOffset = -10000f;
+    [SerializeField, Min(.05f)] private float liftPlayerRotateDuration = .1f;
+    [SerializeField, Min(.05f)] private float liftCameraCenterDuration = .125f;
+    private PlayerMovement lockedPlayerMovement;
+    
+    private Character lockedCharacter;
+private CameraLook lockedCameraLook;
+    private bool restorePlayerMovement;
+    private bool restoreCameraLook;
+    private bool liftControlSessionActive;
+    private Coroutine cameraCenterRoutine;
 
     // ================= UNITY =================
     private void Awake()
     {
+        if (creatingPreviewGenerator)
+        {
+            previewGenerator = true;
+            baseRoomsToEnd = RoomsToEnd;
+            return;
+        }
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -56,12 +81,14 @@ public class ProceduralGenerationManager : MonoBehaviour
 
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        if (!previewGenerator)
+            SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (!previewGenerator)
+            SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     // Replaces Start() as the trigger for generation.
@@ -76,12 +103,12 @@ public class ProceduralGenerationManager : MonoBehaviour
    
     // ================= ENTRY =================
 
-    void GenerateWithRetries()
+    bool GenerateWithRetries()
     {
         if (Presets == null || Presets.Count == 0)
         {
             Debug.LogError("[ProcGen] No generation presets are configured.");
-            return;
+            return false;
         }
 
         currentSetIndex = Mathf.Clamp(ActiveSet, 0, Presets.Count - 1);
@@ -96,23 +123,28 @@ public class ProceduralGenerationManager : MonoBehaviour
             DungeonGraph graph = GenerateGraph(preset);
 
             if (graph == null)
-                return;
+                return false;
 
             bool success = BuildGeometry(graph);
 
             if (success)
             {
                 CloseAllUnusedDoors();
-                RoomVisibilityManager.Instance.Initialize(placedRooms);
-                RoomVisibilityManager.Instance.SetCurrentRoom(0);
+                if (!previewGenerator)
+                {
+                    RoomVisibilityManager.Instance.Initialize(placedRooms);
+                    RoomVisibilityManager.Instance.SetCurrentRoom(0);
+                    CapturePlayerSpawnPoint();
+                }
                 Debug.Log($"[ProcGen] SUCCESS with Seed: {Seed}");                         
-                return;
+                return true;
             }
 
             Debug.LogWarning($"[ProcGen] Global failure with Seed: {Seed}");
         }
 
         Debug.LogError("[ProcGen] Failed to generate dungeon after global retries");
+        return false;
     }
 
     void SetupSeed()
@@ -262,7 +294,7 @@ public class ProceduralGenerationManager : MonoBehaviour
 
         placedNodes[graph.StartNode] = startRoom;
 
-        if (currentSetIndex > 0)
+        if (currentSetIndex > 0 && !previewGenerator)
             StartRegularGameplay();
 
         return PlaceChildren(graph.StartNode);
@@ -369,10 +401,22 @@ public class ProceduralGenerationManager : MonoBehaviour
             return false;
         }
 
-        // Prefer the room's designated start door, fall back to random.
+        // Prefer the room's designated start door. The End Room has two snap
+        // points: Door is its fixed procedural entry, while Door_1 is the
+        // shop-side exit. Never randomize the End Room entry or the lift can
+        // be rotated 180 degrees and expose the wrong set of doors.
         Door entryDoor = System.Array.Find(doors, d => d.IsStartDoor);
         if (entryDoor == null)
+        {
+            if (isEndRoom)
+            {
+                Debug.LogError("[ProcGen] End Room is missing its fixed entry Door (IsStartDoor).", obj);
+                Destroy(obj);
+                return false;
+            }
+
             entryDoor = doors[Random.Range(0, doors.Length)];
+        }
 
         // ---------- DOOR SNAP ----------
 
@@ -449,6 +493,433 @@ public class ProceduralGenerationManager : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    // ================= SEAMLESS LEVEL TRANSITION =================
+
+    public bool PrepareNextLevel()
+    {
+        if (preparedGenerator != null)
+            return true;
+
+        if (Presets == null || Presets.Count == 0 || ActiveSet >= Presets.Count - 1)
+            return false;
+
+        EnsureActiveLevelRoot();
+
+        GameObject previewRoot = new GameObject("Prepared Level");
+        previewRoot.transform.SetParent(transform);
+        previewRoot.transform.position = new Vector3(0f, PreparedLevelYOffset, 0f);
+
+        creatingPreviewGenerator = true;
+        ProceduralGenerationManager preview = previewRoot.AddComponent<ProceduralGenerationManager>();
+        creatingPreviewGenerator = false;
+
+        preview.ActiveSet = ActiveSet + 1;
+        preview.RoomsToEnd = baseRoomsToEnd;
+        preview.DistanceOffset = DistanceOffset;
+        preview.RoomsPerSetIncrease = RoomsPerSetIncrease;
+        preview.RandomizeSeed = RandomizeSeed;
+        preview.Seed = Seed;
+        preview.MaxAttachAttempts = MaxAttachAttempts;
+        preview.MaxGlobalRetries = MaxGlobalRetries;
+        preview.Presets = Presets;
+        preview.baseRoomsToEnd = baseRoomsToEnd;
+
+        if (!preview.GenerateWithRetries())
+        {
+            Destroy(previewRoot);
+            return false;
+        }
+
+        SetLevelEnemyActivation(preview.transform, false);
+        preparedGenerator = preview;
+        return true;
+    }
+
+    public bool ActivatePreparedLevel(Transform arrivalLift = null)
+    {
+        if (preparedGenerator == null && !PrepareNextLevel())
+            return false;
+
+        ProceduralGenerationManager preview = preparedGenerator;
+        Transform startRoom = preview.placedRooms.Count > 0
+            ? preview.placedRooms[0].Instance.transform
+            : null;
+
+        if (startRoom == null)
+            return false;
+
+        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        Vector3 playerPosition = player != null ? player.position : Vector3.zero;
+        Quaternion playerRotation = player != null ? player.rotation : Quaternion.identity;
+        Transform preparedLift = FindChildRecursive(startRoom, "Lift_New");
+
+        if (arrivalLift != null && preparedLift != null)
+        {
+            // Replace the current End Lift with the next level's Spawn Lift
+            // at the exact same position and facing. The player therefore
+            // remains in one continuous lift instead of appearing elsewhere.
+            Vector3 playerLocalToLift = arrivalLift.InverseTransformPoint(playerPosition);
+            // Match the physical End Lift exactly. This keeps the button
+            // console on the same side and prevents the new level from
+            // appearing behind the player during the handoff.
+            Quaternion desiredSpawnLiftRotation = arrivalLift.rotation;
+            Quaternion rotationDelta = desiredSpawnLiftRotation * Quaternion.Inverse(preparedLift.rotation);
+            preview.transform.rotation = rotationDelta * preview.transform.rotation;
+            preview.transform.position += arrivalLift.position - preparedLift.position;
+            playerPosition = preparedLift.TransformPoint(playerLocalToLift);
+        }
+        else
+        {
+            // Fallback for a transition without a lift reference.
+            Quaternion desiredStartRotation = playerRotation * Quaternion.Inverse(playerSpawnRotation);
+            Quaternion rotationDelta = desiredStartRotation * Quaternion.Inverse(startRoom.rotation);
+            preview.transform.rotation = rotationDelta * preview.transform.rotation;
+            Vector3 preparedSpawnPosition = startRoom.TransformPoint(playerSpawnOffset);
+            preview.transform.position += playerPosition - preparedSpawnPosition;
+        }
+
+        if (activeLevelRoot != null)
+        {
+            activeLevelRoot.gameObject.SetActive(false);
+            Destroy(activeLevelRoot.gameObject);
+        }
+
+        activeLevelRoot = preview.transform;
+
+        placedRooms = preview.placedRooms;
+        placedNodes = preview.placedNodes;
+        roomIndexCounter = preview.roomIndexCounter;
+        currentSetIndex = preview.currentSetIndex;
+        RoomsToEnd = preview.RoomsToEnd;
+        ActiveSet = preview.ActiveSet;
+        preparedGenerator = null;
+
+        if (player != null)
+        {
+            Rigidbody playerBody = player.GetComponent<Rigidbody>();
+            if (playerBody != null)
+            {
+                playerBody.velocity = Vector3.zero;
+                playerBody.angularVelocity = Vector3.zero;
+            }
+
+            player.SetPositionAndRotation(playerPosition, playerRotation);
+        }
+
+        Physics.SyncTransforms();
+        RebuildActiveLevelNavMesh();
+        SetLevelEnemyActivation(activeLevelRoot, false);
+
+        RoomVisibilityManager.Instance.Initialize(placedRooms);
+        RoomVisibilityManager.Instance.SetCurrentRoom(0);
+        StartCoroutine(EnsurePreparedEndLiftIsOpen());
+        StartCoroutine(OpenArrivalLiftAndRestoreControl());
+        ScoreManager.Instance?.IncreaseLevel();
+
+        Destroy(preview);
+        return true;
+    }
+
+    private System.Collections.IEnumerator EnsurePreparedEndLiftIsOpen()
+    {
+        // The End Room was built while the level sat below the map. Its
+        // Animator can therefore finish in its default closed state before
+        // this level becomes visible. Reapply OpenLift after activation.
+        for (int attempt = 0; attempt < 4; attempt++)
+        {
+            if (activeLevelRoot == null)
+                yield break;
+
+            LevelComplete[] endLifts = activeLevelRoot.GetComponentsInChildren<LevelComplete>(true);
+            foreach (LevelComplete endLift in endLifts)
+                endLift.OpenLiftForPlayer();
+
+            yield return new WaitForSeconds(.2f);
+        }
+    }
+
+    public void LockPlayerForLiftTravel(
+        Vector3 desiredForward = default,
+        Transform liftMidpoint = null,
+        float forcedPlayerYaw = float.NaN)
+    {
+        lockedPlayerMovement = FindFirstObjectByType<PlayerMovement>();
+        
+        lockedCharacter = FindFirstObjectByType<Character>();
+        lockedCharacter?.SetShopFiringLocked(true);
+lockedCameraLook = FindFirstObjectByType<CameraLook>();
+
+        if (lockedPlayerMovement != null)
+        {
+            if (!liftControlSessionActive)
+                restorePlayerMovement = lockedPlayerMovement.enabled;
+            lockedPlayerMovement.cameraLocked = true;
+            lockedPlayerMovement.enabled = false;
+
+            Rigidbody body = lockedPlayerMovement.GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+        }
+
+        if (lockedCameraLook != null)
+        {
+            if (!liftControlSessionActive)
+                restoreCameraLook = lockedCameraLook.enabled;
+            lockedCameraLook.SetRestrictedShopLook(false);
+            lockedCameraLook.SyncRotationToCurrentView();
+            lockedCameraLook.enabled = false;
+
+            if (cameraCenterRoutine != null)
+                StopCoroutine(cameraCenterRoutine);
+
+            Quaternion playerTargetRotation = lockedPlayerMovement.transform.rotation;
+            if (!float.IsNaN(forcedPlayerYaw))
+            {
+                // The player rig's neutral forward direction is -90° yaw.
+                // With CameraLook at local zero, this faces the shop entrance.
+                playerTargetRotation = Quaternion.Euler(0f, forcedPlayerYaw, 0f);
+            }
+            else
+            {
+                // The target comes from the actual spawned Shopkeeper, so
+                // this remains correct if the lift or shop is rotated.
+                desiredForward.y = 0f;
+                if (desiredForward.sqrMagnitude > .0001f)
+                {
+                    float shopYaw = Quaternion.LookRotation(desiredForward.normalized, Vector3.up).eulerAngles.y;
+                    if (shopYaw > 180f)
+                        shopYaw -= 360f;
+
+                    // Lift and shop layouts use right-angle orientations.
+                    // Snap away tiny world-position offsets such as -102°.
+                    shopYaw = Mathf.Round(shopYaw / 90f) * 90f;
+                    playerTargetRotation = Quaternion.Euler(0f, shopYaw, 0f);
+                }
+            }
+
+            cameraCenterRoutine = StartCoroutine(SmoothlyCenterLiftCamera(
+                lockedPlayerMovement.transform,
+                playerTargetRotation,
+                liftMidpoint));
+        }
+
+        liftControlSessionActive = true;
+    }
+
+    public void EnableShopCameraLook()
+    {
+        if (lockedCameraLook == null)
+            return;
+
+        lockedCameraLook.SyncRotationToCurrentView();
+        lockedCameraLook.SetRestrictedShopLook(true, .5f, 8f);
+        lockedCameraLook.enabled = true;
+    }
+
+    public void UnlockPlayerAfterLiftTravel()
+    {
+        if (lockedCameraLook != null)
+        {
+            lockedCameraLook.SyncRotationToCurrentView();
+            lockedCameraLook.SetRestrictedShopLook(false);
+            lockedCameraLook.enabled = restoreCameraLook;
+        }
+
+        if (lockedPlayerMovement != null)
+        {
+            lockedPlayerMovement.cameraLocked = false;
+            lockedPlayerMovement.enabled = restorePlayerMovement;
+        }
+
+        
+        if (lockedCharacter != null)
+            lockedCharacter.SetShopFiringLocked(false);
+        lockedCharacter = null;
+lockedCameraLook = null;
+        lockedPlayerMovement = null;
+        liftControlSessionActive = false;
+    }
+
+    private System.Collections.IEnumerator SmoothlyCenterLiftCamera(
+        Transform playerTransform,
+        Quaternion targetPlayerRotation,
+        Transform liftMidpoint)
+    {
+        if (playerTransform == null)
+            yield break;
+
+        Quaternion startPlayerRotation = playerTransform.rotation;
+        Vector3 startPlayerPosition = playerTransform.position;
+        Vector3 targetPlayerPosition = startPlayerPosition;
+        if (liftMidpoint != null)
+        {
+            targetPlayerPosition = liftMidpoint.position;
+            // Keep the player's current ground height; the marker defines the
+            // square's horizontal center rather than a vertical teleport.
+            targetPlayerPosition.y = startPlayerPosition.y;
+        }
+        if (lockedCameraLook == null)
+        {
+            playerTransform.rotation = targetPlayerRotation;
+            playerTransform.position = targetPlayerPosition;
+            cameraCenterRoutine = null;
+            yield break;
+        }
+
+        Transform cameraTransform = lockedCameraLook.transform;
+        Quaternion startCameraRotation = cameraTransform.localRotation;
+        Quaternion targetCameraRotation = Quaternion.identity;
+        float elapsed = 0f;
+        float duration = Mathf.Max(liftPlayerRotateDuration, liftCameraCenterDuration);
+
+        // Rotate the player and center both camera axes in the same motion.
+        // Neither yaw nor pitch waits for the other to finish.
+        while (elapsed < duration && cameraTransform != null && playerTransform != null)
+        {
+            elapsed += Time.deltaTime;
+            float playerT = Mathf.SmoothStep(0f, 1f, elapsed / liftPlayerRotateDuration);
+            float cameraT = Mathf.SmoothStep(0f, 1f, elapsed / liftCameraCenterDuration);
+            playerTransform.rotation = Quaternion.Slerp(startPlayerRotation, targetPlayerRotation, playerT);
+            playerTransform.position = Vector3.Lerp(startPlayerPosition, targetPlayerPosition, playerT);
+            cameraTransform.localRotation = Quaternion.Slerp(startCameraRotation, targetCameraRotation, cameraT);
+            yield return null;
+        }
+
+        if (playerTransform != null)
+        {
+            playerTransform.rotation = targetPlayerRotation;
+            playerTransform.position = targetPlayerPosition;
+        }
+
+        if (cameraTransform != null)
+            cameraTransform.localRotation = targetCameraRotation;
+
+        lockedCameraLook.SyncRotationToCurrentView();
+
+        cameraCenterRoutine = null;
+    }
+
+    private System.Collections.IEnumerator OpenArrivalLiftAndRestoreControl()
+    {
+        if (activeLevelRoot == null)
+            yield break;
+
+        Lift[] arrivalLifts = activeLevelRoot.GetComponentsInChildren<Lift>(true);
+        foreach (Lift lift in arrivalLifts)
+            lift.CloseDoorsForTransition();
+
+        // The new level is now in place. Hold the closed doors for one second
+        // after travel has stopped, then reveal the new level in front of the
+        // player by opening this same aligned lift.
+        yield return new WaitForSeconds(1f);
+
+        // Activate the prepared encounter while the doors still hide the new
+        // level. It is already positioned on the rebuilt NavMesh, so it is
+        // present as soon as the lift opens instead of popping in afterward.
+        SetLevelEnemyActivation(activeLevelRoot, true);
+        foreach (Lift lift in arrivalLifts)
+            lift.OpenDoorsForArrival();
+
+        yield return new WaitForSeconds(.65f);
+        UnlockPlayerAfterLiftTravel();
+
+        // Give the player one full second after the doors start opening
+        // before the level's health drain resumes.
+        yield return new WaitForSeconds(.35f);
+        FindFirstObjectByType<PlayerHealth>()?.ResumeHealthDrain();
+    }
+
+    private void RebuildActiveLevelNavMesh()
+    {
+        if (activeLevelRoot == null)
+            return;
+
+        // Some room prefabs keep their NavMeshSurface on a scene-level helper
+        // rather than directly below their room root. Rebuild every active
+        // surface, while skipped old/prepared roots remain inactive.
+        NavMeshSurface[] surfaces = FindObjectsOfType<NavMeshSurface>(true);
+        foreach (NavMeshSurface surface in surfaces)
+        {
+            if (!surface.gameObject.activeInHierarchy)
+                continue;
+
+            surface.RemoveData();
+            surface.BuildNavMesh();
+        }
+
+        // EnemySpawner.Start runs while the prepared level is far below the
+        // map. Recreate its encounter now that the NavMesh is in its final
+        // location, so enemies land on the generated rooms.
+        EnemySpawner[] spawners = activeLevelRoot.GetComponentsInChildren<EnemySpawner>(true);
+        foreach (EnemySpawner spawner in spawners)
+            spawner.RespawnForRebuiltNavMesh();
+    }
+
+private static void SetLevelEnemyActivation(Transform levelRoot, bool allowed)
+    {
+        if (levelRoot == null)
+            return;
+
+        EnemySpawner[] spawners = levelRoot.GetComponentsInChildren<EnemySpawner>(true);
+        foreach (EnemySpawner spawner in spawners)
+            spawner.SetActivationAllowed(allowed);
+    }
+
+
+    private void EnsureActiveLevelRoot()
+    {
+        if (activeLevelRoot != null)
+            return;
+
+        GameObject root = new GameObject("Active Level");
+        root.transform.SetParent(transform);
+
+        List<Transform> roomRoots = new();
+        foreach (Transform child in transform)
+            if (child != root.transform)
+                roomRoots.Add(child);
+
+        foreach (Transform roomRoot in roomRoots)
+            roomRoot.SetParent(root.transform, true);
+
+        activeLevelRoot = root.transform;
+    }
+
+    private static Transform FindChildRecursive(Transform parent, string childName)
+    {
+        if (parent == null)
+            return null;
+
+        if (parent.name == childName)
+            return parent;
+
+        foreach (Transform child in parent)
+        {
+            Transform found = FindChildRecursive(child, childName);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    private void CapturePlayerSpawnPoint()
+    {
+        if (placedRooms.Count == 0)
+            return;
+
+        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (player == null)
+            return;
+
+        Transform startRoom = placedRooms[0].Instance.transform;
+        playerSpawnOffset = startRoom.InverseTransformPoint(player.position);
+        playerSpawnRotation = Quaternion.Inverse(startRoom.rotation) * player.rotation;
     }
 
     // ================= DEBUG =================

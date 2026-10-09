@@ -9,15 +9,29 @@ public class LevelComplete : MonoBehaviour
     [SerializeField] private Animator liftAnimator;
     [SerializeField] private Transform liftTransform;
     [SerializeField] private Transform liftFrontSnapPoint;
+    [SerializeField] private Transform liftMidpoint;
+    [SerializeField] private ShopUpgradeSelection shopUpgradeSelection;
+    [SerializeField, Min(.1f)] private float requiredLiftEntryDistance = 2.35f;
 
     [Header("Lift Timing")]
-    [SerializeField, Min(0f)] private float doorCloseDelay = .45f;
-    [SerializeField, Min(.1f)] private float travelShakeDuration = 1.6f;
+    [SerializeField, Min(.1f)] private float liftCloseAnimationTimeout = 2f;
+    [SerializeField, Min(1f)] private float liftCloseAnimationSpeed = 2f;
+    [SerializeField, Min(0f)] private float delayBeforeTravelShake = .15f;
+    [SerializeField, Min(.05f)] private float liftEntryAlignmentDuration = .15f;
+    [SerializeField, Min(.1f)] private float travelShakeDuration = .8f;
     [SerializeField, Min(0f)] private float travelShakeDistance = .045f;
     [SerializeField, Min(0f)] private float shopDoorOffset = .15f;
     [SerializeField, Min(0f)] private float shopSpawnSettleDelay = .15f;
 
     private bool transitionStarted;
+    
+    private bool shopSelectionMade;
+private bool shopOpenForPlayer;
+    private Transform shopkeeperTransform;
+    private Vector3 lastShopkeeperPosition;
+    private bool hasShopkeeperPosition;
+
+    public bool IsTransitionInProgress => transitionStarted;
     private GameObject spawnedShop;
 
     private void Awake()
@@ -25,15 +39,58 @@ public class LevelComplete : MonoBehaviour
         ResolveLiftReferences();
     }
 
+    private void OnEnable()
+    {
+        // Prepared rooms can be hidden and enabled again by the room
+        // visibility system. Re-issue the open command when this happens so
+        // the End Lift is always waiting open for the player.
+        if (!transitionStarted)
+            StartCoroutine(EnsureEndLiftIsOpen());
+    }
+
     private IEnumerator Start()
     {
-        // The generated room can be enabled before its lift Animator has
-        // initialized. Wait one frame so the open state is not overwritten.
-        yield return null;
-        OpenEndLiftForPlayer();
+        yield return EnsureEndLiftIsOpen();
+    }
+
+    private IEnumerator EnsureEndLiftIsOpen()
+    {
+        // A generated End Room may be created while offstage, then enabled
+        // later when the player reaches it. Give its controller several
+        // frames to settle and keep the approach doors in their open state.
+        yield return new WaitForEndOfFrame();
+
+        for (int attempt = 0; attempt < 4 && !transitionStarted; attempt++)
+        {
+            OpenEndLiftForPlayer();
+            yield return new WaitForSeconds(.2f);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
+    {
+        TryBeginLiftTravel(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        TryBeginLiftTravel(other);
+    }
+
+    private void Update()
+    {
+        // Begin the lift handoff just as the player reaches its entrance,
+        // instead of requiring them to walk all the way into the middle.
+        if (transitionStarted)
+            return;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Collider playerCollider = player != null ? player.GetComponent<Collider>() : null;
+        if (playerCollider != null)
+            TryBeginLiftTravel(playerCollider);
+    }
+
+    private void TryBeginLiftTravel(Collider other)
     {
         if (transitionStarted || !other.CompareTag("Player"))
             return;
@@ -42,7 +99,23 @@ public class LevelComplete : MonoBehaviour
         if (playerHealth == null || playerHealth.playerDead)
             return;
 
+        ResolveLiftReferences();
+        if (!IsPlayerInsideLift(other.transform.position))
+            return;
+
+        playerHealth.PauseHealthDrain();
+        DisableCurrentLevelEnemies();
         StartCoroutine(TravelToShop());
+    }
+
+    private bool IsPlayerInsideLift(Vector3 playerPosition)
+    {
+        if (liftTransform == null)
+            return false;
+
+        Vector3 localPosition = liftTransform.InverseTransformPoint(playerPosition);
+        return Mathf.Abs(localPosition.x) <= requiredLiftEntryDistance &&
+               Mathf.Abs(localPosition.z) <= requiredLiftEntryDistance;
     }
 
     private IEnumerator TravelToShop()
@@ -50,28 +123,72 @@ public class LevelComplete : MonoBehaviour
         transitionStarted = true;
         ResolveLiftReferences();
 
-        TriggerLift("CloseLift");
-        yield return new WaitForSeconds(doorCloseDelay);
-        yield return ShakeLift();
-
+        // Build the shop behind the still-open front doors so its Shopkeeper
+        // provides a real facing target during the entry alignment.
         SpawnShopRoom();
+        ProceduralGenerationManager.Instance?.PrepareNextLevel();
+        KeepCurrentLiftActive();
+        ProceduralGenerationManager.Instance?.LockPlayerForLiftTravel(
+            GetShopkeeperFacing(), liftMidpoint);
+        yield return new WaitForSeconds(liftEntryAlignmentDuration);
+
+        TriggerLift("CloseLift", liftCloseAnimationSpeed);
+        yield return WaitForLiftToClose("LiftClose");
+        ResetLiftAnimationSpeed();
+        yield return new WaitForSeconds(delayBeforeTravelShake);
+        yield return ShakeLift();
         yield return new WaitForSeconds(shopSpawnSettleDelay);
 
         if (spawnedShop != null)
+        {
             TriggerLift("OpenLift Front");
+            shopOpenForPlayer = true;
+            shopSelectionMade = false;
+            StartCoroutine(RestoreShopControlAfterDoorOpens());
+        }
 
-        while (!Input.GetKeyDown(KeyCode.Escape))
+        while (!shopSelectionMade && !Input.GetKeyDown(KeyCode.P))
             yield return null;
 
-        TriggerLift("CloseLift Front");
-        yield return new WaitForSeconds(doorCloseDelay);
+        
+        FindFirstObjectByType<ShopGunOfferController>()?.CloseShop();
+shopUpgradeSelection?.HideImmediate();
+        shopOpenForPlayer = false;
+        TriggerLift("CloseLift Front", liftCloseAnimationSpeed);
+        yield return WaitForLiftToClose("Lift Close Front");
+        ResetLiftAnimationSpeed();
+        yield return new WaitForSeconds(delayBeforeTravelShake);
+        ProceduralGenerationManager.Instance?.LockPlayerForLiftTravel(GetShopkeeperFacing());
+        PlayerHealth.Instance?.RestoreHealthDuringLiftTravel();
         yield return ShakeLift();
 
-        if (ProceduralGenerationManager.Instance != null)
-            ProceduralGenerationManager.Instance.ActiveSet++;
+        if (spawnedShop != null)
+            Destroy(spawnedShop);
 
-        ScoreManager.Instance?.IncreaseLevel();
-        SceneManager.LoadSceneAsync("Mad Dash Game");
+        ProceduralGenerationManager.Instance?.ActivatePreparedLevel(liftTransform);
+    }
+
+private IEnumerator RestoreShopControlAfterDoorOpens()
+    {
+        yield return new WaitForSeconds(.6f);
+        if (!shopOpenForPlayer)
+            yield break;
+
+        if (shopUpgradeSelection == null)
+        {
+            foreach (ShopUpgradeSelection candidate in Resources.FindObjectsOfTypeAll<ShopUpgradeSelection>())
+            {
+                if (candidate.gameObject.scene.IsValid())
+                {
+                    shopUpgradeSelection = candidate;
+                    break;
+                }
+            }
+        }
+
+        ProceduralGenerationManager.Instance?.EnableShopCameraLook();
+        shopUpgradeSelection?.SetSelectionCallback(BeginGunOffers);
+        shopUpgradeSelection?.ShowForShop();
     }
 
     private void ResolveLiftReferences()
@@ -99,6 +216,9 @@ public class LevelComplete : MonoBehaviour
             if (liftFrontSnapPoint == null && liftTransform != null)
                 liftFrontSnapPoint = FindChildRecursive(liftTransform, "Door");
         }
+
+        if (liftMidpoint == null && liftTransform != null)
+            liftMidpoint = FindChildRecursive(liftTransform, "Lift Midpoint");
     }
 
     private void OpenEndLiftForPlayer()
@@ -109,20 +229,58 @@ public class LevelComplete : MonoBehaviour
         if (liftAnimator == null)
             return;
 
+        // Entering the End Lift uses its normal opening direction.
         TriggerLift("OpenLift");
     }
 
-    private void TriggerLift(string trigger)
+    /// <summary>Called by level generation after a prepared level becomes live.</summary>
+    public void OpenLiftForPlayer()
+    {
+        if (!transitionStarted)
+            OpenEndLiftForPlayer();
+    }
+
+    private void TriggerLift(string trigger, float animationSpeed = 1f)
     {
         if (liftAnimator == null)
             return;
 
         liftAnimator.enabled = true;
+        liftAnimator.speed = animationSpeed;
         liftAnimator.ResetTrigger("OpenLift");
         liftAnimator.ResetTrigger("CloseLift");
         liftAnimator.ResetTrigger("OpenLift Front");
         liftAnimator.ResetTrigger("CloseLift Front");
         liftAnimator.SetTrigger(trigger);
+    }
+
+    private void ResetLiftAnimationSpeed()
+    {
+        if (liftAnimator != null)
+            liftAnimator.speed = 1f;
+    }
+
+    private void KeepCurrentLiftActive()
+    {
+        Transform roomRoot = transform.parent != null ? transform.parent : transform.root;
+        if (roomRoot != null)
+            roomRoot.gameObject.SetActive(true);
+
+        if (liftTransform != null)
+            liftTransform.gameObject.SetActive(true);
+
+        if (liftAnimator != null)
+            liftAnimator.enabled = true;
+    }
+
+    private static void DisableCurrentLevelEnemies()
+    {
+        EnemyManager[] enemies = FindObjectsOfType<EnemyManager>(true);
+        foreach (EnemyManager enemy in enemies)
+        {
+            if (enemy != null && enemy.gameObject.activeInHierarchy)
+                enemy.gameObject.SetActive(false);
+        }
     }
 
     private void SpawnShopRoom()
@@ -135,6 +293,13 @@ public class LevelComplete : MonoBehaviour
         }
 
         spawnedShop = Instantiate(shopRoomPrefab);
+        shopkeeperTransform = FindChildRecursive(spawnedShop.transform, "Shopkeeper");
+        if (shopkeeperTransform != null)
+        {
+            lastShopkeeperPosition = shopkeeperTransform.position;
+            hasShopkeeperPosition = true;
+        }
+
         Door shopDoor = FindEntryDoor(spawnedShop);
 
         if (shopDoor == null || shopDoor.SnapPoint == null)
@@ -151,6 +316,25 @@ public class LevelComplete : MonoBehaviour
         spawnedShop.transform.position += liftFrontSnapPoint.position - shopDoor.SnapPoint.position;
         spawnedShop.transform.position += liftFrontSnapPoint.forward * shopDoorOffset;
         shopDoor.Open();
+    }
+
+    private Vector3 GetShopkeeperFacing()
+    {
+        Vector3 targetPosition = shopkeeperTransform != null
+            ? shopkeeperTransform.position
+            : hasShopkeeperPosition
+                ? lastShopkeeperPosition
+                : liftFrontSnapPoint != null
+                    ? liftFrontSnapPoint.position + liftFrontSnapPoint.forward
+                    : Vector3.zero;
+
+        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (player == null)
+            return Vector3.zero;
+
+        Vector3 facing = targetPosition - player.position;
+        facing.y = 0f;
+        return facing;
     }
 
     private IEnumerator ShakeLift()
@@ -173,6 +357,32 @@ public class LevelComplete : MonoBehaviour
         }
 
         liftTransform.localPosition = startingPosition;
+    }
+
+    private IEnumerator WaitForLiftToClose(string closeStateName)
+    {
+        if (liftAnimator == null)
+            yield break;
+
+        float elapsed = 0f;
+        bool enteredCloseState = false;
+
+        while (elapsed < liftCloseAnimationTimeout)
+        {
+            AnimatorStateInfo state = liftAnimator.GetCurrentAnimatorStateInfo(0);
+            if (state.IsName(closeStateName))
+            {
+                enteredCloseState = true;
+                if (state.normalizedTime >= .98f)
+                    yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (!enteredCloseState)
+            Debug.LogWarning($"[LevelComplete] Lift did not enter close state '{closeStateName}' before the timeout.", this);
     }
 
     private void PlayLiftState(string stateName, string fallbackTrigger)
@@ -217,5 +427,22 @@ public class LevelComplete : MonoBehaviour
         }
 
         return null;
+    }
+
+
+private void BeginGunOffers()
+    {
+        shopUpgradeSelection?.HideImmediate();
+
+        ShopGunOfferController gunOffers =
+            FindFirstObjectByType<ShopGunOfferController>();
+
+        if (gunOffers == null || spawnedShop == null)
+        {
+            shopSelectionMade = true;
+            return;
+        }
+
+        gunOffers.ShowOffers(spawnedShop.transform, () => shopSelectionMade = true);
     }
 }

@@ -56,7 +56,9 @@ public class EnemySpawner : MonoBehaviour
     public int activeSet;
 
     private GameObject player;
-    private bool activated;
+    
+    private bool activationAllowed = true;
+private bool activated;
 
     private void Start()
     {
@@ -68,7 +70,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void Update()
     {
-        if (activated)
+        if (activated || !activationAllowed)
             return;
 
         if (player == null)
@@ -189,6 +191,36 @@ public class EnemySpawner : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// Repositions this room's encounter once its generated NavMesh is ready.
+    /// Prepared rooms are built offstage, where no usable NavMesh exists yet.
+    /// </summary>
+    public void RespawnForRebuiltNavMesh()
+    {
+        foreach (GameObject enemy in spawnedEnemies)
+        {
+            if (enemy != null)
+                enemy.SetActive(false);
+        }
+
+        activated = false;
+        activeSet = GetNumberForLevel();
+        SpawnEnemies();
+    }
+
+public void SetActivationAllowed(bool allowed)
+    {
+        activationAllowed = allowed;
+        if (allowed)
+            return;
+
+        activated = false;
+        foreach (GameObject enemy in spawnedEnemies)
+            if (enemy != null)
+                enemy.SetActive(false);
+    }
+
 
     private ObjectPool GetWeightedEnemyPool(SpawnSet spawnSet, List<ObjectPool> excludedPools)
     {

@@ -66,6 +66,13 @@ namespace InfimaGames.LowPolyShooterPack
         public bool gamepadConnected;
 
         private int enemyLayerMask;
+        private bool restrictedShopLook;
+        private float restrictedLookSensitivity = 0.18f;
+        private float restrictedLookSmoothSpeed = 8f;
+        [SerializeField, Min(1f)] private float restrictedShopYawLimit = 35f;
+        [SerializeField, Min(1f)] private float restrictedShopPitchLimit = 20f;
+        private float restrictedShopYaw;
+        private float restrictedShopPitch;
 
         #endregion
 
@@ -95,6 +102,12 @@ namespace InfimaGames.LowPolyShooterPack
         }
         private void LateUpdate()
         {
+            if (restrictedShopLook)
+            {
+                UpdateRestrictedShopLook();
+                return;
+            }
+
             //if (playerMovement.cameraLocked)
             //    return;
            
@@ -159,6 +172,62 @@ namespace InfimaGames.LowPolyShooterPack
         public void SyncRotation()
         {
             rotationCamera = transform.localRotation;
+        }
+
+        /// <summary>
+        /// Synchronizes both cached rotations after an external cinematic or
+        /// lift transition moves the player and camera transforms.
+        /// </summary>
+        public void SyncRotationToCurrentView()
+        {
+            rotationCamera = transform.localRotation;
+            if (playerCharacter != null)
+                rotationCharacter = playerCharacter.transform.localRotation;
+        }
+
+        /// <summary>
+        /// Allows only slow camera rotation for the shop while the player body
+        /// remains locked in the lift.
+        /// </summary>
+        public void SetRestrictedShopLook(bool active, float sensitivityMultiplier = 0.18f, float smoothSpeed = 8f)
+        {
+            restrictedShopLook = active;
+            restrictedLookSensitivity = sensitivityMultiplier;
+            restrictedLookSmoothSpeed = smoothSpeed;
+            SyncRotationToCurrentView();
+
+            if (active)
+            {
+                Vector3 currentAngles = transform.localEulerAngles;
+                restrictedShopYaw = Mathf.Clamp(Mathf.DeltaAngle(0f, currentAngles.y), -restrictedShopYawLimit, restrictedShopYawLimit);
+                restrictedShopPitch = Mathf.Clamp(Mathf.DeltaAngle(0f, currentAngles.x), -restrictedShopPitchLimit, restrictedShopPitchLimit);
+            }
+        }
+
+        private void UpdateRestrictedShopLook()
+        {
+            if (playerCharacter == null || !playerCharacter.IsCursorLocked())
+                return;
+
+            Vector2 input = playerCharacter.GetInputLook();
+            Vector2 frameInput = input * sensitivity * restrictedLookSensitivity;
+
+            // Keep browsing inside a small cone around the centered shop view.
+            // This affects only the camera; the player body remains fixed.
+            restrictedShopYaw = Mathf.Clamp(
+                restrictedShopYaw + frameInput.x,
+                -restrictedShopYawLimit,
+                restrictedShopYawLimit);
+            restrictedShopPitch = Mathf.Clamp(
+                restrictedShopPitch - frameInput.y,
+                -restrictedShopPitchLimit,
+                restrictedShopPitchLimit);
+
+            rotationCamera = Quaternion.Euler(restrictedShopPitch, restrictedShopYaw, 0f);
+            transform.localRotation = Quaternion.Slerp(
+                transform.localRotation,
+                rotationCamera,
+                Time.deltaTime * restrictedLookSmoothSpeed);
         }
 
         #region FUNCTIONS

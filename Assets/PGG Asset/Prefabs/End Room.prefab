@@ -399,7 +399,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SnapPoint: {fileID: 548918465293330675}
   Blocker: {fileID: 0}
-  IsStartDoor: 0
+  IsStartDoor: 1
   IsUsed: 0
 --- !u!1 &22136321340182114
 GameObject:
@@ -448,6 +448,37 @@ Transform:
   - {fileID: 6725872592828700274}
   - {fileID: 5798598673359559094}
   - {fileID: 2920899422547690842}
+  m_Father: {fileID: 1927487693178161369}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &169182754754001120
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2142907537656310973}
+  m_Layer: 0
+  m_Name: Lift Midpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2142907537656310973
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169182754754001120}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 1927487693178161369}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &172511098400338219
@@ -3469,6 +3500,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1927487693178161369}
   - component: {fileID: 2937935820940104312}
+  - component: {fileID: 8471597404154289309}
   m_Layer: 0
   m_Name: Lift_New
   m_TagString: Untagged
@@ -3484,7 +3516,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4704776421627419724}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.70710737, z: -0, w: -0.7071063}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -2.72, y: -4.99, z: 0.12}
   m_LocalScale: {x: 0.59999996, y: 0.7, z: 0.5}
   m_ConstrainProportionsScale: 0
@@ -3501,8 +3533,9 @@ Transform:
   - {fileID: 1840545942997026270}
   - {fileID: 3847894196951636626}
   - {fileID: 8920850861530862300}
+  - {fileID: 2142907537656310973}
   m_Father: {fileID: 447836}
-  m_LocalEulerAnglesHint: {x: 0, y: -990, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!95 &2937935820940104312
 Animator:
   serializedVersion: 5
@@ -3524,6 +3557,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8471597404154289309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4704776421627419724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a31bc86098309dd4c97387b6c1ee02fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4739871329123654893
 GameObject:
   m_ObjectHideFlags: 0
@@ -4672,8 +4717,13 @@ MonoBehaviour:
   liftAnimator: {fileID: 0}
   liftTransform: {fileID: 0}
   liftFrontSnapPoint: {fileID: 0}
-  doorCloseDelay: 0.45
-  travelShakeDuration: 1.6
+  liftMidpoint: {fileID: 0}
+  requiredLiftEntryDistance: 1.6
+  liftCloseAnimationTimeout: 2
+  liftCloseAnimationSpeed: 2
+  delayBeforeTravelShake: 0.15
+  liftEntryAlignmentDuration: 0.15
+  travelShakeDuration: 0.8
   travelShakeDistance: 0.045
   shopDoorOffset: 0.15
   shopSpawnSettleDelay: 0.15
@@ -5276,7 +5326,7 @@ Transform:
   m_GameObject: {fileID: 6068578164290838341}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.139, y: 0.083, z: -0}
+  m_LocalPosition: {x: -0.139, y: -0.075, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6162,8 +6212,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.49344978, y: 0.6656452, z: 0.7198866}
-  m_Center: {x: -0.3596881, y: -0.16717821, z: -0.062992044}
+  m_Size: {x: 0.43614784, y: 0.6656452, z: 1.1029851}
+  m_Center: {x: -0.38833904, y: -0.16717821, z: -0.041542064}
 --- !u!114 &5918293040690971813
 MonoBehaviour:
   m_ObjectHideFlags: 0

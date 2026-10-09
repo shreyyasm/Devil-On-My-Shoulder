@@ -34,7 +34,12 @@ public class PlayerHealth : MonoBehaviour
     public Animator healthAnim;
 
     public PowerUpSelect powerUpSelect;
-    public bool isTick;
+    
+
+    [Header("Lift Health Recovery")]
+    [SerializeField, UnityEngine.Min(.1f)] private float liftHealDuration = 1f;
+    private Coroutine liftHealRoutine;
+public bool isTick;
     public ObjectPool bloodPool;
     public bool dead;
 
@@ -167,6 +172,56 @@ public class PlayerHealth : MonoBehaviour
         currentHealth += amount;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
     }
+
+public void PauseHealthDrain()
+    {
+        isTick = false;
+    }
+
+    public void ResumeHealthDrain()
+    {
+        if (!playerDead)
+            isTick = true;
+    }
+
+    public void RestoreHealthDuringLiftTravel()
+    {
+        if (liftHealRoutine != null)
+            StopCoroutine(liftHealRoutine);
+
+        isTick = false;
+        liftHealRoutine = StartCoroutine(RestoreHealthToMaximum());
+    }
+
+    private IEnumerator RestoreHealthToMaximum()
+    {
+        float startHealth = currentHealth;
+        if (startHealth >= maxHealth)
+        {
+            currentHealth = maxHealth;
+            displayedHealth = currentHealth;
+            liftHealRoutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < liftHealDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / liftHealDuration);
+            currentHealth = Mathf.Lerp(startHealth, maxHealth, progress);
+            // Keep the displayed value in sync so the visible meter rises
+            // smoothly at the same time as the actual health.
+            displayedHealth = currentHealth;
+            yield return null;
+        }
+
+        currentHealth = maxHealth;
+        displayedHealth = currentHealth;
+        StopCountdown();
+        liftHealRoutine = null;
+    }
+
     public TextMeshProUGUI countdownDisplay;
     public int countdownTime = 5;
     public bool timerRunning = false;   

@@ -30,7 +30,7 @@ public class Lift : MonoBehaviour
         }
 
         audioSource = GetComponent<AudioSource>();
-        Invoke(nameof(OpenDoors), initialOpenDelay);
+        Invoke(nameof(OpenDoorsForEntry), initialOpenDelay);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -39,7 +39,7 @@ public class Lift : MonoBehaviour
             return;
 
         playersInDoorway++;
-        OpenDoors();
+        OpenDoorsForEntry();
     }
 
     private void OnTriggerExit(Collider other)
@@ -53,7 +53,17 @@ public class Lift : MonoBehaviour
             ScheduleClose();
     }
 
-    private void OpenDoors()
+    private void OpenDoorsForEntry()
+    {
+        OpenDoors("OpenLift");
+    }
+
+    private void OpenDoorsForExit()
+    {
+        OpenDoors("OpenLift Front");
+    }
+
+    private void OpenDoors(string trigger)
     {
         if (closeRoutine != null)
         {
@@ -70,7 +80,44 @@ public class Lift : MonoBehaviour
             SFXManager.Instance.PlayNPC_SFX(audioSource, "Lift/Open", 0.7f);
 
         if (animator != null)
+            animator.SetTrigger(trigger);
+    }
+
+    /// <summary>For the level-transition controller after a new level arrives.</summary>
+    public void OpenDoorsForArrival()
+    {
+        if (closeRoutine != null)
+        {
+            StopCoroutine(closeRoutine);
+            closeRoutine = null;
+        }
+
+        isOpen = true;
+        if (animator != null)
+        {
+            // A newly loaded level starts with the Spawn Lift's normal open.
+            animator.ResetTrigger("CloseLift");
             animator.SetTrigger("OpenLift");
+        }
+    }
+
+    /// <summary>Forces a prepared spawn lift back to its closed arrival state.</summary>
+    public void CloseDoorsForTransition()
+    {
+        if (closeRoutine != null)
+        {
+            StopCoroutine(closeRoutine);
+            closeRoutine = null;
+        }
+
+        isOpen = false;
+        if (animator != null)
+        {
+            // Reset to the controller's initial closed state so OpenLift is
+            // valid again after the one-second arrival delay.
+            animator.Rebind();
+            animator.Update(0f);
+        }
     }
 
     private void ScheduleClose()
