@@ -178,6 +178,21 @@ public void PauseHealthDrain()
         isTick = false;
     }
 
+    /// <summary>
+    /// The end lift is a safe transition. If the player reaches it while the
+    /// zero-health countdown is active, stop that pending death and retain a
+    /// minimal valid health value until lift recovery restores them fully.
+    /// </summary>
+    public void CancelDeathCountdownForLift()
+    {
+        StopCountdown();
+
+        dead = false;
+        playerDead = false;
+        currentHealth = Mathf.Max(currentHealth, 1f);
+        displayedHealth = currentHealth;
+    }
+
     public void ResumeHealthDrain()
     {
         if (!playerDead)
@@ -265,47 +280,78 @@ public void PauseHealthDrain()
         while (timeLeft > 0)
         {
             if (isCancelled)
-                yield break; // immediately exit if cancelled
+                yield break;
 
             countdownDisplay.text = timeLeft.ToString();
             yield return new WaitForSeconds(1f);
             timeLeft--;
         }
+
         dead = true;
-        ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         VoiceLineManager.instance.PlayRandom("Player Dies", 30f);
         ScoreManager.Instance.CalculateOverallScore();
-        //countdownDisplay.gameObject.SetActive(false);
-        string sfxKey = $"Dead/GameOver";
-        SFXManager.Instance.PlaySFX(sfxKey, 1f);
+        SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);
         ScoreManager.Instance.ManageBGAudio(0.3f);
-        gameObject.GetComponent<PlayerMovement>().ExplodeItself();
         playerDead = true;
-        countdownCoroutine = null; // mark finished
-        yield return new WaitForSeconds(2f);
-        ScoreManager.Instance.scoreCanvas.SetActive(true);
-        LeanTween.delayedCall(3f, () => {
-            Cursor.lockState = CursorLockMode.None;
-            GamepadCursor.Instance.OnControlsChanged();
-        });
-      
+        yield return StartCoroutine(FinishDeathAfterFall());
+        countdownCoroutine = null;
     }
+
     public void PlayerDead()
     {
-       
-        ImpactFrameEffect.Instance.GoBlack();
         countdownDisplay.text = "You're Dead!";
         ScoreManager.Instance.CalculateOverallScore();
-        //countdownDisplay.gameObject.SetActive(false);
-        string sfxKey = $"Dead/GameOver";
-        SFXManager.Instance.PlaySFX(sfxKey, 1f);
+        SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);
         ScoreManager.Instance.ManageBGAudio(0.3f);
-        gameObject.GetComponent<PlayerMovement>().ExplodeItself();
         playerDead = true;
+        StartCoroutine(FinishDeathAfterFall());
+    }
 
-        ScoreManager.Instance.scoreCanvas.SetActive(true);
-        LeanTween.delayedCall(3f, () => {
+    [Header("Death Presentation")]
+    [SerializeField, Range(0.1f, 0.8f)] private float blinkStartDuringFallPortion = 0.45f;
+    [SerializeField, UnityEngine.Min(0f)] private float additionalBlinkDelay = 1f;
+
+    private IEnumerator FinishDeathAfterFall()
+    {
+        PlayerDeathFall deathFall = GetComponent<PlayerDeathFall>();
+        float fallDuration = deathFall != null ? deathFall.FallDuration : 0.85f;
+        float blinkStartDelay = (fallDuration * blinkStartDuringFallPortion) + additionalBlinkDelay;
+        float blinkDuration = Mathf.Max(0.1f, fallDuration * (1f - blinkStartDuringFallPortion));
+        DeathBlinkTransition blinkTransition = DeathBlinkTransition.Instance;
+
+        // Keep the fall clearly visible before the eyes begin to close.
+        if (deathFall != null)
+            deathFall.PlayDeathFall();
+
+        yield return new WaitForSecondsRealtime(blinkStartDelay);
+
+        if (blinkTransition != null)
+            blinkTransition.Play(blinkDuration, ShowScoreCanvas);
+
+        yield return new WaitForSecondsRealtime(blinkDuration);
+        gameObject.GetComponent<PlayerMovement>().ExplodeItself();
+
+        if (blinkTransition == null)
+            ShowScoreCanvas();
+    }
+
+    private void ShowScoreCanvas()
+    {
+        if (ScoreManager.Instance != null && ScoreManager.Instance.scoreCanvas != null)
+        {
+            Canvas scoreCanvas = ScoreManager.Instance.scoreCanvas.GetComponent<Canvas>();
+            if (scoreCanvas != null && DeathBlinkTransition.Instance != null)
+            {
+                scoreCanvas.overrideSorting = true;
+                scoreCanvas.sortingOrder = DeathBlinkTransition.Instance.ScoreCanvasSortingOrder;
+            }
+
+            ScoreManager.Instance.scoreCanvas.SetActive(true);
+        }
+
+        LeanTween.delayedCall(3f, () =>
+        {
             Cursor.lockState = CursorLockMode.None;
             GamepadCursor.Instance.OnControlsChanged();
         });
@@ -354,3 +400,6 @@ public void PauseHealthDrain()
     public bool IsLow => currentBPM <= lowBPM && currentBPM > criticalBPM;
 
 }
+
+
+

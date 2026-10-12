@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -46,6 +47,9 @@ public class TutorialStep
              "gameplay system must call SetExternalTriggerFlag(true) first " +
              "(e.g. an enemy projectile is incoming) before the key press counts.")]
     public bool waitForExternalTrigger = false;
+
+    [Tooltip("If true, the prompt stays hidden until SetExternalTriggerFlag(true) is called. Use this for context prompts such as an enemy encounter or a slide room.")]
+    public bool waitToShowForExternalTrigger = false;
 
     [Header("Timing (this step only)")]
     [Tooltip("How long this prompt stays visible after the correct input is given, " +
@@ -101,6 +105,8 @@ public class PlayerTutorialManager : MonoBehaviour
     [Tooltip("If true, movement state must be pushed in via SetExternalMovingState() " +
              "from your own player controller instead of being read from raw WASD axes.")]
     [SerializeField] private bool useExternalMovementState = false;
+    [Tooltip("Disabled for Mad Dash so the lift controller can start this tutorial after the player exits the spawn lift.")]
+    [SerializeField] private bool startAutomatically = false;
 
     [Header("Events")]
     public UnityEvent onTutorialCompleted;
@@ -111,24 +117,32 @@ public class PlayerTutorialManager : MonoBehaviour
     private bool externalIsMoving = false;
     private bool externalTriggerFlag = false;
     private bool isTimePausedByTutorial = false;
+    private bool waitingToShowCurrentStep = false;
     private float cachedTimeScale = 1f;
+
+    public int CurrentStepIndex => currentStepIndex;
+    public bool IsWaitingForContext => waitingToShowCurrentStep;
+    public event Action<int> StepCompleted;
 
     private void Start()
     {
-        if (steps.Count > 0)
-        {
-            ShowStep(0);
-        }
+        if (startAutomatically)
+            BeginTutorial();
         else if (tutorialPanel != null)
-        {
             tutorialPanel.SetActive(false);
-        }
     }
 
     private void Update()
     {
         if (isTransitioning) return;
         if (currentStepIndex < 0 || currentStepIndex >= steps.Count) return;
+
+        if (waitingToShowCurrentStep)
+        {
+            if (externalTriggerFlag)
+                ShowStep(currentStepIndex);
+            return;
+        }
 
         TutorialStep step = steps[currentStepIndex];
         step.timeShown += Time.unscaledDeltaTime;
@@ -211,14 +225,19 @@ public class PlayerTutorialManager : MonoBehaviour
     public void SetExternalTriggerFlag(bool flag)
     {
         externalTriggerFlag = flag;
+        if (flag && waitingToShowCurrentStep && currentStepIndex >= 0 && currentStepIndex < steps.Count)
+            ShowStep(currentStepIndex);
     }
 
     private void CompleteCurrentStep()
     {
         steps[currentStepIndex].isComplete = true;
+        // Context flags belong to one step only. Clearing here prevents a previous encounter from revealing the next contextual prompt.
+        externalTriggerFlag = false;
         ResumeTimeIfPaused();
         SetStepObjectsActive(steps[currentStepIndex], false);
         onStepCompleted?.Invoke(currentStepIndex);
+        StepCompleted?.Invoke(currentStepIndex);
         StartCoroutine(TransitionToNextStep());
     }
 
@@ -250,6 +269,15 @@ public class PlayerTutorialManager : MonoBehaviour
     {
         currentStepIndex = index;
         TutorialStep step = steps[index];
+
+        if (step.waitToShowForExternalTrigger && !externalTriggerFlag)
+        {
+            waitingToShowCurrentStep = true;
+            if (tutorialPanel != null) tutorialPanel.SetActive(false);
+            return;
+        }
+
+        waitingToShowCurrentStep = false;
         step.timeShown = 0f;
 
         if (tutorialPanel != null) tutorialPanel.SetActive(true);
@@ -309,6 +337,32 @@ public class PlayerTutorialManager : MonoBehaviour
         ResumeTimeIfPaused();
     }
 
+    /// <summary>Begins the configured sequence. Safe to call after a lift or cinematic gate.</summary>
+    public void BeginTutorial()
+    {
+        StopAllCoroutines();
+        isTransitioning = false;
+        waitingToShowCurrentStep = false;
+        externalTriggerFlag = false;
+        ResumeTimeIfPaused();
+
+        foreach (TutorialStep step in steps)
+        {
+            step.isComplete = false;
+            step.timeShown = 0f;
+            SetStepObjectsActive(step, false);
+        }
+
+        if (steps.Count > 0)
+            ShowStep(0);
+        else if (tutorialPanel != null)
+            tutorialPanel.SetActive(false);
+    }
+
+    public void ConfigureSteps(List<TutorialStep> configuredSteps)
+    {
+        steps = configuredSteps ?? new List<TutorialStep>();
+    }
     /// <summary>Manually force-complete the current step (useful for debugging or skip buttons).</summary>
     public void ForceCompleteCurrentStep()
     {

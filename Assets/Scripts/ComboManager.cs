@@ -194,6 +194,40 @@ public class ComboManager : MonoBehaviour
         Parent.SetActive(false);
     }
 
+    /// <summary>
+    /// Clears the full kill-meter state before the player begins lift travel.
+    /// The next level starts with no retained multiplier, XP, or kill feed.
+    /// </summary>
+    public void ResetForLiftTravel()
+    {
+        CancelInvoke(nameof(DelayedKillFeed));
+        CancelInvoke(nameof(ClearKillFeed));
+
+        multiKillCount = 0;
+        lastChainKillTime = 0f;
+        delayedKillText = string.Empty;
+        requiredXP = CalculateXP(1);
+
+        if (enemyKilledText != null)
+        {
+            enemyKilledText.transform.DOKill();
+            enemyKilledText.text = string.Empty;
+        }
+
+        if (killFeedText != null)
+        {
+            killFeedText.transform.DOKill();
+            killFeedText.DOKill();
+            killFeedText.text = string.Empty;
+            killFeedText.alpha = 0f;
+        }
+
+        if (xpSlider != null)
+            DOTween.Kill(xpSlider);
+
+        ResetCombo();
+    }
+
     float CalculateXP(int level)
     {
         return baseXPRequired * Mathf.Pow(level, growthRate);

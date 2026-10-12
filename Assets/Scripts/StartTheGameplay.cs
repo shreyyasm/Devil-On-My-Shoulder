@@ -11,6 +11,7 @@ public class StartTheGameplay : MonoBehaviour
         {
             playerHealth.isTick = true;
             BackgroundMusic.Instance?.StartGameplayMusic();
+            MadDashTutorialDirector.Instance?.NotifyPlayerExitedSpawnRoom();
             enabled = false;
         }
     }

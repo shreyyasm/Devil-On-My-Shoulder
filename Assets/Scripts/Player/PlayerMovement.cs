@@ -626,7 +626,7 @@ public class PlayerMovement : MonoBehaviour
         explosionPrefab.GetObject().transform.position = transform.position;
         gameObject.GetComponent<PlayerMovement>().enabled = false;
         gameObject.GetComponent<Character>().enabled = false;
-        gameObject.GetComponent<Movement>().enabled = false;
+        //gameObject.GetComponent<Movement>().enabled = false;
         //gameObject.GetComponent<PlayerInput>().enabled = false;
         gameObject.GetComponent<CapsuleCollider>().providesContacts = false;
         hands.SetActive(false);

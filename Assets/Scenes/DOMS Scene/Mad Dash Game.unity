@@ -13302,6 +13302,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 447896230}
   m_CullTransparentMesh: 1
+--- !u!134 &452279475
+PhysicMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: player (Instance) (Instance) (Instance)
+  dynamicFriction: 0
+  staticFriction: 0
+  bounciness: 0
+  frictionCombine: 1
+  bounceCombine: 0
 --- !u!1 &453732353
 GameObject:
   m_ObjectHideFlags: 0
@@ -21277,6 +21289,60 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &724033088
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 724033089}
+  - component: {fileID: 724033090}
+  m_Layer: 0
+  m_Name: Death Camera Animation Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &724033089
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724033088}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4582178616147796383}
+  m_Father: {fileID: 7856055840510552940}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &724033090
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724033088}
+  m_Enabled: 0
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 80e05e189f21fe441b2a88ca4c08efb2, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 2
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &724125769
 GameObject:
   m_ObjectHideFlags: 0
@@ -48972,6 +49038,7 @@ GameObject:
   - component: {fileID: 1717912216}
   - component: {fileID: 1717912218}
   - component: {fileID: 1717912217}
+  - component: {fileID: 1717912219}
   m_Layer: 0
   m_Name: Score Manager
   m_TagString: Untagged
@@ -49078,6 +49145,29 @@ MonoBehaviour:
   EnemyStill: 0
   playerShielded: 0
   batteryDrain: 0
+--- !u!114 &1717912219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1717912214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f72093ddc89f43847886343107646563, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  firstClosePortion: 0.25
+  reopenPortion: 0.2
+  firstBlinkClosure: 0.42
+  reopenAmount: 0.08
+  scoreCanvasDelay: 0.6
+  maximumBlurRadius: 2.5
+  blurStartDistance: 0.1
+  blurEndDistance: 0.25
+  sortingOrder: 5000
+  eyelidColor: {r: 0, g: 0, b: 0, a: 1}
+  eyelidFeatherOverlap: 0.08
 --- !u!1 &1723796870
 GameObject:
   m_ObjectHideFlags: 0
@@ -50476,13 +50566,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1790321799}
   - component: {fileID: 1790321800}
+  - component: {fileID: 1790321801}
   m_Layer: 0
   m_Name: Player Tutorial Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1790321799
 Transform:
   m_ObjectHideFlags: 0
@@ -50521,18 +50612,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
-    delayAfterComplete: 0.4
-    autoAdvanceTimeout: 0
-    pauseTimeUntilInput: 0
-    objectsToEnable: []
-    isComplete: 0
-    timeShown: 0
-  - instructionText: Press "SPACE" to JUMP!
-    iconSprite: {fileID: 0}
-    keys: 20000000
-    mouseButton: 0
-    movementRequirement: 0
-    waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
@@ -50545,6 +50625,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
@@ -50557,6 +50638,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 1
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
@@ -50569,6 +50651,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
@@ -50581,6 +50664,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
@@ -50594,6 +50678,7 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
@@ -50606,21 +50691,51 @@ MonoBehaviour:
     mouseButton: 0
     movementRequirement: 0
     waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
+  - instructionText: Press "SPACE" to JUMP!
+    iconSprite: {fileID: 0}
+    keys: 20000000
+    mouseButton: 0
+    movementRequirement: 0
+    waitForExternalTrigger: 0
+    waitToShowForExternalTrigger: 0
+    delayAfterComplete: 0.4
+    autoAdvanceTimeout: 0
+    pauseTimeUntilInput: 0
+    objectsToEnable: []
+    isComplete: 0
+    timeShown: 0
   defaultDelayBetweenSteps: 0.4
   movementDeadzone: 0.1
   useExternalMovementState: 0
+  startAutomatically: 0
   onTutorialCompleted:
     m_PersistentCalls:
       m_Calls: []
   onStepCompleted:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1790321801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790321798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5e836feb0a4a999729c693291d88a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tutorialManager: {fileID: 1790321800}
+  enemyEncounterDistance: 14
+  onlyRunOnActiveSetZero: 1
 --- !u!1 &1791554216
 GameObject:
   m_ObjectHideFlags: 0
@@ -51454,7 +51569,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActiveSet: 0
-  RoomsToEnd: 3
+  RoomsToEnd: 8
   DistanceOffset: -0.7
   RoomsPerSetIncrease: 3
   RandomizeSeed: 1
@@ -60962,9 +61077,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5797045569909138087}
   - {fileID: 2764287865411527739}
   - {fileID: 8185088544430352911}
+  - {fileID: 5797045569909138087}
   - {fileID: 1910589110147628838}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -360438,7 +360553,7 @@ Transform:
   - {fileID: 2929064921460321585}
   - {fileID: 2141866038979370618}
   - {fileID: 467655370009088521}
-  m_Father: {fileID: 7856055840510552940}
+  m_Father: {fileID: 724033089}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4582816370441395019
 Transform:
@@ -377177,6 +377292,7 @@ GameObject:
   - component: {fileID: 2072488805647430192}
   - component: {fileID: 945422214803891704}
   - component: {fileID: 8090627907286243158}
+  - component: {fileID: 8090627907286243159}
   m_Layer: 10
   m_Name: Player
   m_TagString: Player
@@ -383768,6 +383884,8 @@ MonoBehaviour:
   countdownTime: 3
   timerRunning: 0
   countdownAudioSource: {fileID: 945422214803891704}
+  blinkStartDuringFallPortion: 0.45
+  additionalBlinkDelay: 0.5
   criticalBPM: 40
   lowBPM: 70
   maxBPM: 180
@@ -386467,9 +386585,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4025442806276783848}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00000020861616, y: -0.000000029802308, z: -0.000000029802308,
-    w: 1}
-  m_LocalPosition: {x: 0, y: -0, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -440884,7 +441001,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5084496754763298329}
-  m_Material: {fileID: 13400000, guid: 36a4e7dc3aad57942aae174cf30148c9, type: 2}
+  m_Material: {fileID: 452279475}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -477268,9 +477385,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5768524716191094336}
-  - {fileID: 4582178616147796383}
   - {fileID: 7736716257883898155}
+  - {fileID: 724033089}
+  - {fileID: 5768524716191094336}
   m_Father: {fileID: 435554052860265846}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 90}
 --- !u!1 &7857318208395703368
@@ -483394,7 +483511,7 @@ PrefabInstance:
     - target: {fileID: 1554384991912646331, guid: 85cd86c65587e604eb771d12b87673e7,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 103
+      value: 109
       objectReference: {fileID: 0}
     - target: {fileID: 2265602991548060522, guid: 85cd86c65587e604eb771d12b87673e7,
         type: 3}
@@ -495141,6 +495258,22 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &8090627907286243159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5084496754763298329}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4542c0fad2f3cd409238387ca572098, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deathCameraAnimator: {fileID: 0}
+  deathStateName: DeathFall
+  fallbackDuration: 0.98
+  animationSpeed: 0.6
 --- !u!1 &8090684105553228147
 GameObject:
   m_ObjectHideFlags: 0

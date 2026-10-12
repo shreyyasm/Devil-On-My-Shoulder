@@ -4,6 +4,13 @@ using UnityEngine.SceneManagement;
 
 public class LevelComplete : MonoBehaviour
 {
+    private static readonly string[] LiftHiddenPlayerUiNames =
+    {
+        "Finisher UI",
+        "Demon Ability UI",
+        "Reload UI"
+    };
+
     [Header("Shop Lift References")]
     [SerializeField] private GameObject shopRoomPrefab;
     [SerializeField] private Animator liftAnimator;
@@ -103,6 +110,11 @@ private bool shopOpenForPlayer;
         if (!IsPlayerInsideLift(other.transform.position))
             return;
 
+        // The current floor ends as soon as the player commits to the lift.
+        // Hide and clear the entire kill meter before the shop transition.
+        ComboManager.Instance?.ResetForLiftTravel();
+        HidePlayerGameplayUi(other.transform);
+        playerHealth.CancelDeathCountdownForLift();
         playerHealth.PauseHealthDrain();
         DisableCurrentLevelEnemies();
         StartCoroutine(TravelToShop());
@@ -280,6 +292,23 @@ private IEnumerator RestoreShopControlAfterDoorOpens()
         {
             if (enemy != null && enemy.gameObject.activeInHierarchy)
                 enemy.gameObject.SetActive(false);
+        }
+    }
+
+    private static void HidePlayerGameplayUi(Transform playerTransform)
+    {
+        if (playerTransform == null)
+            return;
+
+        Transform uiRoot = FindChildRecursive(playerTransform, "UI");
+        if (uiRoot == null)
+            return;
+
+        foreach (string uiName in LiftHiddenPlayerUiNames)
+        {
+            Transform uiElement = FindChildRecursive(uiRoot, uiName);
+            if (uiElement != null)
+                uiElement.gameObject.SetActive(false);
         }
     }
 
