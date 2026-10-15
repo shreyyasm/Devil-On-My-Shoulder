@@ -58,6 +58,10 @@ public class DeathBlinkTransition : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        // Build the UI while the scene loads rather than at the instant of death.
+        // This avoids relying on a runtime-created sprite/material path that can be
+        // stripped from a standalone player build.
+        EnsureOverlay();
     }
 
     private void OnDestroy()
@@ -217,6 +221,7 @@ public class DeathBlinkTransition : MonoBehaviour
 
         overlayCanvas = canvasObject.GetComponent<Canvas>();
         overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        overlayCanvas.overrideSorting = true;
         overlayCanvas.sortingOrder = sortingOrder;
         canvasObject.GetComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         canvasObject.GetComponent<GraphicRaycaster>().enabled = false;
@@ -228,7 +233,9 @@ public class DeathBlinkTransition : MonoBehaviour
 
     private RectTransform CreateLid(string lidName, Transform parent, bool upper)
     {
-        GameObject lidObject = new GameObject(lidName, typeof(RectTransform), typeof(Image));
+        // CanvasRenderer is explicit here so standalone builds do not depend on the
+        // editor adding Image's required component during object construction.
+        GameObject lidObject = new GameObject(lidName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         lidObject.transform.SetParent(parent, false);
 
         RectTransform rect = lidObject.GetComponent<RectTransform>();
@@ -240,38 +247,13 @@ public class DeathBlinkTransition : MonoBehaviour
         rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 0f);
 
         Image image = lidObject.GetComponent<Image>();
-        image.sprite = CreateFeatheredLidSprite(upper);
+        // Leave sprite empty so Unity uses its built-in white UI sprite. Tinting it
+        // black gives the eyelid shape without a generated texture or custom shader,
+        // both of which are candidates for stripping from a player build.
+        image.sprite = null;
+        image.type = Image.Type.Simple;
         image.color = eyelidColor;
         image.raycastTarget = false;
         return rect;
-    }
-
-    private Sprite CreateFeatheredLidSprite(bool upper)
-    {
-        const int textureHeight = 64;
-        Texture2D texture = new Texture2D(1, textureHeight, TextureFormat.RGBA32, false)
-        {
-            name = upper ? "Upper Eyelid Feather" : "Lower Eyelid Feather",
-            filterMode = FilterMode.Bilinear,
-            wrapMode = TextureWrapMode.Clamp
-        };
-
-        for (int y = 0; y < textureHeight; y++)
-        {
-            float progress = y / (float)(textureHeight - 1);
-            // Only the inner 16% is feathered. The remainder stays opaque,
-            // allowing both eyelids to form a completely black screen on impact.
-            const float innerFeatherFraction = 0.16f;
-            float distanceFromInnerEdge = upper ? progress : 1f - progress;
-            float alpha = Mathf.SmoothStep(0f, 1f, distanceFromInnerEdge / innerFeatherFraction);
-            texture.SetPixel(0, y, new Color(1f, 1f, 1f, alpha));
-        }
-
-        texture.Apply(false, true);
-        return Sprite.Create(
-            texture,
-            new Rect(0f, 0f, 1f, textureHeight),
-            new Vector2(0.5f, upper ? 1f : 0f),
-            textureHeight);
     }
 }

@@ -113,8 +113,10 @@ public class AudioMixerRoutingManager : MonoBehaviour
         {
             if (resolver.ID == "audioVoiceVolume")
             {
-                SetVoiceSliderLabel(resolver.gameObject);
                 resolver.Refresh();
+                // Refresh rebuilds the generated setting label from its source
+                // prefab, so rename it afterwards.
+                SetVoiceSliderLabel(resolver.gameObject);
                 return;
             }
 
@@ -135,8 +137,9 @@ public class AudioMixerRoutingManager : MonoBehaviour
         Kamgam.SettingsGenerator.SettingResolver voiceSlider =
             voiceSliderObject.GetComponent<Kamgam.SettingsGenerator.SettingResolver>();
         voiceSlider.ID = "audioVoiceVolume";
-        SetVoiceSliderLabel(voiceSliderObject);
         voiceSlider.Refresh();
+        // Refresh copies "Effect Volume" from the duplicated template.
+        SetVoiceSliderLabel(voiceSliderObject);
     }
 
     private static void SetVoiceSliderLabel(GameObject voiceSliderObject)
@@ -144,13 +147,13 @@ public class AudioMixerRoutingManager : MonoBehaviour
         foreach (TextMeshProUGUI text in voiceSliderObject.GetComponentsInChildren<TextMeshProUGUI>(true))
         {
             if (text.text == "Effect Volume")
-                text.text = "Demon Dialogs and Voice Lines";
+                text.text = "Demon Voice Volume";
         }
 
         foreach (Text text in voiceSliderObject.GetComponentsInChildren<Text>(true))
         {
             if (text.text == "Effect Volume")
-                text.text = "Demon Dialogs and Voice Lines";
+                text.text = "Demon Voice Volume";
         }
     }
 

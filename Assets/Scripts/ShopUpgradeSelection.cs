@@ -349,13 +349,13 @@ public class ShopUpgradeCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
         if (upgradeTitle == null || upgradeCurrent == null || upgradeNext == null)
             return;
 
-        float current = RoguelikeManager.Instance != null ? RoguelikeManager.Instance.GetCurrentDisplayPercentage(upgrade) : 0f;
-        float next = current + (upgrade != null ? upgrade.displayPercentage : 0f);
+        float current = RoguelikeManager.Instance != null ? RoguelikeManager.Instance.GetCurrentDisplayValue(upgrade) : 0f;
+        float next = current + (upgrade != null ? upgrade.amount : 0f);
         string name = upgrade != null ? upgrade.displayName.ToUpperInvariant() : "MYSTERY UPGRADE";
         // Keep both values together on one row so players can read the change at a glance.
         // The UI's legacy font has no reliable Unicode arrow glyph, so use an ASCII arrow.
-        string currentText = current.ToString("0") + "%";
-        string nextText = "->  " + next.ToString("0") + "%";
+        string currentText = current.ToString("0.##");
+        string nextText = "->  " + next.ToString("0.##");
         upgradeTitle.gameObject.SetActive(true);
         upgradeCurrent.gameObject.SetActive(true);
         upgradeNext.gameObject.SetActive(true);

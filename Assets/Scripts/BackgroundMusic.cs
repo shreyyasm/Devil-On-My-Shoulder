@@ -29,7 +29,7 @@ public class BackgroundMusic : MonoBehaviour
 
     [Header("Transition")]
     [SerializeField, Min(0f)] private float transitionDuration = 1.5f;
-    [SerializeField, Min(0f)] private float iPodMusicFadeDuration = .75f;
+    [SerializeField, Min(0f)] private float iPodMusicFadeDuration = 1.25f;
 
     private AudioSource defaultMusicSource;
     private AudioSource gameplayMusicSource;
@@ -44,7 +44,11 @@ public class BackgroundMusic : MonoBehaviour
     private bool gameplayPlaybackSuspended;
     private AudioClip suspendedGameplayClip;
     private float suspendedGameplayTime;
-    private float resumeRecoveryTime;
+    private bool suspendedGameplayWasPlaying;
+    private bool pausedByPauseMenu;
+    private bool defaultMusicWasPlayingBeforePause;
+    private bool gameplayMusicWasPlayingBeforePause;
+    private bool elevatorMusicWasPlayingBeforePause;
 
     public bool HasStartedGameplay => gameplayStarted;
     public bool IsElevatorMusicActive => elevatorMusicActive;
@@ -85,6 +89,50 @@ public class BackgroundMusic : MonoBehaviour
             return;
 
         PlayDefaultMusic();
+    }
+
+    /// <summary>Pauses every background-music source for the pause menu.</summary>
+    public void PauseForPauseMenu()
+    {
+        if (pausedByPauseMenu)
+            return;
+
+        pausedByPauseMenu = true;
+        defaultMusicWasPlayingBeforePause = defaultMusicSource != null && defaultMusicSource.isPlaying;
+        gameplayMusicWasPlayingBeforePause = gameplayMusicSource != null && gameplayMusicSource.isPlaying;
+        elevatorMusicWasPlayingBeforePause = elevatorMusicSource != null && elevatorMusicSource.isPlaying;
+
+        if (gameplayMusicWasPlayingBeforePause)
+            RememberSuspendedGameplayTrack();
+        if (defaultMusicWasPlayingBeforePause)
+            defaultMusicSource.Pause();
+        if (gameplayMusicWasPlayingBeforePause)
+            gameplayMusicSource.Pause();
+        if (elevatorMusicWasPlayingBeforePause)
+            elevatorMusicSource.Pause();
+    }
+
+    /// <summary>Resumes exactly the tracks paused by the pause menu.</summary>
+    public void ResumeFromPauseMenu()
+    {
+        if (!pausedByPauseMenu)
+            return;
+
+        if (defaultMusicWasPlayingBeforePause)
+            defaultMusicSource.UnPause();
+        if (gameplayMusicWasPlayingBeforePause)
+            gameplayMusicSource.UnPause();
+        if (elevatorMusicWasPlayingBeforePause)
+            elevatorMusicSource.UnPause();
+
+        // The sources are already resumed above; do not let Update restart
+        // the gameplay source while clearing the pause bookkeeping.
+        ClearSuspendedGameplayTrack();
+
+        pausedByPauseMenu = false;
+        defaultMusicWasPlayingBeforePause = false;
+        gameplayMusicWasPlayingBeforePause = false;
+        elevatorMusicWasPlayingBeforePause = false;
     }
 
     private void Update()
@@ -280,7 +328,10 @@ public class BackgroundMusic : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float progress = iPodMusicFadeDuration <= 0f ? 1f : elapsed / iPodMusicFadeDuration;
-            source.volume = GetEffectiveVolume(Mathf.Lerp(0f, targetVolume, progress));
+            // Hold the music quieter at the start, then smoothly raise it as
+            // the demon finishes pressing play.
+            float rise = Mathf.SmoothStep(0f, 1f, progress);
+            source.volume = GetEffectiveVolume(Mathf.Lerp(0f, targetVolume, rise));
             yield return null;
         }
 
@@ -297,10 +348,11 @@ public class BackgroundMusic : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float progress = iPodMusicFadeDuration <= 0f ? 1f : elapsed / iPodMusicFadeDuration;
+            float rise = Mathf.SmoothStep(0f, 1f, progress);
 
             if (elevatorMusicSource != null)
                 elevatorMusicSource.volume = Mathf.Lerp(elevatorStartVolume, 0f, progress);
-            gameplayMusicSource.volume = GetEffectiveVolume(Mathf.Lerp(0f, gameplayMusicVolume, progress));
+            gameplayMusicSource.volume = GetEffectiveVolume(Mathf.Lerp(0f, gameplayMusicVolume, rise));
             yield return null;
         }
 
@@ -359,6 +411,10 @@ public class BackgroundMusic : MonoBehaviour
         {
             suspendedGameplayClip = gameplayMusicSource.clip;
             suspendedGameplayTime = gameplayMusicSource.time;
+            // Windows can report an audio source as stopped before the focus
+            // callback arrives. The clip still represents the active song,
+            // so always restore it rather than allowing Update to randomize.
+            suspendedGameplayWasPlaying = true;
         }
 
         gameplayPlaybackSuspended = true;
@@ -371,26 +427,9 @@ public class BackgroundMusic : MonoBehaviour
         if (!gameplayPlaybackSuspended)
             return false;
 
-        gameplayMusicSource.UnPause();
-
-        if (gameplayMusicSource.isPlaying)
-        {
-            ClearSuspendedGameplayTrack();
-            return false;
-        }
-
-        if (resumeRecoveryTime <= 0f)
-        {
-            // Give Unity's audio system a short moment to restore sound after
-            // Alt-Tab, the Windows key, or the pause menu is closed.
-            resumeRecoveryTime = Time.unscaledTime + .25f;
-            return true;
-        }
-
-        if (Time.unscaledTime < resumeRecoveryTime)
-            return true;
-
-        if (suspendedGameplayClip != null)
+        // A focus change can temporarily make AudioSource.isPlaying false.
+        // Restore the saved clip and playhead directly, never pick a new song.
+        if (suspendedGameplayWasPlaying && suspendedGameplayClip != null)
         {
             gameplayMusicSource.clip = suspendedGameplayClip;
             gameplayMusicSource.time = Mathf.Clamp(suspendedGameplayTime, 0f,
@@ -408,7 +447,7 @@ public class BackgroundMusic : MonoBehaviour
         gameplayPlaybackSuspended = false;
         suspendedGameplayClip = null;
         suspendedGameplayTime = 0f;
-        resumeRecoveryTime = 0f;
+        suspendedGameplayWasPlaying = false;
     }
 
     private AudioClip GetRandomGameplayTrack()

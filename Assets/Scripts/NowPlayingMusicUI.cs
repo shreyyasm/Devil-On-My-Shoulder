@@ -18,6 +18,8 @@ public sealed class NowPlayingMusicUI : MonoBehaviour
     [SerializeField] private TMP_Text songText;
     [SerializeField] private RectTransform[] dots = new RectTransform[3];
     private Coroutine displayRoutine;
+    // Both positions share the upper-left anchor. Keeping the hidden position
+    // beyond the left edge makes the entrance and exit visibly slide.
     [SerializeField] private Vector2 shownPosition = new Vector2(32f, -38f);
     [SerializeField] private Vector2 hiddenPosition = new Vector2(-510f, -38f);
     private bool isVisible;

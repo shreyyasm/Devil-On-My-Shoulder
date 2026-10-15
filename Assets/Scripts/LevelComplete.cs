@@ -4,13 +4,6 @@ using UnityEngine.SceneManagement;
 
 public class LevelComplete : MonoBehaviour
 {
-    private static readonly string[] LiftHiddenPlayerUiNames =
-    {
-        "Finisher UI",
-        "Demon Ability UI",
-        "Reload UI"
-    };
-
     [Header("Shop Lift References")]
     [SerializeField] private GameObject shopRoomPrefab;
     [SerializeField] private Animator liftAnimator;
@@ -333,15 +326,19 @@ private IEnumerator RestoreShopControlAfterDoorOpens()
             return;
 
         Transform uiRoot = FindChildRecursive(playerTransform, "UI");
-        if (uiRoot == null)
+        if (uiRoot != null)
+            uiRoot.gameObject.SetActive(false);
+    }
+
+    /// <summary>Restores the complete player HUD after the next lift opens.</summary>
+    public static void RestorePlayerGameplayUi(Transform playerTransform)
+    {
+        if (playerTransform == null)
             return;
 
-        foreach (string uiName in LiftHiddenPlayerUiNames)
-        {
-            Transform uiElement = FindChildRecursive(uiRoot, uiName);
-            if (uiElement != null)
-                uiElement.gameObject.SetActive(false);
-        }
+        Transform uiRoot = FindChildRecursive(playerTransform, "UI");
+        if (uiRoot != null)
+            uiRoot.gameObject.SetActive(true);
     }
 
     private void SpawnShopRoom()

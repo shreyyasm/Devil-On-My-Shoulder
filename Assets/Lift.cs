@@ -57,6 +57,7 @@ public class Lift : MonoBehaviour
     public void NotifyPlayerExitedDoorway()
     {
         playersInDoorway = Mathf.Max(0, playersInDoorway - 1);
+        LevelComplete.RestorePlayerGameplayUi(GameObject.FindGameObjectWithTag("Player")?.transform);
         PlayIPodCueAfterPlayerLeavesLift();
         if (playersInDoorway == 0)
             ScheduleClose();

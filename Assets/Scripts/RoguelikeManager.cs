@@ -18,8 +18,12 @@ public sealed class RoguelikeManager : MonoBehaviour
         [Tooltip("Sprite displayed beneath this upgrade title on the shop card.")] public Sprite displaySprite;
         [Tooltip("Color applied to this upgrade card background in the shop.")] public Color cardBackgroundColor = new Color(.05f, .7f, 1f, .82f);
         [Min(0f)] public float probability = 1f;
+        [Tooltip("Flat value added to this stat each time the upgrade is selected.")]
         [Min(0.01f)] public float amount = .1f;
-        [Min(0f)] public float displayPercentage = 10f;
+
+        // Retained only so existing scenes/prefabs do not lose serialized data.
+        // Upgrade cards and gameplay now use Amount exclusively.
+        [HideInInspector] public float displayPercentage = 10f;
     }
 
     [Header("Weighted Roguelike Elements")]
@@ -27,7 +31,7 @@ public sealed class RoguelikeManager : MonoBehaviour
     {
         new UpgradeOffer { displayName = "Player Speed", type = UpgradeType.PlayerSpeed, probability = 90, amount = 1f, displayPercentage = 1f },
         new UpgradeOffer { displayName = "Dash Speed", type = UpgradeType.DashSpeed, probability = 60, amount = 1f, displayPercentage = 1f },
-        new UpgradeOffer { displayName = "Player Health", type = UpgradeType.PlayerHealth, probability = 80, amount = 1f, displayPercentage = 5f },
+        new UpgradeOffer { displayName = "Player Health", type = UpgradeType.PlayerHealth, probability = 80, amount = 20f, displayPercentage = 20f },
         new UpgradeOffer { displayName = "Fire Rate", type = UpgradeType.FireRate, probability = 40, amount = 50f, displayPercentage = 5f },
         new UpgradeOffer { displayName = "Magazine Size", type = UpgradeType.MagazineSize, probability = 40, amount = 2f, displayPercentage = 5f },
         new UpgradeOffer { displayName = "Bullet Damage", type = UpgradeType.BulletDamage, probability = 30, amount = 1f, displayPercentage = 5f }
@@ -97,9 +101,21 @@ public sealed class RoguelikeManager : MonoBehaviour
         ApplyRunStats();
     }
 
-    public float GetCurrentDisplayPercentage(UpgradeOffer offer)
+    public float GetCurrentDisplayValue(UpgradeOffer offer)
     {
-        return offer == null ? 0f : upgradeStacks[(int)offer.type] * offer.displayPercentage;
+        if (offer == null)
+            return 0f;
+
+        return offer.type switch
+        {
+            UpgradeType.PlayerSpeed => playerSpeedBonus,
+            UpgradeType.DashSpeed => dashSpeedBonus,
+            UpgradeType.PlayerHealth => playerHealthBonus,
+            UpgradeType.FireRate => fireRateBonus,
+            UpgradeType.MagazineSize => magazineSizeBonus,
+            UpgradeType.BulletDamage => bulletDamageBonus,
+            _ => 0f
+        };
     }
 
     public void ApplyRunStats()
@@ -107,14 +123,14 @@ public sealed class RoguelikeManager : MonoBehaviour
         CaptureBases();
         if (playerMovement != null)
         {
-            playerMovement.moveSpeed = baseMoveSpeed * (1f + playerSpeedBonus);
-            playerMovement.maxSpeed = baseMaxSpeed * (1f + playerSpeedBonus);
-            playerMovement.dashForce = baseDashForce * (1f + dashSpeedBonus);
+            playerMovement.moveSpeed = baseMoveSpeed + playerSpeedBonus;
+            playerMovement.maxSpeed = baseMaxSpeed + playerSpeedBonus;
+            playerMovement.dashForce = baseDashForce + dashSpeedBonus;
         }
         if (playerHealth != null)
         {
             float oldMax = playerHealth.maxHealth;
-            playerHealth.maxHealth = baseMaxHealth * (1f + playerHealthBonus);
+            playerHealth.maxHealth = baseMaxHealth + playerHealthBonus;
             playerHealth.currentHealth = Mathf.Clamp(playerHealth.currentHealth + Mathf.Max(0f, playerHealth.maxHealth - oldMax), 0f, playerHealth.maxHealth);
         }
         foreach (Weapon weapon in FindObjectsOfType<Weapon>(true)) weapon.ApplyRoguelikeMagazineBonus(MagazineSizeBonus);

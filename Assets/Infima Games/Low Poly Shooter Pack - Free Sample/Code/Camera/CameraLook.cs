@@ -82,8 +82,8 @@ namespace InfimaGames.LowPolyShooterPack
         {
             playerCharacter = ServiceLocator.Current.Get<IGameModeService>().GetPlayerCharacter();
             playerCharacterRigidbody = playerCharacter.GetComponent<Rigidbody>();
-            sensitivity.x = SettingsManager.MouseSensitivity;
-            sensitivity.y = SettingsManager.MouseSensitivity;
+            sensitivity.x = MouseSensitivitySettingsControl.Value;
+            sensitivity.y = MouseSensitivitySettingsControl.Value;
 
             enemyLayerMask = LayerMask.GetMask(enemyLayerName);
         }
@@ -114,8 +114,8 @@ namespace InfimaGames.LowPolyShooterPack
             if (playerMovement.finisherActive) return;
             gamepadConnected = IsGamepadConnected();
 
-            sensitivity.x = SettingsManager.MouseSensitivity;
-            sensitivity.y = SettingsManager.MouseSensitivity;
+            sensitivity.x = MouseSensitivitySettingsControl.Value;
+            sensitivity.y = MouseSensitivitySettingsControl.Value;
 
             if (gamepadConnected)
             {

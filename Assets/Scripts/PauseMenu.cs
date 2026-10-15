@@ -9,7 +9,7 @@ using InfimaGames.LowPolyShooterPack;
 public class PauseMenu : MonoBehaviour
 {
     private const string GameplaySceneName = "Mad Dash Game";
-    private const string MainMenuSceneName = "Main Menu";
+    private const string MainMenuSceneName = "Doms Main Menu";
     [Header("UI")]
     [SerializeField] private GameObject pausePanel;   // Assign your Pause panel root here
 
@@ -100,6 +100,7 @@ public class PauseMenu : MonoBehaviour
         if (IsPaused) return;
         IsPaused = true;
        
+        BackgroundMusic.Instance?.PauseForPauseMenu();
         Time.timeScale = 0f;
         if (pauseAudio) AudioListener.pause = true;
 
@@ -130,6 +131,7 @@ public class PauseMenu : MonoBehaviour
 
         Time.timeScale = 1f;
         if (pauseAudio) AudioListener.pause = false;
+        BackgroundMusic.Instance?.ResumeFromPauseMenu();
 
         if (pausePanel) pausePanel.SetActive(false);
 

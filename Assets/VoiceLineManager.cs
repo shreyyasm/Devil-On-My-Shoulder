@@ -14,7 +14,7 @@ public class VoiceLineManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI subtitleText;
 
     [Header("Voice Playback")]
-    [Tooltip("Extra gain for daemon dialogue. The Effects slider still controls the final voice volume.")]
+    [Tooltip("Extra gain for demon dialogue. The Demon Voice Volume slider controls the final voice volume.")]
     [Range(0f, 2f)]
     [SerializeField] private float voiceVolumeMultiplier = 4f;
 
