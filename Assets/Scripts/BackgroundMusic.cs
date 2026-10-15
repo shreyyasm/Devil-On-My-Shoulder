@@ -10,9 +10,16 @@ public class BackgroundMusic : MonoBehaviour
     [Header("Intro Music")]
     [SerializeField] private AudioClip defaultMusic;
     [SerializeField, Range(0f, 1f)] private float defaultMusicVolume = 0.7f;
+    [SerializeField] private string defaultTrackDisplayName = "THE RISER";
 
     [Header("Gameplay Music")]
     [SerializeField] private List<AudioClip> gameplayMusic = new();
+    [SerializeField] private List<string> gameplayTrackDisplayNames = new()
+    {
+        "BUTCHER",
+        "VENGEANCE",
+        "REBELLION TOUCH THE SKY"
+    };
     [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 0.7f;
 
     [Header("Elevator Music")]
@@ -22,6 +29,7 @@ public class BackgroundMusic : MonoBehaviour
 
     [Header("Transition")]
     [SerializeField, Min(0f)] private float transitionDuration = 1.5f;
+    [SerializeField, Min(0f)] private float iPodMusicFadeDuration = .75f;
 
     private AudioSource defaultMusicSource;
     private AudioSource gameplayMusicSource;
@@ -37,6 +45,22 @@ public class BackgroundMusic : MonoBehaviour
     private AudioClip suspendedGameplayClip;
     private float suspendedGameplayTime;
     private float resumeRecoveryTime;
+
+    public bool HasStartedGameplay => gameplayStarted;
+    public bool IsElevatorMusicActive => elevatorMusicActive;
+    public string CurrentTrackName
+    {
+        get
+        {
+            if (elevatorMusicSource != null && elevatorMusicSource.isPlaying && elevatorMusicSource.clip != null)
+                return elevatorMusicSource.clip.name;
+            if (gameplayMusicSource != null && gameplayMusicSource.isPlaying && gameplayMusicSource.clip != null)
+                return GetGameplayTrackDisplayName(gameplayMusicSource.clip);
+            return defaultMusicSource != null && defaultMusicSource.isPlaying && defaultMusicSource.clip != null
+                ? defaultTrackDisplayName
+                : string.Empty;
+        }
+    }
 
     private void Awake()
     {
@@ -54,10 +78,13 @@ public class BackgroundMusic : MonoBehaviour
             defaultMusic = defaultMusicSource.clip;
     }
 
-    private void Start()
+    /// <summary>Starts the intro/default track from the player iPod cue.</summary>
+    public void PlayDefaultMusicFromIPod()
     {
-        if (!gameplayStarted)
-            PlayDefaultMusic();
+        if (gameplayStarted || elevatorMusicActive)
+            return;
+
+        PlayDefaultMusic();
     }
 
     private void Update()
@@ -131,8 +158,9 @@ public class BackgroundMusic : MonoBehaviour
         defaultMusicSource.Stop();
         gameplayMusicSource.clip = nextTrack;
         gameplayMusicSource.loop = false;
-        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+        gameplayMusicSource.volume = 0f;
         gameplayMusicSource.Play();
+        transitionRoutine = StartCoroutine(FadeInMusic(gameplayMusicSource, gameplayMusicVolume));
     }
 
     private void PlayDefaultMusic()
@@ -140,11 +168,15 @@ public class BackgroundMusic : MonoBehaviour
         if (defaultMusic == null)
             return;
 
+        if (transitionRoutine != null)
+            StopCoroutine(transitionRoutine);
+
         defaultMusicSource.Stop();
         defaultMusicSource.clip = defaultMusic;
         defaultMusicSource.loop = true;
-        defaultMusicSource.volume = GetEffectiveVolume(defaultMusicVolume);
+        defaultMusicSource.volume = 0f;
         defaultMusicSource.Play();
+        transitionRoutine = StartCoroutine(FadeInMusic(defaultMusicSource, defaultMusicVolume));
     }
 
     private IEnumerator TransitionToGameplay()
@@ -223,9 +255,6 @@ public class BackgroundMusic : MonoBehaviour
             elevatorTransitionRoutine = null;
         }
 
-        if (elevatorMusicSource != null)
-            elevatorMusicSource.Stop();
-
         elevatorMusicActive = false;
         gameplayStarted = true;
         ClearSuspendedGameplayTrack();
@@ -238,8 +267,51 @@ public class BackgroundMusic : MonoBehaviour
         gameplayMusicSource.Stop();
         gameplayMusicSource.clip = nextTrack;
         gameplayMusicSource.loop = false;
-        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+        gameplayMusicSource.volume = 0f;
         gameplayMusicSource.Play();
+        transitionRoutine = StartCoroutine(FadeElevatorIntoGameplay());
+    }
+
+    private IEnumerator FadeInMusic(AudioSource source, float targetVolume)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < iPodMusicFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = iPodMusicFadeDuration <= 0f ? 1f : elapsed / iPodMusicFadeDuration;
+            source.volume = GetEffectiveVolume(Mathf.Lerp(0f, targetVolume, progress));
+            yield return null;
+        }
+
+        source.volume = GetEffectiveVolume(targetVolume);
+        transitionRoutine = null;
+    }
+
+    private IEnumerator FadeElevatorIntoGameplay()
+    {
+        float elevatorStartVolume = elevatorMusicSource != null ? elevatorMusicSource.volume : 0f;
+        float elapsed = 0f;
+
+        while (elapsed < iPodMusicFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = iPodMusicFadeDuration <= 0f ? 1f : elapsed / iPodMusicFadeDuration;
+
+            if (elevatorMusicSource != null)
+                elevatorMusicSource.volume = Mathf.Lerp(elevatorStartVolume, 0f, progress);
+            gameplayMusicSource.volume = GetEffectiveVolume(Mathf.Lerp(0f, gameplayMusicVolume, progress));
+            yield return null;
+        }
+
+        if (elevatorMusicSource != null)
+        {
+            elevatorMusicSource.Stop();
+            elevatorMusicSource.volume = GetEffectiveVolume(elevatorMusicVolume);
+        }
+
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+        transitionRoutine = null;
     }
 
     private IEnumerator FadeToElevatorMusic()
@@ -358,6 +430,16 @@ public class BackgroundMusic : MonoBehaviour
         }
 
         return nextTrack;
+    }
+
+    private string GetGameplayTrackDisplayName(AudioClip clip)
+    {
+        int index = gameplayMusic.IndexOf(clip);
+        if (index >= 0 && index < gameplayTrackDisplayNames.Count &&
+            !string.IsNullOrWhiteSpace(gameplayTrackDisplayNames[index]))
+            return gameplayTrackDisplayNames[index];
+
+        return clip.name;
     }
 
     public void SetDialogueDucking(float multiplier)

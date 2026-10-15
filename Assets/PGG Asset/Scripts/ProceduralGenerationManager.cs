@@ -309,7 +309,6 @@ private CameraLook lockedCameraLook;
         else
             Debug.LogWarning("[ProcGen] Regular spawn room could not find PlayerHealth to start health drain.");
 
-        BackgroundMusic.Instance?.StartGameplayMusicImmediately();
     }
 
     bool PlaceChildren(DungeonNode node)
@@ -866,9 +865,6 @@ lockedCameraLook = null;
         SetLevelEnemyActivation(activeLevelRoot, true);
         foreach (Lift lift in arrivalLifts)
             lift.OpenDoorsForArrival();
-
-        // The lift track ends when the doors reveal the next combat area.
-        BackgroundMusic.Instance?.StopElevatorMusicAndStartFreshGameplayTrack();
 
         // Survival time starts again when the arriving lift opens onto the
         // newly generated level, excluding all travel and shop time.

@@ -309,6 +309,8 @@ public void PauseHealthDrain()
 
         dead = true;
         RoguelikeManager.Instance?.ResetRunStats();
+        ComboManager.Instance?.ResetScoreForDeath();
+        SoulCurrency.Instance?.ResetForDeath();
         ShowDeathMessage();
         VoiceLineManager.instance.PlayRandom("Player Dies", 30f);
         ScoreManager.Instance.CalculateOverallScore();
@@ -322,6 +324,8 @@ public void PauseHealthDrain()
     public void PlayerDead()
     {
         RoguelikeManager.Instance?.ResetRunStats();
+        ComboManager.Instance?.ResetScoreForDeath();
+        SoulCurrency.Instance?.ResetForDeath();
         ShowDeathMessage();
         ScoreManager.Instance.CalculateOverallScore();
         SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);

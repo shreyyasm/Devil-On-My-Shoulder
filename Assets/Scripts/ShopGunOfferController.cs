@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using InfimaGames.LowPolyShooterPack;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -19,6 +20,8 @@ public class ShopGunOfferController : MonoBehaviour{
         public Sprite previewSprite;
         [Tooltip("Optional label. Leave empty to use the weapon object name.")]
         public string displayName;
+        [Min(0), Tooltip("Soul currency required to purchase this weapon.")]
+        public int soulPrice = 1000;
         [Range(0f, 100f), Tooltip("Selection chance weight from 0 to 100. Zero disables this gun; a value of 50 is half as likely as a gun set to 100.")]
         public float probability = 100f;
     }
@@ -41,6 +44,16 @@ public class ShopGunOfferController : MonoBehaviour{
     [SerializeField, Tooltip("Animated polygon material used by each hover information panel.")]
     private Material gunInformationBackgroundMaterial;
     [SerializeField] private Color gunInformationPolygonColor = Color.black;
+    [Header("Shop Controls")]
+    [SerializeField, Tooltip("Saved world-space skip button. Edit its canvas, text, collider, and appearance directly in the hierarchy.")]
+    private GameObject skipShopButton;
+    [SerializeField, Tooltip("Name of the transform inside the Shop Room prefab that controls where the saved Skip Shop Button appears.")]
+    private string skipButtonAnchorName = "Skip Shop Button Anchor";
+    [Header("Shop Wallet")]
+    [SerializeField, Tooltip("Font used by the SOULS wallet shown in the top-left of the shop view. Leave empty to use Unity's built-in font.")]
+    private Font shopSoulCurrencyFont;
+    [SerializeField, Tooltip("BoldPixels font used for the insufficient-sol purchase message.")]
+    private TMP_FontAsset insufficientSolsFont;
     [Header("Hold To Purchase")]
     [SerializeField, Min(.1f)] private float purchaseHoldDuration = 1.15f;
     [SerializeField, Min(.1f)] private float purchaseReleaseDrainDuration = .85f;
@@ -69,9 +82,14 @@ public class ShopGunOfferController : MonoBehaviour{
     private Camera arsenalCamera;
     private GameObject arsenalCameraRoot;
     private Canvas arsenalCameraCanvas;
+    private Text shopSoulCurrencyText;
     private RenderTexture arsenalRenderTexture;
     private Material arsenalRetroLookMaterial;
     private Character pendingWeaponRevealCharacter;
+    private GunStats equippedWeaponStats;
+    private Vector3 skipButtonRestScale;
+    private bool hasSkipButtonRestScale;
+    private bool skipButtonHovered;
     private Transform playerTransform;
     private Vector3 playerPositionBeforeOffers;
     private Vector3 gameplayCameraPositionBeforeOffers;
@@ -101,6 +119,7 @@ public class ShopGunOfferController : MonoBehaviour{
         }
         Inventory inventory = player != null ? player.GetComponentInChildren<Inventory>(true) : null;
         WeaponBehaviour equipped = inventory != null ? inventory.GetEquipped() : null;
+        equippedWeaponStats = GetStats(equipped);
         List<GunOfferDefinition> candidates = GetOfferCandidates(player, inventory, equipped);
         while (candidates.Count > 0 && offeredDefinitions.Count < 3)
         {
@@ -137,7 +156,9 @@ public class ShopGunOfferController : MonoBehaviour{
             Vector3 position = offerCenter + right.normalized * (((i - 1) * gunOfferSpacing) + gunOfferGroupLeftOffset);
             offers.Add(CreateOffer(i, position, offerRotation));
         }
-        offers.Add(CreateCloseButton(center + (table != null ? table.forward : shopRoot.forward) * .55f, shopRoot.rotation));
+        GameObject skipButton = ActivateSkipShopButton(shopRoot, offerCenter, offerRotation);
+        if (skipButton != null)
+            offers.Add(skipButton);
         cursorPosition = new Vector2(Screen.width * .5f, Screen.height * .5f);
         cursorVisual = FindCursor();
         if (cursorVisual != null) cursorVisual.gameObject.SetActive(true);
@@ -163,7 +184,7 @@ public class ShopGunOfferController : MonoBehaviour{
         foreach (RaycastHit hit in hits)
         {
             ShopGunOffer candidate = hit.collider.GetComponentInParent<ShopGunOffer>();
-            if (candidate == null || candidate.closeShop)
+            if (candidate == null)
                 continue;
             hoveredOffer = candidate.gameObject;
             break;
@@ -172,13 +193,20 @@ public class ShopGunOfferController : MonoBehaviour{
         {
             if (offer == null) continue;
             bool hovered = offer == hoveredOffer;
+            // This is an authored, world-space canvas with its own tiny
+            // hierarchy scale. Gun hover scaling must never reset it to one.
+            if (offer == skipShopButton)
+            {
+                SetSkipButtonHovered(hovered);
+                continue;
+            }
             offer.transform.localScale = hovered ? Vector3.one * 1.1f : Vector3.one;
             offer.GetComponent<ShopGunOffer>()?.SetHovered(hovered);
         }
         if (mouse.leftButton.wasPressedThisFrame && hoveredOffer != null &&
             hoveredOffer.GetComponent<ShopGunOffer>()?.closeShop == true)
         {
-            CloseShop();
+            SkipShop();
             return;
         }
         foreach (GameObject offerObject in offers)
@@ -191,7 +219,7 @@ public class ShopGunOfferController : MonoBehaviour{
             bool isHoldingThisOffer = hoveredOffer == offerObject && mouse.leftButton.isPressed;
             if (offer.UpdatePurchaseHold(isHoldingThisOffer, purchaseHoldDuration, purchaseReleaseDrainDuration))
             {
-                CompletePurchase(offer.weapon);
+                CompletePurchase(offer.weapon, offer.soulPrice);
                 return;
             }
         }
@@ -211,13 +239,14 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         AlignDisplayModelForTable(gun);
         NormalizeDisplayModelToOffer(gun, root.transform);
         GunOfferDefinition definition = offeredDefinitions[index];
+        offerComponent.soulPrice = definition != null ? definition.soulPrice : 0;
         string gunName = definition == null || string.IsNullOrWhiteSpace(definition.displayName)
             ? (offeredWeapons[index] == null ? "PROTOTYPE WEAPON" : offeredWeapons[index].gameObject.name.ToUpperInvariant())
             : definition.displayName.ToUpperInvariant();
-        Canvas canvas = CreateGunInformationCard(root.transform, gunName, GetStats(offeredWeapons[index]), definition != null ? definition.previewSprite : null, index);
+        Canvas canvas = CreateGunInformationCard(root.transform, gunName, GetStats(offeredWeapons[index]), equippedWeaponStats, definition != null ? definition.previewSprite : null, offerComponent.soulPrice, index);
         canvas.transform.localPosition = gunInfoCardLocalPosition;
         canvas.transform.localRotation = Quaternion.identity;
-        offerComponent.SetInfo(canvas.GetComponentInChildren<Text>(true));
+        offerComponent.SetInfo(canvas.GetComponentInChildren<Text>(true), offerComponent.soulPrice);
         return root;
     }
     private void NormalizeDisplayModelToOffer(GameObject gun, Transform offerRoot)
@@ -275,10 +304,10 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
             bounds.Encapsulate(renderers[i].bounds);
         return bounds;
     }
-    private Canvas CreateGunInformationCard(Transform parent, string gunName, GunStats stats, Sprite previewSprite, int index)
+    private Canvas CreateGunInformationCard(Transform parent, string gunName, GunStats stats, GunStats equippedStats, Sprite previewSprite, int soulPrice, int index)
     {
         if (gunInformationCardTemplate != null)
-            return CreateGunInformationCardFromTemplate(parent, gunName, stats, previewSprite, index);
+            return CreateGunInformationCardFromTemplate(parent, gunName, stats, equippedStats, previewSprite, soulPrice, index);
         GameObject card = new GameObject("Gun Information", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         card.transform.SetParent(parent, false);
         Canvas canvas = card.GetComponent<Canvas>();
@@ -304,15 +333,16 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         CreateText(card.transform, "Weapon Label", "ARSENAL OFFER // 0" + (index + 1), new Vector2(125f, 235f), new Vector2(610f, 55f), 28, TextAnchor.MiddleLeft, new Color(.2f, .95f, 1f));
         CreateText(card.transform, "Weapon Name", gunName, new Vector2(125f, 165f), new Vector2(610f, 85f), 50, TextAnchor.MiddleLeft, Color.white);
         CreateText(card.transform, "Weapon Description", "Experimental weapon platform. Precise, reliable, and ready for field evaluation.", new Vector2(125f, 95f), new Vector2(610f, 75f), 28, TextAnchor.UpperLeft, new Color(.78f, .9f, .94f));
-        AddStatBar(card.transform, "DAMAGE", stats.damage, stats.damageNormalized, 25f);
-        AddStatBar(card.transform, "FIRE RATE", stats.fireRate, stats.fireRateNormalized, -35f);
-        AddStatBar(card.transform, "CAPACITY", stats.capacity, stats.capacityNormalized, -95f);
-        AddStatBar(card.transform, "RECOIL", stats.recoil, stats.recoilNormalized, -155f);
+        AddStatBar(card.transform, "DAMAGE", stats.damage, stats.damageNormalized, equippedStats.damageNormalized, equippedStats.isValid, false, 25f);
+        AddStatBar(card.transform, "FIRE RATE", stats.fireRate, stats.fireRateNormalized, equippedStats.fireRateNormalized, equippedStats.isValid, false, -35f);
+        AddStatBar(card.transform, "CAPACITY", stats.capacity, stats.capacityNormalized, equippedStats.capacityNormalized, equippedStats.isValid, false, -95f);
+        AddStatBar(card.transform, "RECOIL", stats.recoil, stats.recoilNormalized, equippedStats.recoilNormalized, equippedStats.isValid, true, -155f);
+        CreateText(card.transform, "Soul Price", "PRICE  " + soulPrice.ToString("N0") + " SOULS", new Vector2(125f, -195f), new Vector2(610f, 42f), 24, TextAnchor.MiddleLeft, new Color(.25f, .95f, 1f));
         CreateText(card.transform, "Purchase Hint", "HOLD LEFT CLICK TO PURCHASE", new Vector2(125f, -235f), new Vector2(610f, 42f), 24, TextAnchor.MiddleLeft, new Color(1f, .76f, .25f));
         card.AddComponent<PolygonPanelFloat>().CacheContents();
         return canvas;
     }
-    private Canvas CreateGunInformationCardFromTemplate(Transform parent, string gunName, GunStats stats, Sprite previewSprite, int index)
+    private Canvas CreateGunInformationCardFromTemplate(Transform parent, string gunName, GunStats stats, GunStats equippedStats, Sprite previewSprite, int soulPrice, int index)
     {
         Canvas canvas = Instantiate(gunInformationCardTemplate, parent, false);
         GameObject card = canvas.gameObject;
@@ -323,15 +353,19 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         RectTransform cardRect = card.GetComponent<RectTransform>();
         cardRect.sizeDelta = new Vector2(1150f, 650f);
         card.transform.localScale = gunInfoCardLocalScale;
+        GunOfferPurchaseHold clonedPurchaseHold = card.GetComponent<GunOfferPurchaseHold>();
+        if (clonedPurchaseHold != null)
+            clonedPurchaseHold.ConfigureInsufficientSolsFont(insufficientSolsFont);
         SetTemplatePreviewSprite(card.transform, previewSprite);
         SetTemplateText(card.transform, "Weapon Label", "ARSENAL OFFER // 0" + (index + 1));
         SetTemplateText(card.transform, "Weapon Name", gunName);
         SetTemplateText(card.transform, "Weapon Description", "Experimental weapon platform. Precise, reliable, and ready for field evaluation.");
+        SetTemplateText(card.transform, "Soul Price", "PRICE  " + soulPrice.ToString("N0") + " SOULS");
         SetTemplateText(card.transform, "Purchase Hint", "HOLD LEFT CLICK TO PURCHASE");
-        SetTemplateStat(card.transform, "DAMAGE", stats.damage, stats.damageNormalized);
-        SetTemplateStat(card.transform, "FIRE RATE", stats.fireRate, stats.fireRateNormalized);
-        SetTemplateStat(card.transform, "CAPACITY", stats.capacity, stats.capacityNormalized);
-        SetTemplateStat(card.transform, "RECOIL", stats.recoil, stats.recoilNormalized);
+        SetTemplateStat(card.transform, "DAMAGE", stats.damage, stats.damageNormalized, equippedStats.damageNormalized, equippedStats.isValid, false);
+        SetTemplateStat(card.transform, "FIRE RATE", stats.fireRate, stats.fireRateNormalized, equippedStats.fireRateNormalized, equippedStats.isValid, false);
+        SetTemplateStat(card.transform, "CAPACITY", stats.capacity, stats.capacityNormalized, equippedStats.capacityNormalized, equippedStats.isValid, false);
+        SetTemplateStat(card.transform, "RECOIL", stats.recoil, stats.recoilNormalized, equippedStats.recoilNormalized, equippedStats.isValid, true);
         PolygonPanelFloat floatingPanel = card.GetComponent<PolygonPanelFloat>();
         if (floatingPanel == null)
             floatingPanel = card.AddComponent<PolygonPanelFloat>();
@@ -372,19 +406,22 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
                 return child;
         return null;
     }
-    private static void SetTemplateStat(Transform root, string label, string value, float normalizedValue)
+    private static void SetTemplateStat(Transform root, string label, string value, float normalizedValue, float equippedNormalizedValue, bool hasEquippedWeapon, bool lowerIsBetter)
     {
         SetTemplateText(root, label + " Label", label + "  " + value);
-        Image fill = root.Find(label + " Track/" + label + " Fill")?.GetComponent<Image>();
+        Transform track = root.Find(label + " Track");
+        Image fill = track?.Find(label + " Fill")?.GetComponent<Image>();
         if (fill == null)
             return;
         RectTransform fillRect = fill.rectTransform;
         fillRect.sizeDelta = new Vector2(Mathf.Clamp01(normalizedValue) * 286f, 12f);
+        SetComparisonSegment(track, label, normalizedValue, equippedNormalizedValue, hasEquippedWeapon, lowerIsBetter);
     }
     private void EnsureGunInformationCardTemplate()
     {
         if (gunInformationCardTemplate != null)
         {
+            EnsureSoulPriceTemplateText(gunInformationCardTemplate.transform);
             EnsurePurchaseTemplateControls();
             return;
         }
@@ -394,6 +431,7 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
             gunInformationCardTemplate = existing.GetComponent<Canvas>();
             if (gunInformationCardTemplate != null)
             {
+                EnsureSoulPriceTemplateText(gunInformationCardTemplate.transform);
                 EnsurePurchaseTemplateControls();
                 return;
             }
@@ -414,10 +452,11 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         CreateText(card.transform, "Weapon Label", "ARSENAL OFFER // 01", new Vector2(125f, 235f), new Vector2(610f, 55f), 28, TextAnchor.MiddleLeft, new Color(.2f, .95f, 1f));
         CreateText(card.transform, "Weapon Name", "WEAPON NAME", new Vector2(125f, 165f), new Vector2(610f, 85f), 50, TextAnchor.MiddleLeft, Color.white);
         CreateText(card.transform, "Weapon Description", "Experimental weapon platform. Precise, reliable, and ready for field evaluation.", new Vector2(125f, 95f), new Vector2(610f, 75f), 28, TextAnchor.UpperLeft, new Color(.78f, .9f, .94f));
-        AddStatBar(card.transform, "DAMAGE", "0", 0f, 25f);
-        AddStatBar(card.transform, "FIRE RATE", "0", 0f, -35f);
-        AddStatBar(card.transform, "CAPACITY", "0", 0f, -95f);
-        AddStatBar(card.transform, "RECOIL", "0", 0f, -155f);
+        AddStatBar(card.transform, "DAMAGE", "0", 0f, 0f, false, false, 25f);
+        AddStatBar(card.transform, "FIRE RATE", "0", 0f, 0f, false, false, -35f);
+        AddStatBar(card.transform, "CAPACITY", "0", 0f, 0f, false, false, -95f);
+        AddStatBar(card.transform, "RECOIL", "0", 0f, 0f, false, true, -155f);
+        CreateText(card.transform, "Soul Price", "PRICE  0 SOULS", new Vector2(125f, -195f), new Vector2(610f, 42f), 24, TextAnchor.MiddleLeft, new Color(.25f, .95f, 1f));
         CreateText(card.transform, "Purchase Hint", "HOLD LEFT CLICK TO PURCHASE", new Vector2(125f, -235f), new Vector2(610f, 42f), 24, TextAnchor.MiddleLeft, new Color(1f, .76f, .25f));
         card.AddComponent<PolygonPanelFloat>().CacheContents();
         gunInformationCardTemplate = canvas;
@@ -431,7 +470,15 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         GunOfferPurchaseHold purchaseHold = gunInformationCardTemplate.GetComponent<GunOfferPurchaseHold>();
         if (purchaseHold == null)
             purchaseHold = gunInformationCardTemplate.gameObject.AddComponent<GunOfferPurchaseHold>();
+        purchaseHold.ConfigureInsufficientSolsFont(insufficientSolsFont);
         purchaseHold.Initialize();
+    }
+    private static void EnsureSoulPriceTemplateText(Transform cardRoot)
+    {
+        if (FindDescendant(cardRoot, "Soul Price") != null)
+            return;
+
+        CreateText(cardRoot, "Soul Price", "PRICE  0 SOULS", new Vector2(125f, -195f), new Vector2(610f, 42f), 24, TextAnchor.MiddleLeft, new Color(.25f, .95f, 1f));
     }
     private static Image CreateImage(Transform parent, string name, Vector2 position, Vector2 size, Color color)
     {
@@ -461,7 +508,7 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         text.verticalOverflow = VerticalWrapMode.Overflow;
         return text;
     }
-    private static void AddStatBar(Transform parent, string label, string value, float normalizedValue, float y)
+    private static void AddStatBar(Transform parent, string label, string value, float normalizedValue, float equippedNormalizedValue, bool hasEquippedWeapon, bool lowerIsBetter, float y)
     {
         CreateText(parent, label + " Label", label + "  " + value, new Vector2(-10f, y), new Vector2(340f, 38f), 26, TextAnchor.MiddleLeft, Color.white);
         Image track = CreateImage(parent, label + " Track", new Vector2(270f, y), new Vector2(300f, 20f), new Color(.1f, .16f, .2f, 1f));
@@ -471,10 +518,38 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         fillRect.anchorMax = new Vector2(0f, .5f);
         fillRect.pivot = new Vector2(0f, .5f);
         fillRect.anchoredPosition = new Vector2(7f, 0f);
+        SetComparisonSegment(track.transform, label, normalizedValue, equippedNormalizedValue, hasEquippedWeapon, lowerIsBetter);
     }
-    private void CompletePurchase(WeaponBehaviour purchasedWeapon)
+    private static void SetComparisonSegment(Transform track, string label, float offeredNormalizedValue, float equippedNormalizedValue, bool hasEquippedWeapon, bool lowerIsBetter)
+    {
+        Transform segmentTransform = track.Find(label + " Comparison");
+        Image segment = segmentTransform != null ? segmentTransform.GetComponent<Image>() : null;
+        if (segment == null)
+            segment = CreateImage(track, label + " Comparison", Vector2.zero, Vector2.zero, Color.clear);
+
+        float offered = Mathf.Clamp01(offeredNormalizedValue);
+        float equipped = Mathf.Clamp01(equippedNormalizedValue);
+        float difference = Mathf.Abs(offered - equipped);
+        bool showDifference = hasEquippedWeapon && difference > .0001f;
+        segment.gameObject.SetActive(showDifference);
+        if (!showDifference)
+            return;
+
+        bool improvement = lowerIsBetter ? offered < equipped : offered > equipped;
+        segment.color = improvement ? new Color(.2f, 1f, .35f, 1f) : new Color(1f, .22f, .25f, 1f);
+
+        RectTransform segmentRect = segment.rectTransform;
+        segmentRect.anchorMin = new Vector2(0f, .5f);
+        segmentRect.anchorMax = new Vector2(0f, .5f);
+        segmentRect.pivot = new Vector2(0f, .5f);
+        segmentRect.sizeDelta = new Vector2(difference * 286f, 12f);
+        segmentRect.anchoredPosition = new Vector2(7f + Mathf.Min(offered, equipped) * 286f, 0f);
+    }
+    private void CompletePurchase(WeaponBehaviour purchasedWeapon, int soulPrice)
     {
         if (completingPurchase)
+            return;
+        if (!SoulCurrency.EnsureInstance().TrySpend(soulPrice))
             return;
         MovePurchasedWeaponToUnlocked(purchasedWeapon);
         completingPurchase = true;
@@ -570,14 +645,37 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
     }
     public void CloseShop()
     {
+        SkipShop();
+    }
+    public void SkipShop()
+    {
         if (completingPurchase)
             return;
-        ClearOffers();
-        completed?.Invoke();
+        // LevelComplete calls CloseShop once more after the completed callback.
+        // At that point the first return has already cleared this presentation.
+        if (offers.Count == 0 && arsenalCamera == null)
+            return;
+
+        completingPurchase = true;
+        StartCoroutine(ReturnToPlayerThenCloseShop());
     }
     private void ClearOffers()
     {
-        foreach (GameObject offer in offers) if (offer != null) Destroy(offer);
+        foreach (GameObject offer in offers)
+        {
+            if (offer == null)
+                continue;
+            if (offer == skipShopButton)
+            {
+                offer.transform.DOKill();
+                if (hasSkipButtonRestScale)
+                    offer.transform.localScale = skipButtonRestScale;
+                skipButtonHovered = false;
+                offer.SetActive(false);
+                continue;
+            }
+            Destroy(offer);
+        }
         offers.Clear(); offeredWeapons.Clear(); offeredDefinitions.Clear();
         if (cursorVisual != null) cursorVisual.gameObject.SetActive(false);
         if (crosshair != null) crosshair.SetActive(true);
@@ -670,6 +768,7 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         imageRect.anchorMax = Vector2.one;
         imageRect.offsetMin = Vector2.zero;
         imageRect.offsetMax = Vector2.zero;
+        CreateShopSoulCurrencyDisplay(canvasObject.transform);
         // The gameplay cursor lives behind this full-screen image, so the
         // arsenal view owns an equivalent cursor above its RenderTexture.
         if (cursorVisual != null)
@@ -689,6 +788,35 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         cursorRect.sizeDelta = new Vector2(56f, 56f);
         cursorRect.anchoredPosition = Vector2.zero;
         cursorVisual = cursorRect;
+    }
+    private void CreateShopSoulCurrencyDisplay(Transform parent)
+    {
+        GameObject walletObject = new GameObject("Shop Soul Currency", typeof(Text));
+        walletObject.transform.SetParent(parent, false);
+        shopSoulCurrencyText = walletObject.GetComponent<Text>();
+        shopSoulCurrencyText.font = shopSoulCurrencyFont != null
+            ? shopSoulCurrencyFont
+            : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        shopSoulCurrencyText.fontSize = 34;
+        shopSoulCurrencyText.fontStyle = FontStyle.Bold;
+        shopSoulCurrencyText.alignment = TextAnchor.UpperLeft;
+        shopSoulCurrencyText.color = new Color(.25f, 1f, 1f, 1f);
+        shopSoulCurrencyText.raycastTarget = false;
+        RectTransform walletRect = shopSoulCurrencyText.rectTransform;
+        walletRect.anchorMin = new Vector2(0f, 1f);
+        walletRect.anchorMax = new Vector2(0f, 1f);
+        walletRect.pivot = new Vector2(0f, 1f);
+        walletRect.anchoredPosition = new Vector2(38f, -32f);
+        walletRect.sizeDelta = new Vector2(500f, 64f);
+
+        SoulCurrency wallet = SoulCurrency.EnsureInstance();
+        wallet.BalanceChanged += UpdateShopSoulCurrencyDisplay;
+        UpdateShopSoulCurrencyDisplay(wallet.Balance);
+    }
+    private void UpdateShopSoulCurrencyDisplay(int souls)
+    {
+        if (shopSoulCurrencyText != null)
+            shopSoulCurrencyText.text = "SOULS  " + souls.ToString("N0");
     }
     private void ApplyRetroLook(RawImage targetImage)
     {
@@ -715,12 +843,20 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
     }
     private void CleanupArsenalCamera()
     {
+        if (SoulCurrency.Instance != null)
+            SoulCurrency.Instance.BalanceChanged -= UpdateShopSoulCurrencyDisplay;
+        shopSoulCurrencyText = null;
         if (arsenalCameraRoot != null)
             Destroy(arsenalCameraRoot);
         arsenalCameraRoot = null;
         arsenalCamera = null;
         if (arsenalCameraCanvas != null)
+        {
+            // Destroy is deferred until frame end. Disable first so the shop
+            // overlay, including the wallet, cannot remain visible after close.
+            arsenalCameraCanvas.gameObject.SetActive(false);
             Destroy(arsenalCameraCanvas.gameObject);
+        }
         arsenalCameraCanvas = null;
         if (arsenalRenderTexture != null)
         {
@@ -769,22 +905,60 @@ private GameObject CreateOffer(int index, Vector3 position, Quaternion rotation)
         Vector2 local; RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, cursorPosition, null, out local);
         cursorVisual.anchoredPosition = local;
     }
-private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
+    private GameObject ActivateSkipShopButton(Transform shopRoot, Vector3 offerCenter, Quaternion offerRotation)
     {
-        GameObject root = new GameObject("Close Shop Button");
-        root.transform.position = position;
-        root.transform.rotation = rotation;
-        root.AddComponent<BoxCollider>().size = new Vector3(.7f, .2f, .15f);
-        ShopGunOffer offer = root.AddComponent<ShopGunOffer>();
+        if (skipShopButton == null)
+            skipShopButton = transform.Find("Skip Shop Button")?.gameObject;
+        if (skipShopButton == null)
+        {
+            Debug.LogWarning("[ShopGunOffer] Assign the saved Skip Shop Button in the controller hierarchy.", this);
+            return null;
+        }
+
+        // Artists place this anchor in the Shop Room prefab. It moves with
+        // each spawned shop and controls the button position and rotation.
+        Transform anchor = FindChild(shopRoot, skipButtonAnchorName);
+        if (anchor != null)
+        {
+            skipShopButton.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+        }
+        else
+        {
+            // Keep the original hardcoded placement as a safe fallback for
+            // any older Shop Room prefab that does not yet have the anchor.
+            Vector3 fallbackPosition = offerCenter + shopRoot.forward * .7f + Vector3.up * .04f;
+            skipShopButton.transform.SetPositionAndRotation(fallbackPosition, offerRotation);
+        }
+        if (!hasSkipButtonRestScale)
+        {
+            skipButtonRestScale = skipShopButton.transform.localScale;
+            hasSkipButtonRestScale = true;
+        }
+        ShopGunOffer offer = skipShopButton.GetComponent<ShopGunOffer>();
+        if (offer == null)
+        {
+            Debug.LogWarning("[ShopGunOffer] The saved Skip Shop Button needs a ShopGunOffer component.", skipShopButton);
+            return null;
+        }
+
         offer.closeShop = true;
-        GameObject label = new GameObject("Close Shop Label", typeof(Canvas), typeof(Text));
-        label.transform.SetParent(root.transform, false);
-        label.transform.localPosition = Vector3.up * .25f;
-        label.transform.localScale = Vector3.one * .002f;
-        Canvas canvas = label.GetComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace; canvas.worldCamera = playerCamera;
-        Text text = label.GetComponent<Text>(); text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.text = "CLOSE SHOP"; text.alignment = TextAnchor.MiddleCenter; text.fontSize = 40; text.color = Color.red;
-        return root;
+        Canvas canvas = skipShopButton.GetComponent<Canvas>();
+        if (canvas != null)
+            canvas.worldCamera = playerCamera;
+        skipShopButton.SetActive(true);
+        return skipShopButton;
+    }
+    private void SetSkipButtonHovered(bool hovered)
+    {
+        if (skipShopButton == null || !hasSkipButtonRestScale || skipButtonHovered == hovered)
+            return;
+
+        skipButtonHovered = hovered;
+        Transform buttonTransform = skipShopButton.transform;
+        buttonTransform.DOKill();
+        buttonTransform.DOScale(hovered ? skipButtonRestScale * 1.18f : skipButtonRestScale, .16f)
+            .SetEase(hovered ? Ease.OutBack : Ease.OutQuad)
+            .SetUpdate(true);
     }
     private List<GunOfferDefinition> GetOfferCandidates(GameObject player, Inventory inventory, WeaponBehaviour equipped)
     {
@@ -817,6 +991,7 @@ private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
                     weaponPrefab = weapon,
                     displayPrefab = FindDisplayPrefab(weapon.gameObject.name),
                     displayName = weapon.gameObject.name,
+                    soulPrice = 1000,
                     probability = 1f
                 });
             }
@@ -833,6 +1008,7 @@ private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
                     weaponPrefab = realWeapon,
                     displayPrefab = FindDisplayPrefab(realWeapon.gameObject.name),
                     displayName = realWeapon.gameObject.name,
+                    soulPrice = 1000,
                     probability = 1f
                 });
             }
@@ -896,6 +1072,7 @@ private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
     }
     private struct GunStats
     {
+        public bool isValid;
         public string damage;
         public string fireRate;
         public string capacity;
@@ -919,6 +1096,7 @@ private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
         float displayedRecoil = recoil * 10f;
         return new GunStats
         {
+            isValid = true,
             damage = FormatStat(damage),
             fireRate = FormatStat(fireRate),
             capacity = FormatStat(capacity),
@@ -953,6 +1131,7 @@ private GameObject CreateCloseButton(Vector3 position, Quaternion rotation)
 public class ShopGunOffer : MonoBehaviour
 {
         public bool closeShop;public WeaponBehaviour weapon;
+        [HideInInspector] public int soulPrice;
         private bool isHovered;private Text info;
     private Vector3 hologramRestScale;
     private GunOfferPurchaseHold purchaseHold;private void Awake() { }
@@ -1036,7 +1215,7 @@ public void SetHovered(bool hovered)
                 .OnComplete(() => canvas.enabled = false);
         }
     }
-public void SetInfo(Text value)
+    public void SetInfo(Text value, int price)
     {
         info = value;
         if (info != null)
@@ -1047,6 +1226,7 @@ public void SetInfo(Text value)
             if (purchaseHold == null)
                 purchaseHold = canvas.gameObject.AddComponent<GunOfferPurchaseHold>();
             purchaseHold.Initialize();
+            purchaseHold.ConfigurePrice(price);
             canvas.enabled = false;
         }
     }
@@ -1061,20 +1241,44 @@ public sealed class GunOfferPurchaseHold : MonoBehaviour
     private Slider purchaseSlider;
     private RectTransform sliderRect;
     private Text hint;
+    private TextMeshProUGUI insufficientSolsText;
+    private TMP_FontAsset insufficientSolsFont;
     private GameObject holdControls;
     private Vector2 sliderBasePosition;
     private bool isButtonVibrating;
     private float progress;
+    private int soulPrice;
     public void Initialize()
     {
         BuildSlider();
         hint = transform.Find("Purchase Hint")?.GetComponent<Text>();
+        CreateInsufficientSolsText();
         ResetHold();
+    }
+    public void ConfigureInsufficientSolsFont(TMP_FontAsset font)
+    {
+        insufficientSolsFont = font;
+        if (insufficientSolsText != null)
+            insufficientSolsText.font = font;
+    }
+    public void ConfigurePrice(int price)
+    {
+        soulPrice = Mathf.Max(0, price);
+        ResetHold();
+        ShowPurchaseReady();
     }
     public bool Tick(bool holding, float holdDuration, float releaseDuration)
     {
         if (purchaseSlider == null)
             return false;
+
+        // Keep the buy control visible when a card opens. It becomes disabled
+        // only after the player actually tries to hold-buy without enough souls.
+        if (holding && !SoulCurrency.EnsureInstance().CanAfford(soulPrice))
+        {
+            ShowInsufficientFunds();
+            return false;
+        }
         float fillRate = 1f / Mathf.Max(.01f, holdDuration);
         float drainRate = 1f / Mathf.Max(.01f, releaseDuration);
         progress = holding
@@ -1096,6 +1300,31 @@ public sealed class GunOfferPurchaseHold : MonoBehaviour
                 hint.transform.localScale = Vector3.one;
         }
         return progress >= 1f;
+    }
+    private void ShowPurchaseReady()
+    {
+        if (holdControls != null)
+            holdControls.SetActive(true);
+        if (insufficientSolsText != null)
+            insufficientSolsText.gameObject.SetActive(false);
+        if (hint != null)
+        {
+            hint.text = "HOLD LEFT CLICK TO PURCHASE";
+            hint.color = new Color(1f, .76f, .25f);
+        }
+    }
+    private void ShowInsufficientFunds()
+    {
+        ResetHold();
+        if (holdControls != null)
+            holdControls.SetActive(false);
+        if (insufficientSolsText != null)
+            insufficientSolsText.gameObject.SetActive(true);
+        if (hint != null)
+        {
+            hint.text = "NOT ENOUGH SOULS";
+            hint.color = new Color(1f, .26f, .26f);
+        }
     }
     private void StartButtonVibration()
     {
@@ -1155,6 +1384,42 @@ public sealed class GunOfferPurchaseHold : MonoBehaviour
         Transform legacyControl = transform.Find("Purchase Hold Control");
         if (legacyControl != null && !purchaseSlider.transform.IsChildOf(legacyControl))
             legacyControl.gameObject.SetActive(false);
+    }
+    private void CreateInsufficientSolsText()
+    {
+        if (purchaseSlider == null || insufficientSolsText != null)
+            return;
+
+        RectTransform sliderParent = purchaseSlider.transform.parent as RectTransform;
+        if (sliderParent == null)
+            return;
+
+        Transform existing = sliderParent.Find("Not Enough Sols");
+        if (existing != null)
+        {
+            insufficientSolsText = existing.GetComponent<TextMeshProUGUI>();
+            return;
+        }
+
+        GameObject messageObject = new GameObject("Not Enough Sols", typeof(RectTransform), typeof(TextMeshProUGUI));
+        messageObject.transform.SetParent(sliderParent, false);
+        insufficientSolsText = messageObject.GetComponent<TextMeshProUGUI>();
+        RectTransform messageRect = insufficientSolsText.rectTransform;
+        messageRect.anchorMin = sliderRect.anchorMin;
+        messageRect.anchorMax = sliderRect.anchorMax;
+        messageRect.pivot = sliderRect.pivot;
+        messageRect.anchoredPosition = sliderRect.anchoredPosition;
+        messageRect.sizeDelta = sliderRect.sizeDelta;
+        messageRect.localRotation = sliderRect.localRotation;
+        messageRect.localScale = sliderRect.localScale;
+        insufficientSolsText.font = insufficientSolsFont;
+        insufficientSolsText.text = "NOT ENOUGH SOLS";
+        insufficientSolsText.fontSize = 28f;
+        insufficientSolsText.alignment = TextAlignmentOptions.Center;
+        insufficientSolsText.color = new Color(1f, .26f, .26f);
+        insufficientSolsText.enableWordWrapping = false;
+        insufficientSolsText.raycastTarget = false;
+        messageObject.SetActive(false);
     }
     private static Sprite LoadSprite(string resourcePath)
     {

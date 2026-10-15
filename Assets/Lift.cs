@@ -11,6 +11,7 @@ public class Lift : MonoBehaviour
     private Coroutine closeRoutine;
     private int playersInDoorway;
     private bool isOpen;
+    private bool iPodCuePlayedForThisArrival;
 
     private void Awake()
     {
@@ -56,8 +57,18 @@ public class Lift : MonoBehaviour
     public void NotifyPlayerExitedDoorway()
     {
         playersInDoorway = Mathf.Max(0, playersInDoorway - 1);
+        PlayIPodCueAfterPlayerLeavesLift();
         if (playersInDoorway == 0)
             ScheduleClose();
+    }
+
+    private void PlayIPodCueAfterPlayerLeavesLift()
+    {
+        if (iPodCuePlayedForThisArrival)
+            return;
+
+        iPodCuePlayedForThisArrival = true;
+        FindFirstObjectByType<IPodMusicSequenceController>()?.PlayForSpawnLiftExit();
     }
 
     private void CreateSpawnLiftEntryTrigger()

@@ -28,6 +28,9 @@ public class ScoreManager : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI scoreText;     // assign in inspector
+    [Tooltip("Optional wallet display. Assign a TextMeshProUGUI field to show the current souls.")]
+    [SerializeField] private TextMeshProUGUI soulCurrencyText;
+    [SerializeField] private string soulCurrencyPrefix = "SOULS  ";
     public GameObject choiceCanvas;       // assign in inspector (disabled by default)
     public Slider choiceTimerSlider;      // assign a UI Slider (acts as countdown)
     public float choiceTime = 5f;         // seconds to choose
@@ -61,6 +64,17 @@ public class ScoreManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    private void OnEnable()
+    {
+        SoulCurrency.EnsureInstance().BalanceChanged += UpdateSoulCurrencyUI;
+    }
+
+    private void OnDisable()
+    {
+        if (SoulCurrency.Instance != null)
+            SoulCurrency.Instance.BalanceChanged -= UpdateSoulCurrencyUI;
+    }
     public FunticoSDKExample FunticoSDKExample;
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -81,6 +95,7 @@ public class ScoreManager : MonoBehaviour
         internalScore = 0f;
         gameScore = 0;
         UpdateScoreUI();
+        UpdateSoulCurrencyUI(SoulCurrency.EnsureInstance().Balance);
 
         //nextThreshold = Mathf.Max(1, thresholdInterval); // avoid zero
         if (choiceCanvas) choiceCanvas.SetActive(false);
@@ -188,6 +203,12 @@ public class ScoreManager : MonoBehaviour
     {
         if (scoreText != null)
             scoreText.text = gameScore.ToString("N0"); // formatted with commas
+    }
+
+    private void UpdateSoulCurrencyUI(int souls)
+    {
+        if (soulCurrencyText != null)
+            soulCurrencyText.text = soulCurrencyPrefix + souls.ToString("N0");
     }
 
     public void StartChoice()
@@ -470,22 +491,16 @@ public class ScoreManager : MonoBehaviour
     }
     public void RestartGame()
     {
-        if (ScoreManager.Instance != null)
-        {
-            Destroy(ScoreManager.Instance.gameObject);
-        }
+        PauseMenu.RestartGameplaySession();
+    }
 
-        SceneManager.LoadScene("Mad Dash Game");
+    public void NewGame()
+    {
+        PauseMenu.StartNewGameSession();
     }
     public void MainMenu()
     {
-
-        if (ScoreManager.Instance != null)
-        {
-            Destroy(ScoreManager.Instance.gameObject);
-        }
-        SceneManager.LoadScene(3);
-
+        PauseMenu.ReturnToMainMenuSession();
     }
 
 }

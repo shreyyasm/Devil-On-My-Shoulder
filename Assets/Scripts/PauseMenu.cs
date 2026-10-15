@@ -8,6 +8,8 @@ using InfimaGames.LowPolyShooterPack;
 
 public class PauseMenu : MonoBehaviour
 {
+    private const string GameplaySceneName = "Mad Dash Game";
+    private const string MainMenuSceneName = "Main Menu";
     [Header("UI")]
     [SerializeField] private GameObject pausePanel;   // Assign your Pause panel root here
 
@@ -17,6 +19,7 @@ public class PauseMenu : MonoBehaviour
 
     public GameObject settingsMenu;
     public static bool IsPaused { get; private set; }
+    private static bool sceneTransitionInProgress;
 
     void Awake()
     {
@@ -40,6 +43,13 @@ public class PauseMenu : MonoBehaviour
             // and time scale are restored without requiring a second Escape.
             if (buttonName.Contains("(apply)") || buttonName.Contains("(close)"))
                 button.onClick.AddListener(Resume);
+
+            if (buttonName == "new game")
+                button.onClick.AddListener(NewGame);
+            else if (buttonName == "restart")
+                button.onClick.AddListener(RestartGame);
+            else if (buttonName == "main menu")
+                button.onClick.AddListener(ReturnToMainMenu);
         }
     }
     [Header("Input Action for Pause")]
@@ -136,16 +146,83 @@ public class PauseMenu : MonoBehaviour
     // Called by a "Resume" button
     //public void OnResumeButton() => Resume();
 
-    // Called by a "Restart" button
-    public void MainMenu()
+    public void NewGame()
     {
-        
-        if (ScoreManager.Instance != null)
-        {
-            Destroy(ScoreManager.Instance.gameObject);
-        }
-      SceneManager.LoadScene(3);
+        StartNewGameSession();
+    }
 
+    public static void StartNewGameSession()
+    {
+        if (sceneTransitionInProgress)
+            return;
+
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+        ReloadGameplaySession();
+    }
+
+    public void RestartGame()
+    {
+        RestartGameplaySession();
+    }
+
+    public static void RestartGameplaySession()
+    {
+        if (sceneTransitionInProgress)
+            return;
+
+        ReloadGameplaySession();
+    }
+
+    // Kept for existing inspector events that already call MainMenu.
+    public void MainMenu() => ReturnToMainMenu();
+
+    public void ReturnToMainMenu()
+    {
+        ReturnToMainMenuSession();
+    }
+
+    public static void ReturnToMainMenuSession()
+    {
+        if (sceneTransitionInProgress)
+            return;
+
+        sceneTransitionInProgress = true;
+        PrepareForSceneTransition();
+        SceneManager.LoadScene(MainMenuSceneName);
+    }
+
+    private static void ReloadGameplaySession()
+    {
+        sceneTransitionInProgress = true;
+        PrepareForSceneTransition();
+        DestroyDontDestroyOnLoadObjects();
+
+        SceneManager.LoadScene(GameplaySceneName);
+    }
+
+    private static void PrepareForSceneTransition()
+    {
+        IsPaused = false;
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+
+        PauseMenu pauseMenu = FindFirstObjectByType<PauseMenu>();
+        if (pauseMenu != null && pauseMenu.pausePanel != null)
+            pauseMenu.pausePanel.SetActive(false);
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    private static void DestroyDontDestroyOnLoadObjects()
+    {
+        Scene persistentScene = SceneManager.GetSceneByName("DontDestroyOnLoad");
+        if (!persistentScene.IsValid())
+            return;
+
+        foreach (GameObject root in persistentScene.GetRootGameObjects())
+            Destroy(root);
     }
     public void OpenSettings()
     {

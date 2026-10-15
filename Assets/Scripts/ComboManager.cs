@@ -78,6 +78,7 @@ public class ComboManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        SoulCurrency.EnsureInstance();
         Parent.SetActive(false);
     }
 
@@ -592,16 +593,21 @@ public class ComboManager : MonoBehaviour
     public float scorePopDuration = 0.15f;
 
     private int currentScore = 0;
+    public int CurrentScore => currentScore;
     public void AddScore(float amount)
     {
+        int startScore = currentScore;
+        int targetScore = currentScore + Mathf.RoundToInt(amount);
+
         if (scoreText == null)
+        {
+            currentScore = targetScore;
+            SoulCurrency.EnsureInstance().SyncWithComboScore(currentScore);
             return;
+        }
 
         DOTween.Kill(scoreText);
         scoreText.transform.DOKill();
-
-        int startScore = currentScore;
-        int targetScore = currentScore + Mathf.RoundToInt(amount);
 
         CultureInfo indianCulture = new CultureInfo("en-IN");
 
@@ -621,6 +627,7 @@ public class ComboManager : MonoBehaviour
             value =>
             {
                 currentScore = value;
+                SoulCurrency.EnsureInstance().SyncWithComboScore(currentScore);
 
                 scoreText.text = currentScore.ToString(
                     "N0",
@@ -639,6 +646,18 @@ public class ComboManager : MonoBehaviour
                 .DOScale(1f, scorePopDuration)
                 .SetEase(Ease.InBack);
         });
+    }
+
+    public void ResetScoreForDeath()
+    {
+        if (scoreText != null)
+        {
+            DOTween.Kill(scoreText);
+            scoreText.transform.DOKill();
+            scoreText.text = "0";
+        }
+
+        currentScore = 0;
     }
 }
 
