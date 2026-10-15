@@ -193,6 +193,7 @@ namespace InfimaGames.LowPolyShooterPack
 		}
 		
 		private bool shopFiringLocked;
+		public bool IsShopFiringLocked => shopFiringLocked;
 public PlayerMovement playerMovement;
 		protected override void Update()
 		{
@@ -245,6 +246,18 @@ public PlayerMovement playerMovement;
 		
 		public override bool IsAiming() => aiming;
 		public override bool IsCursorLocked() => cursorLocked;
+
+		/// <summary>
+		/// Keeps the character's input gate aligned with external menus.
+		/// </summary>
+		public void SetCursorLockedForGameplay(bool locked)
+		{
+			cursorLocked = locked;
+			if (!locked)
+				holdingButtonFire = false;
+
+			UpdateCursorState();
+		}
 		
 		public override bool IsTutorialTextVisible() => tutorialTextVisible;
 		
@@ -745,6 +758,10 @@ public PlayerMovement playerMovement;
 
 		public void OnTryPlayReload(InputAction.CallbackContext context)
 		{
+			// The lift/shop transition locks weapon actions until the next level opens.
+			if (shopFiringLocked)
+				return;
+
 			//Block while the cursor is unlocked.
 			if (!cursorLocked)
 				return;

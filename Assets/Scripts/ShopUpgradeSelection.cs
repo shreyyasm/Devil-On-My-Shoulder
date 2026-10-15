@@ -25,6 +25,7 @@ public class ShopUpgradeSelection : MonoBehaviour
     private bool hasSelection;
     private System.Action selectionCallback;
     private GameObject gameplayCrosshair;
+    private RoguelikeManager.UpgradeOffer[] currentOffers;
 
     private void Awake()
     {
@@ -38,6 +39,9 @@ public class ShopUpgradeSelection : MonoBehaviour
 
     private void Update()
     {
+        if (hologramCanvas.enabled && currentOffers == null)
+            PopulateRoguelikeCards();
+
         if (!hologramCanvas.enabled || hasSelection)
             return;
 
@@ -87,8 +91,7 @@ public void ShowForShop()
             hologramCanvas.worldCamera = playerCamera;
         }
 
-        foreach (ShopUpgradeCard card in cards)
-            card.ResetCard();
+        PopulateRoguelikeCards();
 
         hologramCanvas.enabled = true;
         graphicRaycaster.enabled = true;
@@ -110,6 +113,23 @@ public void ShowForShop()
     public void SetSelectionCallback(System.Action callback)
     {
         selectionCallback = callback;
+    }
+
+    private void PopulateRoguelikeCards()
+    {
+        RoguelikeManager manager = RoguelikeManager.Instance;
+        if (manager == null)
+            manager = FindFirstObjectByType<RoguelikeManager>(FindObjectsInactive.Include);
+
+        currentOffers = manager != null
+            ? manager.RollThreeUpgrades().ToArray()
+            : System.Array.Empty<RoguelikeManager.UpgradeOffer>();
+
+        for (int i = 0; i < cards.Length; i++)
+        {
+            cards[i].ResetCard();
+            cards[i].SetUpgrade(i < currentOffers.Length ? currentOffers[i] : null);
+        }
     }
 
     public void HideImmediate()
@@ -139,6 +159,7 @@ public void ShowForShop()
             return;
 
         hasSelection = true;
+        selectedCard.ApplyUpgrade();
         if (hoveredCard != null)
             hoveredCard.SetHovered(false);
 
@@ -256,20 +277,32 @@ public class ShopUpgradeCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
 {
     [SerializeField] private ShopUpgradeSelection selection;
     [SerializeField] private Image frame;
-    [SerializeField] private Color normalColor = new Color(0.05f, 0.7f, 1f, 0.5f);
-    [SerializeField] private Color hoverColor = new Color(0.25f, 0.95f, 1f, 0.9f);
-    [SerializeField] private Color selectedColor = new Color(1f, 0.85f, 0.15f, 1f);
-    [SerializeField] private float hoverScale = 1.08f;
+    [SerializeField] private float hoverScale = 1.12f;
     [SerializeField] private float hoverDuration = 0.12f;
 
     private Button button;
     private Vector3 startingLocalPosition;
+    private RoguelikeManager.UpgradeOffer upgrade;
+    private Material polygonMaterial;
+    private Color activeBackgroundColor;
+    private bool hasActiveBackgroundColor;
+    [Header("Scene Card Text")]
+    [SerializeField] private Text upgradeTitle;
+    [SerializeField] private Text upgradeCurrent;
+    [SerializeField] private Text upgradeNext;
+    [SerializeField, Tooltip("Image shown below the upgrade title. Created automatically if the card has no child named Upgrade Sprite.")] private Image upgradeSprite;
 
     private void Awake()
     {
         button = GetComponent<Button>();
         startingLocalPosition = transform.localPosition;
         button.onClick.AddListener(Choose);
+        ConfigurePolygonBackground();
+
+        PolygonPanelFloat floatingPanel = GetComponent<PolygonPanelFloat>();
+        if (floatingPanel == null)
+            floatingPanel = gameObject.AddComponent<PolygonPanelFloat>();
+        floatingPanel.CacheContents();
     }
 
     public void ResetCard()
@@ -280,8 +313,16 @@ public class ShopUpgradeCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
         transform.DOKill();
         transform.localPosition = startingLocalPosition;
         transform.localScale = Vector3.one;
-        frame.color = normalColor;
+        frame.color = Color.white;
+        SetPolygonColor(GetBaseBackgroundColor());
         button.interactable = true;
+
+        PolygonPanelFloat floatingPanel = GetComponent<PolygonPanelFloat>();
+        if (floatingPanel != null)
+        {
+            floatingPanel.enabled = true;
+            floatingPanel.CacheContents();
+        }
     }
 
     public void SetInteractable(bool value)
@@ -290,6 +331,88 @@ public class ShopUpgradeCard : MonoBehaviour, IPointerEnterHandler, IPointerExit
             button = GetComponent<Button>();
 
         button.interactable = value;
+
+        if (!value)
+        {
+            PolygonPanelFloat floatingPanel = GetComponent<PolygonPanelFloat>();
+            if (floatingPanel != null)
+                floatingPanel.enabled = false;
+        }
+    }
+
+    public void SetUpgrade(RoguelikeManager.UpgradeOffer value)
+    {
+        upgrade = value;
+        ResolveSceneText();
+        SetUpgradeSprite(upgrade != null ? upgrade.displaySprite : null);
+        SetBackgroundColor(upgrade != null ? upgrade.cardBackgroundColor : Color.white);
+        if (upgradeTitle == null || upgradeCurrent == null || upgradeNext == null)
+            return;
+
+        float current = RoguelikeManager.Instance != null ? RoguelikeManager.Instance.GetCurrentDisplayPercentage(upgrade) : 0f;
+        float next = current + (upgrade != null ? upgrade.displayPercentage : 0f);
+        string name = upgrade != null ? upgrade.displayName.ToUpperInvariant() : "MYSTERY UPGRADE";
+        // Keep both values together on one row so players can read the change at a glance.
+        // The UI's legacy font has no reliable Unicode arrow glyph, so use an ASCII arrow.
+        string currentText = current.ToString("0") + "%";
+        string nextText = "->  " + next.ToString("0") + "%";
+        upgradeTitle.gameObject.SetActive(true);
+        upgradeCurrent.gameObject.SetActive(true);
+        upgradeNext.gameObject.SetActive(true);
+
+        upgradeTitle.text = name;
+        upgradeCurrent.text = currentText;
+        upgradeNext.text = nextText;
+        upgradeTitle.alignment = TextAnchor.MiddleCenter;
+        upgradeCurrent.alignment = TextAnchor.MiddleCenter;
+        upgradeNext.alignment = TextAnchor.MiddleCenter;
+        upgradeNext.color = new Color(0.25f, 1f, 0.38f, 1f);
+    }
+
+    private void ResolveSceneText()
+    {
+        if (upgradeTitle == null)
+            upgradeTitle = transform.Find("Card Text")?.GetComponent<Text>();
+        if (upgradeCurrent == null)
+            upgradeCurrent = transform.Find("Current Value")?.GetComponent<Text>();
+        if (upgradeNext == null)
+            upgradeNext = transform.Find("Next Value")?.GetComponent<Text>();
+    }
+
+    private void SetUpgradeSprite(Sprite sprite)
+    {
+        if (upgradeSprite == null)
+            upgradeSprite = transform.Find("Upgrade Sprite")?.GetComponent<Image>();
+
+        if (upgradeSprite == null)
+        {
+            GameObject iconObject = new GameObject("Upgrade Sprite", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            iconObject.transform.SetParent(transform, false);
+            upgradeSprite = iconObject.GetComponent<Image>();
+            upgradeSprite.raycastTarget = false;
+
+            RectTransform iconRect = upgradeSprite.rectTransform;
+            iconRect.anchorMin = new Vector2(.5f, .5f);
+            iconRect.anchorMax = new Vector2(.5f, .5f);
+            iconRect.pivot = new Vector2(.5f, .5f);
+            iconRect.anchoredPosition = new Vector2(0f, 28f);
+            iconRect.sizeDelta = new Vector2(150f, 150f);
+        }
+
+        bool hasSprite = sprite != null;
+        upgradeSprite.sprite = sprite;
+        upgradeSprite.preserveAspect = true;
+        upgradeSprite.color = Color.white;
+        upgradeSprite.gameObject.SetActive(hasSprite);
+
+        PolygonPanelFloat floatingPanel = GetComponent<PolygonPanelFloat>();
+        if (floatingPanel != null)
+            floatingPanel.CacheContents();
+    }
+    public void ApplyUpgrade()
+    {
+        if (upgrade != null)
+            RoguelikeManager.Instance?.ApplyUpgrade(upgrade);
     }
 
 public void OnPointerEnter(PointerEventData eventData)
@@ -304,7 +427,7 @@ public void OnPointerExit(PointerEventData eventData)
 
     public void PlaySelectedFeedback()
     {
-        frame.DOColor(selectedColor, 0.12f);
+        // The roll's Roguelike Manager color remains unchanged on selection.
         transform.DOPunchScale(Vector3.one * 0.15f, 0.3f, 6, 0.8f);
     }
 
@@ -325,6 +448,42 @@ public void SetHovered(bool hovered)
         transform.DOKill();
         transform.DOScale(hovered ? Vector3.one * hoverScale : Vector3.one, hoverDuration)
             .SetEase(hovered ? Ease.OutBack : Ease.OutQuad);
-        frame.DOColor(hovered ? hoverColor : normalColor, hoverDuration);
+    }
+
+    private void SetBackgroundColor(Color color)
+    {
+        // Existing scene data predates this field and therefore deserializes as clear.
+        if (color == Color.clear)
+            color = Color.white;
+
+        activeBackgroundColor = color;
+        hasActiveBackgroundColor = true;
+
+        // The shader reads its color from the material. Keep the UI vertex
+        // color white so it cannot tint or conflict with the Manager color.
+        if (frame != null)
+            frame.color = Color.white;
+        SetPolygonColor(activeBackgroundColor);
+    }
+
+    private Color GetBaseBackgroundColor()
+    {
+        return hasActiveBackgroundColor ? activeBackgroundColor : Color.white;
+    }
+    private void ConfigurePolygonBackground()
+    {
+        if (frame == null || frame.material == null || !frame.material.HasProperty("_Color"))
+            return;
+
+        polygonMaterial = new Material(frame.material);
+        frame.material = polygonMaterial;
+        SetPolygonColor(GetBaseBackgroundColor());
+    }
+
+    private void SetPolygonColor(Color color)
+    {
+        if (polygonMaterial != null && polygonMaterial.HasProperty("_Color"))
+            polygonMaterial.SetColor("_Color", color);
     }
 }
+

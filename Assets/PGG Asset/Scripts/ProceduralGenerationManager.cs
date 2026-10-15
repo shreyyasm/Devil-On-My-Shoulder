@@ -484,13 +484,23 @@ private CameraLook lockedCameraLook;
 
     bool CheckOverlap(RoomInstance newRoom, RoomInstance ignoreRoom)
     {
+        // Room roots can move while attaching and while a prepared level is
+        // handed off into the active world. Re-read the authored RoomBounds
+        // colliders instead of trusting bounds cached at instantiation.
+        Physics.SyncTransforms();
+        newRoom.RefreshBounds();
+
         foreach (RoomInstance room in placedRooms)
         {
             if (room == ignoreRoom)
                 continue;
 
+            room.RefreshBounds();
             if (room.Bounds.Intersects(newRoom.Bounds))
+            {
+                Debug.LogWarning($"[ProcGen] Rejected '{newRoom.Instance.name}' because its RoomBounds overlap '{room.Instance.name}'.");
                 return true;
+            }
         }
         return false;
     }
@@ -533,6 +543,12 @@ private CameraLook lockedCameraLook;
         }
 
         SetLevelEnemyActivation(preview.transform, false);
+
+        // Keeping the prepared root merely below the map still leaves its
+        // colliders and renderers active. That can let a prepared room bleed
+        // into the shop/current level. The completed level stays wholly
+        // inactive until the old level has been hidden during handoff.
+        previewRoot.SetActive(false);
         preparedGenerator = preview;
         return true;
     }
@@ -586,6 +602,10 @@ private CameraLook lockedCameraLook;
             Destroy(activeLevelRoot.gameObject);
         }
 
+        // The old root is now inactive, so it is safe to reveal the prepared
+        // level at the aligned lift position. This ordering prevents one
+        // frame where both room sets can render or collide together.
+        preview.gameObject.SetActive(true);
         activeLevelRoot = preview.transform;
 
         placedRooms = preview.placedRooms;
@@ -595,6 +615,8 @@ private CameraLook lockedCameraLook;
         RoomsToEnd = preview.RoomsToEnd;
         ActiveSet = preview.ActiveSet;
         preparedGenerator = null;
+
+        RefreshPlacedRoomBounds();
 
         if (player != null)
         {
@@ -622,6 +644,13 @@ private CameraLook lockedCameraLook;
         return true;
     }
 
+    private void RefreshPlacedRoomBounds()
+    {
+        Physics.SyncTransforms();
+        foreach (RoomInstance room in placedRooms)
+            room?.RefreshBounds();
+    }
+
     private System.Collections.IEnumerator EnsurePreparedEndLiftIsOpen()
     {
         // The End Room was built while the level sat below the map. Its
@@ -643,8 +672,10 @@ private CameraLook lockedCameraLook;
     public void LockPlayerForLiftTravel(
         Vector3 desiredForward = default,
         Transform liftMidpoint = null,
-        float forcedPlayerYaw = float.NaN)
+        float forcedPlayerYaw = float.NaN,
+        bool snapCameraToNeutralImmediately = false)
     {
+        ScoreManager.Instance?.PauseSurvivalTimer();
         lockedPlayerMovement = FindFirstObjectByType<PlayerMovement>();
         
         lockedCharacter = FindFirstObjectByType<Character>();
@@ -701,11 +732,22 @@ lockedCameraLook = FindFirstObjectByType<CameraLook>();
                     playerTargetRotation = Quaternion.Euler(0f, shopYaw, 0f);
                 }
             }
+            if (snapCameraToNeutralImmediately)
+            {
+                if (lockedPlayerMovement != null)
+                    lockedPlayerMovement.transform.rotation = playerTargetRotation;
 
-            cameraCenterRoutine = StartCoroutine(SmoothlyCenterLiftCamera(
-                lockedPlayerMovement.transform,
-                playerTargetRotation,
-                liftMidpoint));
+                lockedCameraLook.transform.localRotation = Quaternion.identity;
+                lockedCameraLook.SyncRotationToCurrentView();
+                cameraCenterRoutine = null;
+            }
+            else
+            {
+                cameraCenterRoutine = StartCoroutine(SmoothlyCenterLiftCamera(
+                    lockedPlayerMovement.transform,
+                    playerTargetRotation,
+                    liftMidpoint));
+            }
         }
 
         liftControlSessionActive = true;
@@ -824,6 +866,13 @@ lockedCameraLook = null;
         SetLevelEnemyActivation(activeLevelRoot, true);
         foreach (Lift lift in arrivalLifts)
             lift.OpenDoorsForArrival();
+
+        // The lift track ends when the doors reveal the next combat area.
+        BackgroundMusic.Instance?.StopElevatorMusicAndStartFreshGameplayTrack();
+
+        // Survival time starts again when the arriving lift opens onto the
+        // newly generated level, excluding all travel and shop time.
+        ScoreManager.Instance?.ResumeSurvivalTimer();
 
         yield return new WaitForSeconds(.65f);
         UnlockPlayerAfterLiftTravel();

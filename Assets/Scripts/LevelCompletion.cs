@@ -58,7 +58,7 @@ public class LevelCompletion : MonoBehaviour
     IEnumerator loadMainMenu()
     {
         yield return new WaitForSeconds(3f);
-        AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, 1f);
+        AudioMixerRoutingManager.PlayClipAtPoint(clip, Camera.main.transform.position, 1f);
         int currentscene = SceneManager.GetActiveScene().buildIndex;
         yield return new WaitForSeconds(5f);
         SceneManager.UnloadSceneAsync(currentscene);

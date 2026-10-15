@@ -204,7 +204,7 @@ public class Projectile : MonoBehaviour {
 
 
 
-        return bulletDamage;
+        return bulletDamage + (RoguelikeManager.Instance != null ? RoguelikeManager.Instance.BulletDamageBonus : 0f);
     }
     private void Update()
     {

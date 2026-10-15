@@ -44,9 +44,9 @@ public class EnemyHead : MonoBehaviour
                 // Give it an upward "pop"
                 rb.AddForce(Vector3.up * 7, ForceMode.Impulse);
             }
-            //AudioSource.PlayClipAtPoint(jumpKillSFX, Camera.main.transform.position, 2f);
+            //AudioMixerRoutingManager.PlayClipAtPoint(jumpKillSFX, Camera.main.transform.position, 2f);
             //Instantiate(Enemy.Instance.explosionPrefab, transform.position, Quaternion.identity);
-            AudioSource.PlayClipAtPoint(Enemy.Instance.destroySFX, transform.position, 0.3f);
+            AudioMixerRoutingManager.PlayClipAtPoint(Enemy.Instance.destroySFX, transform.position, 0.3f);
 
             //Instantiate(Enemy.Instance.coin, transform.position, Quaternion.identity);
             //enemy1Pool.Release(gameObject);
@@ -66,9 +66,9 @@ public class EnemyHead : MonoBehaviour
         explosion = explosionPool.GetObject();
         explosion.transform.position = transform.position;
         batteryLife.GetObject().transform.position = transform.position;
-        //AudioSource.PlayClipAtPoint(jumpKillSFX, Camera.main.transform.position, 2f);
+        //AudioMixerRoutingManager.PlayClipAtPoint(jumpKillSFX, Camera.main.transform.position, 2f);
         //Instantiate(Enemy.Instance.explosionPrefab, transform.position, Quaternion.identity);
-        AudioSource.PlayClipAtPoint(Enemy.Instance.destroySFX, transform.position, 0.3f);
+        AudioMixerRoutingManager.PlayClipAtPoint(Enemy.Instance.destroySFX, transform.position, 0.3f);
 
         //Instantiate(Enemy.Instance.coin, transform.position, Quaternion.identity);
         enemy1Pool.Release(gameObject);

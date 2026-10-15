@@ -112,7 +112,7 @@ public class Challenges : MonoBehaviour
         {
             mainText.text = "Kill 15 Enemies in a row. (15/15)";
             if (ChallengeSFX != null)
-                AudioSource.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
+                AudioMixerRoutingManager.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
             Debug.Log("Challenge Comepleted");
             if(anim != null)
             {
@@ -143,7 +143,7 @@ public class Challenges : MonoBehaviour
         {
             mainText.text = "2. Complete a level without getting any hit.";
             if (ChallengeSFX != null)
-                AudioSource.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
+                AudioMixerRoutingManager.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
             Debug.Log("Challenge Comepleted");
             if (anim != null)
             {
@@ -174,7 +174,7 @@ public class Challenges : MonoBehaviour
         {
             mainText.text = "3. Kill 30 enemies with invincibilty stars.(30/30)";
             if (ChallengeSFX != null)
-                AudioSource.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
+                AudioMixerRoutingManager.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
             Debug.Log("Challenge Comepleted");
             if (anim != null)
             {
@@ -205,7 +205,7 @@ public class Challenges : MonoBehaviour
         {
             mainText.text = "4. Complete Level 3 Without Killing any enemy.";
             if (ChallengeSFX != null)
-                AudioSource.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
+                AudioMixerRoutingManager.PlayClipAtPoint(ChallengeSFX, Camera.main.transform.position);
             Debug.Log("Challenge Comepleted");
             if (anim != null)
             {
@@ -236,7 +236,7 @@ public class Challenges : MonoBehaviour
         {
             mainText.text = "5.Kill the boss in 1 minute";
             if(ChallengeSFX != null)
-                AudioSource.PlayClipAtPoint(ChallengeSFX,Camera.main.transform.position);
+                AudioMixerRoutingManager.PlayClipAtPoint(ChallengeSFX,Camera.main.transform.position);
             Debug.Log("Challenge Comepleted");
             if (anim != null)
             {

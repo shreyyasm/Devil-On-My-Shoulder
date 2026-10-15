@@ -23,7 +23,7 @@ public class Star : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            AudioSource.PlayClipAtPoint(starSFX, transform.position, 1);
+            AudioMixerRoutingManager.PlayClipAtPoint(starSFX, transform.position, 1);
             Destroy(gameObject);
         }
 

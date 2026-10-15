@@ -451,7 +451,7 @@ public class LeanTween : MonoBehaviour {
                         if (tween.type == TweenAction.GUI_ROTATE)
                             ltRect.rotateFinished = true;
                         if (tween.type == TweenAction.DELAYED_SOUND)
-                            AudioSource.PlayClipAtPoint(onCompleteParam, to, vol);
+                            AudioMixerRoutingManager.PlayClipAtPoint(onCompleteParam, to, vol);
                     }else {
                         removeTween(j);
                     }

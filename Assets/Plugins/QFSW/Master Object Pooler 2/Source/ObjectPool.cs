@@ -53,6 +53,13 @@ namespace QFSW.MOP2
         public string PoolName => _name;
 
         /// <summary>
+        /// The prefab used by this pool. This is read-only so systems that
+        /// present weapon information can inspect the projectile without
+        /// spawning a pooled instance.
+        /// </summary>
+        public GameObject Template => _template;
+
+        /// <summary>
         /// Parent transform for all pooled objects.
         /// </summary>
         public Transform ObjectParent

@@ -15,13 +15,28 @@ public class BackgroundMusic : MonoBehaviour
     [SerializeField] private List<AudioClip> gameplayMusic = new();
     [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 0.7f;
 
+    [Header("Elevator Music")]
+    [SerializeField] private AudioClip elevatorMusic;
+    [SerializeField, Range(0f, 1f)] private float elevatorMusicVolume = 0.7f;
+    [SerializeField, Min(0f)] private float elevatorMusicFadeDuration = 1f;
+
     [Header("Transition")]
     [SerializeField, Min(0f)] private float transitionDuration = 1.5f;
 
     private AudioSource defaultMusicSource;
     private AudioSource gameplayMusicSource;
+    private AudioSource elevatorMusicSource;
     private Coroutine transitionRoutine;
+    private Coroutine elevatorTransitionRoutine;
     private bool gameplayStarted;
+    private bool elevatorMusicActive;
+    private float dialogueDuckMultiplier = 1f;
+    private bool applicationHasFocus = true;
+    private bool applicationIsPaused;
+    private bool gameplayPlaybackSuspended;
+    private AudioClip suspendedGameplayClip;
+    private float suspendedGameplayTime;
+    private float resumeRecoveryTime;
 
     private void Awake()
     {
@@ -30,6 +45,8 @@ public class BackgroundMusic : MonoBehaviour
         defaultMusicSource = GetComponent<AudioSource>();
         gameplayMusicSource = gameObject.AddComponent<AudioSource>();
         CopyMusicSettings(defaultMusicSource, gameplayMusicSource);
+        elevatorMusicSource = gameObject.AddComponent<AudioSource>();
+        CopyMusicSettings(defaultMusicSource, elevatorMusicSource);
         defaultMusicSource.playOnAwake = false;
         defaultMusicSource.Stop();
 
@@ -45,11 +62,36 @@ public class BackgroundMusic : MonoBehaviour
 
     private void Update()
     {
-        if (gameplayStarted &&
+        if (IsMusicTemporarilySuspended())
+        {
+            RememberSuspendedGameplayTrack();
+            return;
+        }
+
+        if (TryResumeSuspendedGameplayTrack())
+            return;
+
+        if (!elevatorMusicActive &&
+            gameplayStarted &&
             transitionRoutine == null &&
-            !AudioListener.pause &&
             !gameplayMusicSource.isPlaying)
             PlayRandomGameplayTrack();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        applicationHasFocus = hasFocus;
+
+        if (!hasFocus)
+            RememberSuspendedGameplayTrack();
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        applicationIsPaused = paused;
+
+        if (paused)
+            RememberSuspendedGameplayTrack();
     }
 
     private void OnDestroy()
@@ -64,6 +106,8 @@ public class BackgroundMusic : MonoBehaviour
             return;
 
         gameplayStarted = true;
+        elevatorMusicActive = false;
+        ClearSuspendedGameplayTrack();
 
         if (GetRandomGameplayTrack() == null)
             return;
@@ -82,10 +126,12 @@ public class BackgroundMusic : MonoBehaviour
             return;
 
         gameplayStarted = true;
+        elevatorMusicActive = false;
+        ClearSuspendedGameplayTrack();
         defaultMusicSource.Stop();
         gameplayMusicSource.clip = nextTrack;
         gameplayMusicSource.loop = false;
-        gameplayMusicSource.volume = gameplayMusicVolume;
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
         gameplayMusicSource.Play();
     }
 
@@ -97,7 +143,7 @@ public class BackgroundMusic : MonoBehaviour
         defaultMusicSource.Stop();
         defaultMusicSource.clip = defaultMusic;
         defaultMusicSource.loop = true;
-        defaultMusicSource.volume = defaultMusicVolume;
+        defaultMusicSource.volume = GetEffectiveVolume(defaultMusicVolume);
         defaultMusicSource.Play();
     }
 
@@ -116,7 +162,6 @@ public class BackgroundMusic : MonoBehaviour
         gameplayMusicSource.volume = 0f;
         gameplayMusicSource.Play();
 
-        float startingDefaultVolume = defaultMusicSource.volume;
         float elapsed = 0f;
 
         while (elapsed < transitionDuration)
@@ -124,14 +169,14 @@ public class BackgroundMusic : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             float progress = transitionDuration <= 0f ? 1f : elapsed / transitionDuration;
 
-            defaultMusicSource.volume = Mathf.Lerp(startingDefaultVolume, 0f, progress);
-            gameplayMusicSource.volume = Mathf.Lerp(0f, gameplayMusicVolume, progress);
+            defaultMusicSource.volume = GetEffectiveVolume(Mathf.Lerp(defaultMusicVolume, 0f, progress));
+            gameplayMusicSource.volume = GetEffectiveVolume(Mathf.Lerp(0f, gameplayMusicVolume, progress));
             yield return null;
         }
 
         defaultMusicSource.Stop();
-        defaultMusicSource.volume = defaultMusicVolume;
-        gameplayMusicSource.volume = gameplayMusicVolume;
+        defaultMusicSource.volume = GetEffectiveVolume(defaultMusicVolume);
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
         transitionRoutine = null;
     }
 
@@ -144,8 +189,154 @@ public class BackgroundMusic : MonoBehaviour
 
         gameplayMusicSource.clip = nextTrack;
         gameplayMusicSource.loop = false;
-        gameplayMusicSource.volume = gameplayMusicVolume;
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
         gameplayMusicSource.Play();
+    }
+
+    /// <summary>Fades all regular background music to silence, then loops the lift track.</summary>
+    public void StartElevatorMusic()
+    {
+        if (elevatorMusic == null)
+            return;
+
+        elevatorMusicActive = true;
+        ClearSuspendedGameplayTrack();
+
+        if (transitionRoutine != null)
+        {
+            StopCoroutine(transitionRoutine);
+            transitionRoutine = null;
+        }
+
+        if (elevatorTransitionRoutine != null)
+            StopCoroutine(elevatorTransitionRoutine);
+
+        elevatorTransitionRoutine = StartCoroutine(FadeToElevatorMusic());
+    }
+
+    /// <summary>Ends the lift track and starts a newly selected gameplay song.</summary>
+    public void StopElevatorMusicAndStartFreshGameplayTrack()
+    {
+        if (elevatorTransitionRoutine != null)
+        {
+            StopCoroutine(elevatorTransitionRoutine);
+            elevatorTransitionRoutine = null;
+        }
+
+        if (elevatorMusicSource != null)
+            elevatorMusicSource.Stop();
+
+        elevatorMusicActive = false;
+        gameplayStarted = true;
+        ClearSuspendedGameplayTrack();
+
+        AudioClip nextTrack = GetRandomGameplayTrack();
+        if (nextTrack == null)
+            return;
+
+        defaultMusicSource.Stop();
+        gameplayMusicSource.Stop();
+        gameplayMusicSource.clip = nextTrack;
+        gameplayMusicSource.loop = false;
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+        gameplayMusicSource.Play();
+    }
+
+    private IEnumerator FadeToElevatorMusic()
+    {
+        float defaultStartVolume = defaultMusicSource != null ? defaultMusicSource.volume : 0f;
+        float gameplayStartVolume = gameplayMusicSource != null ? gameplayMusicSource.volume : 0f;
+        float elapsed = 0f;
+
+        while (elapsed < elevatorMusicFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = elevatorMusicFadeDuration <= 0f ? 1f : elapsed / elevatorMusicFadeDuration;
+
+            if (defaultMusicSource != null)
+                defaultMusicSource.volume = Mathf.Lerp(defaultStartVolume, 0f, progress);
+            if (gameplayMusicSource != null)
+                gameplayMusicSource.volume = Mathf.Lerp(gameplayStartVolume, 0f, progress);
+
+            yield return null;
+        }
+
+        defaultMusicSource.Stop();
+        gameplayMusicSource.Stop();
+        defaultMusicSource.volume = GetEffectiveVolume(defaultMusicVolume);
+        gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+
+        elevatorMusicSource.clip = elevatorMusic;
+        elevatorMusicSource.loop = true;
+        elevatorMusicSource.volume = GetEffectiveVolume(elevatorMusicVolume);
+        elevatorMusicSource.Play();
+        elevatorTransitionRoutine = null;
+    }
+
+    private bool IsMusicTemporarilySuspended()
+    {
+        return !applicationHasFocus || applicationIsPaused || AudioListener.pause;
+    }
+
+    private void RememberSuspendedGameplayTrack()
+    {
+        if (!gameplayStarted || gameplayMusicSource == null || gameplayMusicSource.clip == null)
+            return;
+
+        if (!gameplayPlaybackSuspended)
+        {
+            suspendedGameplayClip = gameplayMusicSource.clip;
+            suspendedGameplayTime = gameplayMusicSource.time;
+        }
+
+        gameplayPlaybackSuspended = true;
+    }
+
+    // Returns true while this source is being restored, preventing Update from
+    // misreading a system pause as the end of a gameplay track.
+    private bool TryResumeSuspendedGameplayTrack()
+    {
+        if (!gameplayPlaybackSuspended)
+            return false;
+
+        gameplayMusicSource.UnPause();
+
+        if (gameplayMusicSource.isPlaying)
+        {
+            ClearSuspendedGameplayTrack();
+            return false;
+        }
+
+        if (resumeRecoveryTime <= 0f)
+        {
+            // Give Unity's audio system a short moment to restore sound after
+            // Alt-Tab, the Windows key, or the pause menu is closed.
+            resumeRecoveryTime = Time.unscaledTime + .25f;
+            return true;
+        }
+
+        if (Time.unscaledTime < resumeRecoveryTime)
+            return true;
+
+        if (suspendedGameplayClip != null)
+        {
+            gameplayMusicSource.clip = suspendedGameplayClip;
+            gameplayMusicSource.time = Mathf.Clamp(suspendedGameplayTime, 0f,
+                Mathf.Max(0f, suspendedGameplayClip.length - .01f));
+            gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+            gameplayMusicSource.Play();
+        }
+
+        ClearSuspendedGameplayTrack();
+        return true;
+    }
+
+    private void ClearSuspendedGameplayTrack()
+    {
+        gameplayPlaybackSuspended = false;
+        suspendedGameplayClip = null;
+        suspendedGameplayTime = 0f;
+        resumeRecoveryTime = 0f;
     }
 
     private AudioClip GetRandomGameplayTrack()
@@ -167,6 +358,22 @@ public class BackgroundMusic : MonoBehaviour
         }
 
         return nextTrack;
+    }
+
+    public void SetDialogueDucking(float multiplier)
+    {
+        dialogueDuckMultiplier = Mathf.Clamp01(multiplier);
+
+        if (defaultMusicSource != null && defaultMusicSource.isPlaying)
+            defaultMusicSource.volume = GetEffectiveVolume(defaultMusicVolume);
+
+        if (gameplayMusicSource != null && gameplayMusicSource.isPlaying)
+            gameplayMusicSource.volume = GetEffectiveVolume(gameplayMusicVolume);
+    }
+
+    private float GetEffectiveVolume(float baseVolume)
+    {
+        return baseVolume * dialogueDuckMultiplier;
     }
 
     private static void CopyMusicSettings(AudioSource source, AudioSource destination)

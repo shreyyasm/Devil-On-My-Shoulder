@@ -2,6 +2,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using InfimaGames.LowPolyShooterPack;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -17,8 +20,27 @@ public class PauseMenu : MonoBehaviour
 
     void Awake()
     {
+        ConfigureSettingsButtons();
         if (pausePanel) pausePanel.SetActive(false);
         ResumeInternal(); // ensure clean state
+    }
+
+    private void ConfigureSettingsButtons()
+    {
+        if (pausePanel == null)
+            return;
+
+        Button[] buttons = pausePanel.GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            string buttonName = button.name.ToLowerInvariant();
+
+            // The Settings Generator buttons only apply or hide their own UI.
+            // Finish the pause session as well so the camera, shooting, cursor,
+            // and time scale are restored without requiring a second Escape.
+            if (buttonName.Contains("(apply)") || buttonName.Contains("(close)"))
+                button.onClick.AddListener(Resume);
+        }
     }
     [Header("Input Action for Pause")]
     public InputActionReference pauseAction; // assign from Input Actions asset (e.g. "UI/Pause")
@@ -74,8 +96,15 @@ public class PauseMenu : MonoBehaviour
         if (pausePanel) pausePanel.SetActive(true);
 
         // Show and free the cursor for menu navigation
+        Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        FindFirstObjectByType<Character>()?.SetCursorLockedForGameplay(false);
         GamepadCursor.Instance.OnControlsChanged();
+
+        // Clear any gameplay selection so pointer clicks, including Apply,
+        // always reach the settings UI.
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
 
     }
 
@@ -97,6 +126,7 @@ public class PauseMenu : MonoBehaviour
         // Restore your preferred gameplay cursor state
         Cursor.visible = !lockCursorOnResume;
         Cursor.lockState = lockCursorOnResume ? CursorLockMode.Locked : CursorLockMode.None;
+        FindFirstObjectByType<Character>()?.SetCursorLockedForGameplay(lockCursorOnResume);
 
         GamepadCursor.Instance.DisableCursor();
     }
@@ -123,7 +153,7 @@ public class PauseMenu : MonoBehaviour
     }
     public void closeSettings()
     {
-        settingsMenu.SetActive(false);
+        Resume();
     }
 
     

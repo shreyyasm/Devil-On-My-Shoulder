@@ -1,26 +1,44 @@
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Runs the first two Mad Dash tutorial prompts on Active Set 0.
-/// Movement is shown as soon as the scene starts; firing is shown only when
-/// the player can see an enemy in the first room.
+/// Releases the authored Player Tutorial Manager steps at the right gameplay
+/// moments. It never replaces the Inspector-authored prompt text or bindings.
 /// </summary>
 public class MadDashTutorialDirector : MonoBehaviour
 {
     public static MadDashTutorialDirector Instance { get; private set; }
 
+    private const int FireStep = 1;
+    private const int HeartStep = 2;
+    private const int KickStep = 3;
+    private const int DashSlideStep = 4;
+    private const int FinisherStep = 5;
+    private const int DemonStep = 6;
+    private const int ParryStep = 7;
+    private const int JumpDashStep = 8;
+    private const int SlideTunnelsStep = 9;
+
     [Header("References")]
     [SerializeField] private PlayerTutorialManager tutorialManager;
 
-    [Header("First-room enemy detection")]
-    [SerializeField, Min(1f)] private float enemyEncounterDistance = 14f;
+    [Header("Timing")]
+    [SerializeField, Min(0f)] private float firePromptDelay = 1f;
+    [SerializeField, Min(1f)] private float enemyEncounterDistance = 7f;
     [SerializeField] private bool onlyRunOnActiveSetZero = true;
 
     private Transform player;
-    private Camera playerCamera;
+    private CharacterAbilities characterAbilities;
+    private PlayerHealth playerHealth;
     private bool tutorialStarted;
     private bool hasLeftSpawnRoom;
+    private bool firePromptReleased;
+    private int currentRoomIndex = -1;
+    private bool normalHealthDrainRestored;
+    private float normalHealthDrainRate;
+    private bool slideRoomPromptQueued;
+    private bool parryPromptQueued;
+    private bool jumpRoomPromptQueued;
 
     private void Awake()
     {
@@ -35,17 +53,39 @@ public class MadDashTutorialDirector : MonoBehaviour
             tutorialManager = GetComponent<PlayerTutorialManager>();
 
         FindPlayerReferences();
-        tutorialManager?.ConfigureSteps(CreateFirstRoomSteps());
+        if (tutorialManager != null)
+        {
+            // Keep the authored text and inputs. Only control when each step can appear.
+            tutorialManager.ConfigureExistingStepGate(FireStep, true);
+            tutorialManager.ConfigureExistingStepGate(HeartStep, true, 3f);
+            tutorialManager.ConfigureExistingStepGate(KickStep, true);
+            tutorialManager.ConfigureExistingStepGate(DashSlideStep, true);
+            tutorialManager.ConfigureExistingStepGate(FinisherStep, true);
+            tutorialManager.ConfigureExistingStepGate(DemonStep, true);
+            tutorialManager.StepCompleted += OnStepCompleted;
+        }
     }
 
     private void Start()
     {
-        // This happens immediately when Mad Dash begins, while the player is still in the spawn lift.
-        BeginFirstRoomTutorial();
+        if (tutorialManager == null || tutorialStarted || !CanRunTutorialForCurrentSet())
+            return;
+
+        if (tutorialManager.HasCompletedAllSteps)
+            return;
+
+        tutorialStarted = true;
+        // Keep the drain gentle only until the player has seen and completed
+        // the health instruction. Its completion is persisted by PlayerTutorialManager.
+        if (!tutorialManager.IsStepCompleted(HeartStep))
+            SetTutorialHealthDrain();
+        tutorialManager.BeginTutorial();
     }
 
     private void OnDestroy()
     {
+        if (tutorialManager != null)
+            tutorialManager.StepCompleted -= OnStepCompleted;
         if (Instance == this)
             Instance = null;
     }
@@ -55,35 +95,153 @@ public class MadDashTutorialDirector : MonoBehaviour
         if (!tutorialStarted || tutorialManager == null)
             return;
 
-        if (player == null || playerCamera == null)
+        if (player == null || characterAbilities == null)
             FindPlayerReferences();
 
-        // Step 1 is the fire prompt. Keep it hidden until an enemy is visible on screen.
-        bool enemyIsVisible = tutorialManager.CurrentStepIndex == 1 && hasLeftSpawnRoom && HasVisibleEnemy();
-        tutorialManager.SetExternalTriggerFlag(enemyIsVisible);
+        ReleaseCurrentStepWhenReady();
+        QueueMessLadyParryPrompt();
+        ReleaseQueuedContextPrompts();
     }
 
     /// <summary>Called when the player clears the spawn-lift corridor.</summary>
     public void NotifyPlayerExitedSpawnRoom()
     {
-        hasLeftSpawnRoom = true;
-    }
-
-    private void BeginFirstRoomTutorial()
-    {
-        if (tutorialStarted || tutorialManager == null || !CanRunTutorialForCurrentSet())
+        if (!tutorialStarted || hasLeftSpawnRoom)
             return;
 
-        tutorialStarted = true;
-        tutorialManager.BeginTutorial();
+        hasLeftSpawnRoom = true;
+        StartCoroutine(ReleaseFireAfterDelay());
+    }
+
+    /// <summary>Called by RoomTrigger. OnTriggerStay repeats are ignored.</summary>
+    public void NotifyRoomEntered(int roomIndex)
+    {
+        NotifyRoomEntered(roomIndex, string.Empty);
+    }
+
+    /// <summary>Called by RoomTrigger with the spawned room hierarchy so skill-room prompts only fire in their own rooms.</summary>
+    public void NotifyRoomEntered(int roomIndex, string roomIdentity)
+    {
+        if (!tutorialStarted || roomIndex == currentRoomIndex)
+            return;
+
+        currentRoomIndex = roomIndex;
+        tutorialManager?.NotifyRoomEntered(roomIndex);
+
+        if (IsSkillRoom(roomIdentity, "Slide"))
+            slideRoomPromptQueued = true;
+        if (IsSkillRoom(roomIdentity, "Jump"))
+            jumpRoomPromptQueued = true;
+
+        ReleaseQueuedContextPrompts();
+    }
+
+    private IEnumerator ReleaseFireAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(firePromptDelay);
+        firePromptReleased = true;
+    }
+
+    private void ReleaseCurrentStepWhenReady()
+    {
+        switch (tutorialManager.CurrentStepIndex)
+        {
+            case FireStep:
+                if (firePromptReleased)
+                    tutorialManager.SetExternalTriggerFlag(true);
+                break;
+
+            // This prompt appears only after the fire prompt and in a later room.
+            case HeartStep:
+                tutorialManager.SetExternalTriggerFlag(HasNearbyEnemy());
+                break;
+
+            // The authored kick prompt deliberately does not pause time.
+            case KickStep:
+                tutorialManager.SetExternalTriggerFlag(HasNearbyEnemy());
+                break;
+
+            case FinisherStep:
+                bool finisherAvailable = characterAbilities != null && characterAbilities.finisherReady && !characterAbilities.abilityReady && HasNearbyEnemy();
+                tutorialManager.SetExternalTriggerFlag(finisherAvailable);
+                break;
+
+            case DemonStep:
+                tutorialManager.SetExternalTriggerFlag(characterAbilities != null && characterAbilities.abilityReady && HasNearbyEnemy());
+                break;
+        }
+    }
+
+    private void OnStepCompleted(int completedStep)
+    {
+        // Per-step progress is saved by PlayerTutorialManager before this event.
+        // Once the health instruction is completed, return to the normal
+        // inspector-authored depletion rate for the rest of this run.
+        if (completedStep == HeartStep)
+            RestoreNormalHealthDrain();
+    }
+
+    private void QueueMessLadyParryPrompt()
+    {
+        if (parryPromptQueued || tutorialManager.IsStepCompleted(ParryStep) || player == null)
+            return;
+
+        foreach (EnemyManager enemy in FindObjectsOfType<EnemyManager>())
+        {
+            if (enemy == null || !enemy.gameObject.activeInHierarchy || !IsMessLady(enemy.transform) ||
+                (enemy.transform.position - player.position).sqrMagnitude > enemyEncounterDistance * enemyEncounterDistance)
+                continue;
+
+            parryPromptQueued = true;
+            return;
+        }
+    }
+
+    private void ReleaseQueuedContextPrompts()
+    {
+        if (tutorialManager == null)
+            return;
+
+        // Only one banner may be on screen at a time. Queued prompts remain
+        // pending until the player has finished the current instruction.
+        if (slideRoomPromptQueued && tutorialManager.TryShowContextStep(SlideTunnelsStep))
+        {
+            slideRoomPromptQueued = false;
+            return;
+        }
+
+        if (parryPromptQueued && tutorialManager.TryShowContextStep(ParryStep))
+        {
+            parryPromptQueued = false;
+            return;
+        }
+
+        if (jumpRoomPromptQueued && tutorialManager.TryShowContextStep(JumpDashStep))
+            jumpRoomPromptQueued = false;
+    }
+
+    private static bool IsSkillRoom(string roomIdentity, string skillName)
+    {
+        return !string.IsNullOrEmpty(roomIdentity) &&
+               roomIdentity.IndexOf("Skill", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
+               roomIdentity.IndexOf(skillName, System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsMessLady(Transform enemyTransform)
+    {
+        for (Transform current = enemyTransform; current != null; current = current.parent)
+        {
+            if (current.name.IndexOf("MessLady", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.name.IndexOf("Mess Lady", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+
+        return false;
     }
 
     private bool CanRunTutorialForCurrentSet()
     {
-        if (!onlyRunOnActiveSetZero || ProceduralGenerationManager.Instance == null)
-            return true;
-
-        return ProceduralGenerationManager.Instance.ActiveSet == 0;
+        return !onlyRunOnActiveSetZero || ProceduralGenerationManager.Instance == null || ProceduralGenerationManager.Instance.ActiveSet == 0;
     }
 
     private void FindPlayerReferences()
@@ -93,54 +251,44 @@ public class MadDashTutorialDirector : MonoBehaviour
             return;
 
         player = playerObject.transform;
-        playerCamera = playerObject.GetComponentInChildren<Camera>();
-        if (playerCamera == null)
-            playerCamera = Camera.main;
+        characterAbilities = playerObject.GetComponent<CharacterAbilities>();
+        playerHealth = playerObject.GetComponent<PlayerHealth>();
     }
 
-    private bool HasVisibleEnemy()
+    private void SetTutorialHealthDrain()
     {
-        if (player == null || playerCamera == null)
+        if (playerHealth == null)
+            FindPlayerReferences();
+        if (playerHealth == null)
+            return;
+
+        normalHealthDrainRate = playerHealth.healthDecreaseRate;
+        playerHealth.healthDecreaseRate = 1f;
+        normalHealthDrainRestored = false;
+    }
+
+    private void RestoreNormalHealthDrain()
+    {
+        if (normalHealthDrainRestored || playerHealth == null)
+            return;
+
+        playerHealth.healthDecreaseRate = normalHealthDrainRate;
+        normalHealthDrainRestored = true;
+    }
+
+    private bool HasNearbyEnemy()
+    {
+        if (player == null)
             return false;
 
         foreach (EnemyManager enemy in FindObjectsOfType<EnemyManager>())
         {
-            if (enemy == null || !enemy.gameObject.activeInHierarchy)
-                continue;
-
-            Vector3 toEnemy = enemy.transform.position - player.position;
-            if (toEnemy.sqrMagnitude > enemyEncounterDistance * enemyEncounterDistance)
-                continue;
-
-            Vector3 viewportPoint = playerCamera.WorldToViewportPoint(enemy.transform.position);
-            bool isOnScreen = viewportPoint.z > 0f
-                              && viewportPoint.x > 0.05f && viewportPoint.x < 0.95f
-                              && viewportPoint.y > 0.05f && viewportPoint.y < 0.95f;
-            if (isOnScreen)
+            if (enemy != null && enemy.gameObject.activeInHierarchy &&
+                (enemy.transform.position - player.position).sqrMagnitude <= enemyEncounterDistance * enemyEncounterDistance)
                 return true;
         }
 
         return false;
     }
 
-    private static List<TutorialStep> CreateFirstRoomSteps()
-    {
-        return new List<TutorialStep>
-        {
-            new TutorialStep
-            {
-                instructionText = "USE W / A / S / D TO MOVE",
-                keys = new[] { KeyCode.W, KeyCode.A, KeyCode.S, KeyCode.D },
-                delayAfterComplete = 0.2f
-            },
-            new TutorialStep
-            {
-                instructionText = "ENEMY DETECTED — MOVE AND KILL / PRESS MOUSE 1 TO FIRE",
-                mouseButton = MouseButtonType.Left,
-                waitToShowForExternalTrigger = true,
-                pauseTimeUntilInput = true,
-                delayAfterComplete = 0.25f
-            }
-        };
-    }
 }

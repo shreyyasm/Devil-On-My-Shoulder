@@ -59,6 +59,7 @@ namespace InfimaGames.LowPolyShooterPack
         [SerializeField] private LayerMask mask;
         [SerializeField] private float maximumDistance = 500.0f;
         [SerializeField] private int ammunitionTotal = 10;
+        private int baseAmmunitionTotal = -1;
         [SerializeField] private Transform socket;
         [SerializeField] private AudioClip audioClipFire;
         public float reloadAnimationTime = 1f;
@@ -284,7 +285,11 @@ namespace InfimaGames.LowPolyShooterPack
 
         private void Update()
         {
-            if (ammunitionCurrent < 2 && !Character.reloading)
+            if (Character.IsShopFiringLocked)
+            {
+                reloadCanvas.SetActive(false);
+            }
+            else if (ammunitionCurrent < 2 && !Character.reloading)
             {
                 reloadCanvas.SetActive(true);
             }
@@ -493,12 +498,42 @@ namespace InfimaGames.LowPolyShooterPack
             return gunType == GunType.Automatic;
         }
 
-        public override float GetRateOfFire() => roundsPerMinutes * Character.playerMovement.characterAbilities.GetFireRateModifier();
+        public override float GetRateOfFire() => (roundsPerMinutes + (RoguelikeManager.Instance != null ? RoguelikeManager.Instance.FireRateBonusRpm : 0f)) * Character.playerMovement.characterAbilities.GetFireRateModifier();
+
+        // These base values are deliberately separate from the gameplay
+        // getters above. The shop previews the weapon prefab safely, before a
+        // player Character has necessarily been assigned to it.
+        public float GetShopBaseDamage()
+        {
+            Projectile projectile = BulletPool != null && BulletPool.Template != null
+                ? BulletPool.Template.GetComponent<Projectile>()
+                : null;
+            return projectile != null ? projectile.bulletDamage : 0f;
+        }
+
+        public int GetShopBaseFireRate() => roundsPerMinutes;
+        public int GetShopBaseCapacity() => ammunitionTotal;
+
+        public float GetShopRecoil()
+        {
+            Vector2 recoil = gunType == GunType.Shotgun ? shotgunRecoil :
+                gunType == GunType.ChargedBeam ? chargedBeamRecoil :
+                gunType == GunType.Pistol ? pistolRecoil : automaticRecoil;
+            return recoil.magnitude;
+        }
         public override bool IsFull() => ammunitionCurrent == ammunitionTotal;
         public override bool isChargedBeam() => gunType == GunType.ChargedBeam;
         public override bool IsLaserBeam() => gunType == GunType.LaserBeam;
         public override bool HasAmmunition() => ammunitionCurrent > 0;
         public override RuntimeAnimatorController GetAnimatorController() => controller;
+
+        public void ApplyRoguelikeMagazineBonus(int bonus)
+        {
+            if (baseAmmunitionTotal < 0)
+                baseAmmunitionTotal = ammunitionTotal;
+            ammunitionTotal = Mathf.Max(1, baseAmmunitionTotal + Mathf.Max(0, bonus));
+            ammunitionCurrent = Mathf.Clamp(ammunitionCurrent, 0, ammunitionTotal);
+        }
 
         #endregion
 

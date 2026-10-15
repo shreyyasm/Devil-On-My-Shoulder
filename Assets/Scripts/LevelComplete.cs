@@ -30,6 +30,21 @@ public class LevelComplete : MonoBehaviour
     [SerializeField, Min(0f)] private float shopDoorOffset = .15f;
     [SerializeField, Min(0f)] private float shopSpawnSettleDelay = .15f;
 
+    [Header("Shop Arrival Travel")]
+    [Tooltip("How far above its door alignment the shop room begins before arriving.")]
+    [SerializeField, Min(0f)] private float shopLiftTravelHeight = 12f;
+    [SerializeField, Min(.05f)] private float shopLiftArrivalDuration = 1.75f;
+    [SerializeField, Min(.05f)] private float shopLiftDepartureDuration = 1.5f;
+
+    [Header("First Shop Introduction")]
+    [SerializeField, Min(0f)] private float firstShopIntroductionDuration = 3.35f;
+    [SerializeField, Min(0f)] private float shopIntroSlowMotionDelay = .5f;
+    [SerializeField, Min(.01f)] private float shopIntroSlowMotionDuration = 1f;
+    [SerializeField, Range(.01f, 1f)] private float firstShopTimeScale = .05f;
+    [SerializeField, Min(0f)] private float soulKeeperTitleTravelDistance = 500f;
+
+    private const string FirstShopIntroductionPreferenceKey = "DevilOnMyShoulder.FirstShopIntroductionPlayed";
+
     private bool transitionStarted;
     
     private bool shopSelectionMade;
@@ -40,6 +55,8 @@ private bool shopOpenForPlayer;
 
     public bool IsTransitionInProgress => transitionStarted;
     private GameObject spawnedShop;
+    private Vector3 authoredShopPosition;
+    private bool hasAuthoredShopPosition;
 
     private void Awake()
     {
@@ -135,6 +152,10 @@ private bool shopOpenForPlayer;
         transitionStarted = true;
         ResolveLiftReferences();
 
+        // The lift gets its own track once the player enters the End Room.
+        // Regular gameplay music fades away before the doors close.
+        BackgroundMusic.Instance?.StartElevatorMusic();
+
         // Build the shop behind the still-open front doors so its Shopkeeper
         // provides a real facing target during the entry alignment.
         SpawnShopRoom();
@@ -147,6 +168,10 @@ private bool shopOpenForPlayer;
         TriggerLift("CloseLift", liftCloseAnimationSpeed);
         yield return WaitForLiftToClose("LiftClose");
         ResetLiftAnimationSpeed();
+
+        // The spawned shop begins two storeys above its door alignment, then descends
+        // into place while the player is sealed inside. The End Lift stays fixed.
+        yield return BringShopInFromAbove();
         yield return new WaitForSeconds(delayBeforeTravelShake);
         yield return ShakeLift();
         yield return new WaitForSeconds(shopSpawnSettleDelay);
@@ -156,6 +181,9 @@ private bool shopOpenForPlayer;
             TriggerLift("OpenLift Front");
             shopOpenForPlayer = true;
             shopSelectionMade = false;
+
+            yield return PlayShopIntroduction();
+
             StartCoroutine(RestoreShopControlAfterDoorOpens());
         }
 
@@ -173,6 +201,10 @@ shopUpgradeSelection?.HideImmediate();
         ProceduralGenerationManager.Instance?.LockPlayerForLiftTravel(GetShopkeeperFacing());
         PlayerHealth.Instance?.RestoreHealthDuringLiftTravel();
         yield return ShakeLift();
+
+        // Keep the doors closed while the shop room rises away, then reveal the
+        // next level through the normal lift handoff.
+        yield return SendShopUpward();
 
         if (spawnedShop != null)
             Destroy(spawnedShop);
@@ -322,7 +354,11 @@ private IEnumerator RestoreShopControlAfterDoorOpens()
         }
 
         spawnedShop = Instantiate(shopRoomPrefab);
-        shopkeeperTransform = FindChildRecursive(spawnedShop.transform, "Shopkeeper");
+        // The authored prefab calls this child "Shop Keeper". Keep the old
+        // spelling as a fallback so alternate shop prefabs still work.
+        shopkeeperTransform = FindChildRecursive(spawnedShop.transform, "Shop Keeper");
+        if (shopkeeperTransform == null)
+            shopkeeperTransform = FindChildRecursive(spawnedShop.transform, "Shopkeeper");
         if (shopkeeperTransform != null)
         {
             lastShopkeeperPosition = shopkeeperTransform.position;
@@ -344,9 +380,23 @@ private IEnumerator RestoreShopControlAfterDoorOpens()
         spawnedShop.transform.rotation = liftFacing * Quaternion.Inverse(shopFacing);
         spawnedShop.transform.position += liftFrontSnapPoint.position - shopDoor.SnapPoint.position;
         spawnedShop.transform.position += liftFrontSnapPoint.forward * shopDoorOffset;
+
+        // Keep the End Lift fixed. Only the newly spawned shop room starts high
+        // above its door alignment and descends after the lift seals.
+        CacheAuthoredShopPosition();
+        spawnedShop.transform.position = authoredShopPosition + Vector3.up * shopLiftTravelHeight;
         shopDoor.Open();
     }
 
+    /// <summary>Locks the player and resets the view before the shop exit doors close.</summary>
+    public void SnapPlayerToShopExitView()
+    {
+        ProceduralGenerationManager.Instance?.LockPlayerForLiftTravel(
+            GetShopkeeperFacing(),
+            null,
+            float.NaN,
+            true);
+    }
     private Vector3 GetShopkeeperFacing()
     {
         Vector3 targetPosition = shopkeeperTransform != null
@@ -366,6 +416,242 @@ private IEnumerator RestoreShopControlAfterDoorOpens()
         return facing;
     }
 
+    private IEnumerator PlayShopIntroduction()
+    {
+        // The character and camera introductions are part of every shop visit.
+        // Only the slow-motion title beat is a one-time introduction.
+        bool isFirstShopEncounter = PlayerPrefs.GetInt(FirstShopIntroductionPreferenceKey, 0) == 0;
+        SetShopIntroVisualsActive(true);
+
+        CharacterAbilities abilities = CharacterAbilities.instance;
+        Animator finisherCameraAnimator = null;
+        // CharacterAbilities already stores the player Character reference.
+        // Use it directly because this lift component is not on the player.
+        var playerCharacter = abilities != null ? abilities.character : null;
+
+        if (abilities != null)
+        {
+            // Match the normal finisher-camera setup so this animation is
+            // actually visible before its Animator receives the trigger.
+            if (abilities.finisherCamera != null)
+            {
+                abilities.finisherCamera.SetActive(true);
+                finisherCameraAnimator = abilities.finisherCamera.GetComponent<Animator>();
+            }
+
+            if (playerCharacter != null && playerCharacter.characterAnimator != null)
+                playerCharacter.characterAnimator.SetBool("FinisherUnholstered", true);
+
+            if (abilities.renderFinisherCanvas != null)
+                abilities.renderFinisherCanvas.SetActive(true);
+
+            if (abilities.mainCameraTexture != null)
+                abilities.mainCameraTexture.SetActive(false);
+        }
+
+        Animator shopkeeperAnimator = FindShopkeeperIntroductionAnimator();
+        TriggerAnimatorIfPresent(shopkeeperAnimator, "Introduction");
+        TriggerAnimatorIfPresent(finisherCameraAnimator, "Shop Introduction");
+
+        if (isFirstShopEncounter)
+        {
+            StartCoroutine(AnimateSoulKeeperTitle());
+
+            // The beat deliberately starts half a second into the intro, so
+            // the animation is already in motion before time slows down.
+            yield return new WaitForSecondsRealtime(shopIntroSlowMotionDelay);
+
+            // Preserve any time scale already established by another system,
+            // then restore that exact value after the first Shop Keeper beat.
+            float previousTimeScale = Time.timeScale;
+            Time.timeScale = Mathf.Min(previousTimeScale, firstShopTimeScale);
+            yield return new WaitForSecondsRealtime(shopIntroSlowMotionDuration);
+            Time.timeScale = previousTimeScale;
+            PlayerPrefs.SetInt(FirstShopIntroductionPreferenceKey, 1);
+            PlayerPrefs.Save();
+
+            yield return new WaitForSeconds(Mathf.Max(0f, firstShopIntroductionDuration - shopIntroSlowMotionDelay));
+
+            // Keep the title readable at centre until the authored Shop Keeper
+            // and finisher-camera introductions have finished, then send it away.
+            yield return AnimateSoulKeeperTitleExit();
+        }
+        else
+        {
+            yield return new WaitForSeconds(firstShopIntroductionDuration);
+        }
+
+        // Return to the regular shop view before the card hologram appears.
+        if (abilities != null)
+        {
+            if (playerCharacter != null && playerCharacter.characterAnimator != null)
+                playerCharacter.characterAnimator.SetBool("FinisherUnholstered", false);
+
+            if (abilities.finisherCamera != null)
+                abilities.finisherCamera.SetActive(false);
+
+            if (abilities.renderFinisherCanvas != null)
+                abilities.renderFinisherCanvas.SetActive(false);
+
+            if (abilities.mainCameraTexture != null)
+                abilities.mainCameraTexture.SetActive(true);
+        }
+
+        SetShopIntroVisualsActive(false);
+    }
+
+    private Animator FindShopkeeperIntroductionAnimator()
+    {
+        if (spawnedShop == null)
+            return null;
+
+        // Resolve by the trigger the introduction needs, rather than relying
+        // on the exact object that happens to hold the Animator component.
+        foreach (Animator animator in spawnedShop.GetComponentsInChildren<Animator>(true))
+        {
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.type == AnimatorControllerParameterType.Trigger &&
+                    parameter.name == "Introduction")
+                    return animator;
+            }
+        }
+
+        Debug.LogWarning("[LevelComplete] Could not find a Shop Keeper Animator with an Introduction trigger.", spawnedShop);
+        return null;
+    }
+
+    private void SetShopIntroVisualsActive(bool active)
+    {
+        if (spawnedShop == null)
+            return;
+
+        Transform background = FindChildRecursive(spawnedShop.transform, "Intro BG");
+        if (background != null)
+            background.gameObject.SetActive(active);
+
+        Transform title = FindChildRecursive(spawnedShop.transform, "Soul Keeper") ??
+                          FindChildRecursive(spawnedShop.transform, "Sol - keeper Sprite");
+        if (title != null && !active)
+            title.gameObject.SetActive(false);
+    }
+
+    private IEnumerator AnimateSoulKeeperTitle()
+    {
+        if (spawnedShop == null)
+            yield break;
+
+        Transform title = FindChildRecursive(spawnedShop.transform, "Soul Keeper") ??
+                          FindChildRecursive(spawnedShop.transform, "Sol - keeper Sprite");
+        if (title == null)
+            yield break;
+
+        Vector3 centre = title.localPosition;
+        Vector3 left = centre + Vector3.left * soulKeeperTitleTravelDistance;
+        title.localPosition = left;
+        title.gameObject.SetActive(true);
+
+        // Arrive at centre exactly when the slow-motion beat begins.
+        float elapsed = 0f;
+        while (elapsed < shopIntroSlowMotionDelay)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            title.localPosition = Vector3.Lerp(left, centre,
+                Mathf.Clamp01(elapsed / Mathf.Max(.01f, shopIntroSlowMotionDelay)));
+            yield return null;
+        }
+
+        title.localPosition = centre;
+    }
+
+    private IEnumerator AnimateSoulKeeperTitleExit()
+    {
+        if (spawnedShop == null)
+            yield break;
+
+        Transform title = FindChildRecursive(spawnedShop.transform, "Soul Keeper") ??
+                          FindChildRecursive(spawnedShop.transform, "Sol - keeper Sprite");
+        if (title == null || !title.gameObject.activeSelf)
+            yield break;
+
+        Vector3 centre = title.localPosition;
+        Vector3 right = centre + Vector3.right * soulKeeperTitleTravelDistance;
+        const float exitDuration = .35f;
+        float elapsed = 0f;
+        while (elapsed < exitDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            title.localPosition = Vector3.Lerp(centre, right, Mathf.Clamp01(elapsed / exitDuration));
+            yield return null;
+        }
+
+        title.localPosition = centre;
+        title.gameObject.SetActive(false);
+    }
+
+    private static void TriggerAnimatorIfPresent(Animator animator, string trigger)
+    {
+        if (animator == null)
+            return;
+
+        foreach (AnimatorControllerParameter parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Trigger && parameter.name == trigger)
+            {
+                animator.SetTrigger(trigger);
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[LevelComplete] Animator '{animator.name}' does not define the '{trigger}' trigger.", animator);
+    }
+
+    private void CacheAuthoredShopPosition()
+    {
+        if (spawnedShop == null || hasAuthoredShopPosition)
+            return;
+
+        authoredShopPosition = spawnedShop.transform.position;
+        hasAuthoredShopPosition = true;
+    }
+
+    private IEnumerator BringShopInFromAbove()
+    {
+        if (spawnedShop == null)
+            yield break;
+
+        CacheAuthoredShopPosition();
+        yield return MoveShopTo(authoredShopPosition, shopLiftArrivalDuration);
+    }
+
+    private IEnumerator SendShopUpward()
+    {
+        if (spawnedShop == null)
+            yield break;
+
+        CacheAuthoredShopPosition();
+        yield return MoveShopTo(authoredShopPosition + Vector3.up * shopLiftTravelHeight, shopLiftDepartureDuration);
+    }
+
+    private IEnumerator MoveShopTo(Vector3 targetPosition, float duration)
+    {
+        if (spawnedShop == null)
+            yield break;
+
+        Vector3 start = spawnedShop.transform.position;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+            if (spawnedShop != null)
+                spawnedShop.transform.position = Vector3.LerpUnclamped(start, targetPosition, progress);
+            yield return null;
+        }
+
+        if (spawnedShop != null)
+            spawnedShop.transform.position = targetPosition;
+    }
     private IEnumerator ShakeLift()
     {
         if (liftTransform == null)
@@ -475,3 +761,7 @@ private void BeginGunOffers()
         gunOffers.ShowOffers(spawnedShop.transform, () => shopSelectionMade = true);
     }
 }
+
+
+
+

@@ -1022,7 +1022,7 @@ public class LTDescr
 			this._optional.ltRect.rotateFinished = true;
 
 		if(this.type==TweenAction.DELAYED_SOUND){
-			AudioSource.PlayClipAtPoint((AudioClip)this._optional.onCompleteParam, this.to, this.from.x);
+			AudioMixerRoutingManager.PlayClipAtPoint((AudioClip)this._optional.onCompleteParam, this.to, this.from.x);
 		}
 		if(this._optional.onComplete!=null){
 			this._optional.onComplete();

@@ -116,7 +116,7 @@ public class Enemy : MonoBehaviour
         health -= damageValue;
 
         BloodPool.GetObject().transform.position = transform.position;
-        //AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
+        //AudioMixerRoutingManager.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
         ScoreManager.Instance.RegisterShotHit();
         if (health <= 0)
         {
@@ -132,8 +132,8 @@ public class Enemy : MonoBehaviour
             }).setIgnoreTimeScale(true);
 
 
-            AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
-            AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
+            AudioMixerRoutingManager.PlayClipAtPoint(destroySFX, transform.position, 1f);
+            AudioMixerRoutingManager.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
             //Instantiate(coin, transform.position, Quaternion.identity);
 
 
@@ -173,7 +173,7 @@ public class Enemy : MonoBehaviour
             //health -= collision.gameObject.GetComponent<Projectile>().Damage(gameObject);
            
             BloodPool.GetObject().transform.position = transform.position;
-            AudioSource.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
+            AudioMixerRoutingManager.PlayClipAtPoint(BulletHitSFX[UnityEngine.Random.Range(0, 2)], transform.position, 1f);
             ScoreManager.Instance.RegisterShotHit();
             if (health <= 0)
             {
@@ -185,8 +185,8 @@ public class Enemy : MonoBehaviour
                 ImpactFrameEffect.Instance.GoBlack();
                 LeanTween.delayedCall(0.2f, () => { ImpactFrameEffect.Instance.GoColor(); });
 
-                AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
-                AudioSource.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
+                AudioMixerRoutingManager.PlayClipAtPoint(destroySFX, transform.position, 1f);
+                AudioMixerRoutingManager.PlayClipAtPoint(killSound, Camera.main.transform.position, 1f);
                 //Instantiate(coin, transform.position, Quaternion.identity);
 
 
@@ -233,7 +233,7 @@ public class Enemy : MonoBehaviour
                     explosion.transform.position = transform.position + new Vector3(0, 01f, 0);
                     gameObject.SetActive(false);
                    
-                    AudioSource.PlayClipAtPoint(destroySFX, transform.position, 1f);
+                    AudioMixerRoutingManager.PlayClipAtPoint(destroySFX, transform.position, 1f);
 
                 }
                 //ImpactFrameEffect.Instance.GoBlack();

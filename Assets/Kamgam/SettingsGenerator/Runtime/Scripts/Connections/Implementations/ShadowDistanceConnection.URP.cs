@@ -95,10 +95,15 @@ namespace Kamgam.SettingsGenerator
                 {
                     _distancesFromSettings = new List<float>();
                     int levels = QualitySettings.names.Length;
+                    var activeAsset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+                    float fallbackDistance = activeAsset != null ? activeAsset.shadowDistance : 50f;
                     for (int level = 0; level < levels; level++)
                     {
                         var asset = QualitySettings.GetRenderPipelineAssetAt(level) as UniversalRenderPipelineAsset;
-                        _distancesFromSettings.Add(asset.shadowDistance);
+                        // A quality level may intentionally have no pipeline
+                        // asset assigned. Keep its index valid instead of
+                        // throwing while the settings menu is opening.
+                        _distancesFromSettings.Add(asset != null ? asset.shadowDistance : fallbackDistance);
                     }
                 }
                 return _distancesFromSettings;

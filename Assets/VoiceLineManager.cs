@@ -13,6 +13,11 @@ public class VoiceLineManager : MonoBehaviour
     [SerializeField] public Animator animator;
     [SerializeField] private TextMeshProUGUI subtitleText;
 
+    [Header("Voice Playback")]
+    [Tooltip("Extra gain for daemon dialogue. The Effects slider still controls the final voice volume.")]
+    [Range(0f, 2f)]
+    [SerializeField] private float voiceVolumeMultiplier = 4f;
+
     [Header("Music Ducking")]
     [SerializeField] private AudioSource musicAudioSource;
 
@@ -47,6 +52,12 @@ public class VoiceLineManager : MonoBehaviour
             normalMusicVolume = musicAudioSource.volume;
             targetMusicVolume = normalMusicVolume;
         }
+
+        // Dialogue is narration, so it should not become quiet when the demon head
+        // is off screen or farther away from the listener.
+        if (audioSource != null)
+            audioSource.spatialBlend = 0f;
+
         PlayRandom("Game Start", 20f);
     }
 
@@ -160,7 +171,7 @@ public class VoiceLineManager : MonoBehaviour
         {
             audioSource.PlayOneShot(
                 line.audioClip,
-                line.volume
+                Mathf.Clamp(line.volume * voiceVolumeMultiplier, 0f, 4f)
             );
 
             DuckMusic();
@@ -232,6 +243,12 @@ public class VoiceLineManager : MonoBehaviour
 
     private void DuckMusic()
     {
+        if (BackgroundMusic.Instance != null)
+        {
+            BackgroundMusic.Instance.SetDialogueDucking(musicDuckVolume);
+            return;
+        }
+
         if (musicAudioSource == null)
             return;
 
@@ -241,6 +258,12 @@ public class VoiceLineManager : MonoBehaviour
 
     private void RestoreMusic()
     {
+        if (BackgroundMusic.Instance != null)
+        {
+            BackgroundMusic.Instance.SetDialogueDucking(1f);
+            return;
+        }
+
         targetMusicVolume = normalMusicVolume;
     }
 

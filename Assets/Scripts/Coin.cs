@@ -23,7 +23,7 @@ public class Coin : MonoBehaviour
     {
         if(other.CompareTag("Player"))
         {
-            AudioSource.PlayClipAtPoint(coinSFX, transform.position, 1);
+            AudioMixerRoutingManager.PlayClipAtPoint(coinSFX, transform.position, 1);
             KillStreak.Instance.CoinCollectProgress();
             coinsPool.Release(gameObject);
             LevelCompletion.Instance.CoinCheck();

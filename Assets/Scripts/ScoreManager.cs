@@ -343,6 +343,18 @@ public class ScoreManager : MonoBehaviour
     {
         isRunning = false;
     }
+
+    // Keeps the current survival time intact while the player is travelling
+    // between levels or using the lift shop.
+    public void PauseSurvivalTimer()
+    {
+        isRunning = false;
+    }
+
+    public void ResumeSurvivalTimer()
+    {
+        isRunning = true;
+    }
     private void UpdateTimerDisplay()
     {
         int hours = Mathf.FloorToInt(elapsedTime / 3600);

@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
+using UnityEngine.UI;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -241,6 +242,17 @@ public void PauseHealthDrain()
     public int countdownTime = 5;
     public bool timerRunning = false;   
 
+    [Header("Death Countdown Images")]
+    [SerializeField] private Image countdownImage;
+    [SerializeField] private Sprite countdownThreeSprite;
+    [SerializeField] private Sprite countdownTwoSprite;
+    [SerializeField] private Sprite countdownOneSprite;
+    [SerializeField] private Image deathLogoImage;
+    [SerializeField] private Sprite deathLogoSprite;
+    [SerializeField, UnityEngine.Min(.01f)] private float countdownPopDuration = .18f;
+    [SerializeField, UnityEngine.Min(.1f)] private float countdownPopStartScale = .55f;
+    [SerializeField, UnityEngine.Min(1f)] private float countdownPopOvershootScale = 1.15f;
+
     private Coroutine countdownCoroutine;
     private bool isCancelled;
 
@@ -252,8 +264,12 @@ public void PauseHealthDrain()
 
         timerRunning = true;
         isCancelled = false;
-        countdownCoroutine = StartCoroutine(CountdownToStart());
         countdownDisplay.gameObject.SetActive(true);
+        if (countdownImage != null)
+            countdownImage.gameObject.SetActive(false);
+        if (deathLogoImage != null)
+            deathLogoImage.gameObject.SetActive(false);
+        countdownCoroutine = StartCoroutine(CountdownToStart());
 
     }
 
@@ -263,6 +279,10 @@ public void PauseHealthDrain()
         {
             timerRunning = false;
             countdownDisplay.gameObject.SetActive(false);
+            if (countdownImage != null)
+                countdownImage.gameObject.SetActive(false);
+            if (deathLogoImage != null)
+                deathLogoImage.gameObject.SetActive(false);
             isCancelled = true;
             StopCoroutine(countdownCoroutine);
             countdownCoroutine = null;
@@ -282,13 +302,14 @@ public void PauseHealthDrain()
             if (isCancelled)
                 yield break;
 
-            countdownDisplay.text = timeLeft.ToString();
+            ShowCountdownNumber(timeLeft);
             yield return new WaitForSeconds(1f);
             timeLeft--;
         }
 
         dead = true;
-        countdownDisplay.text = "You're Dead!";
+        RoguelikeManager.Instance?.ResetRunStats();
+        ShowDeathMessage();
         VoiceLineManager.instance.PlayRandom("Player Dies", 30f);
         ScoreManager.Instance.CalculateOverallScore();
         SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);
@@ -300,12 +321,69 @@ public void PauseHealthDrain()
 
     public void PlayerDead()
     {
-        countdownDisplay.text = "You're Dead!";
+        RoguelikeManager.Instance?.ResetRunStats();
+        ShowDeathMessage();
         ScoreManager.Instance.CalculateOverallScore();
         SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);
         ScoreManager.Instance.ManageBGAudio(0.3f);
         playerDead = true;
         StartCoroutine(FinishDeathAfterFall());
+    }
+
+    private void ShowCountdownNumber(int number)
+    {
+        Sprite sprite = number == 3 ? countdownThreeSprite :
+                        number == 2 ? countdownTwoSprite :
+                        number == 1 ? countdownOneSprite : null;
+
+        if (countdownImage == null || sprite == null)
+        {
+            countdownDisplay.gameObject.SetActive(true);
+            countdownDisplay.text = number.ToString();
+            return;
+        }
+
+        countdownDisplay.gameObject.SetActive(false);
+        countdownImage.sprite = sprite;
+        countdownImage.preserveAspect = true;
+        countdownImage.gameObject.SetActive(true);
+
+        RectTransform imageTransform = countdownImage.rectTransform;
+        LeanTween.cancel(countdownImage.gameObject);
+        imageTransform.localScale = Vector3.one * countdownPopStartScale;
+        LeanTween.scale(countdownImage.gameObject, Vector3.one * countdownPopOvershootScale, countdownPopDuration)
+            .setEaseOutBack()
+            .setIgnoreTimeScale(true)
+            .setOnComplete(() => LeanTween.scale(countdownImage.gameObject, Vector3.one, countdownPopDuration * .55f)
+                .setEaseInOutQuad()
+                .setIgnoreTimeScale(true));
+    }
+
+    private void ShowDeathMessage()
+    {
+        if (countdownImage != null)
+            countdownImage.gameObject.SetActive(false);
+
+        if (deathLogoImage != null && deathLogoSprite != null)
+        {
+            countdownDisplay.gameObject.SetActive(false);
+            deathLogoImage.sprite = deathLogoSprite;
+            deathLogoImage.preserveAspect = true;
+            deathLogoImage.gameObject.SetActive(true);
+            RectTransform logoTransform = deathLogoImage.rectTransform;
+            LeanTween.cancel(deathLogoImage.gameObject);
+            logoTransform.localScale = Vector3.one * countdownPopStartScale;
+            LeanTween.scale(deathLogoImage.gameObject, Vector3.one * countdownPopOvershootScale, countdownPopDuration)
+                .setEaseOutBack()
+                .setIgnoreTimeScale(true)
+                .setOnComplete(() => LeanTween.scale(deathLogoImage.gameObject, Vector3.one, countdownPopDuration * .55f)
+                    .setEaseInOutQuad()
+                    .setIgnoreTimeScale(true));
+            return;
+        }
+
+        countdownDisplay.gameObject.SetActive(true);
+        countdownDisplay.text = "You're Dead!";
     }
 
     [Header("Death Presentation")]
