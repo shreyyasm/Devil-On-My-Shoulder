@@ -124,7 +124,15 @@ public sealed class RoguelikeManager : MonoBehaviour
         if (playerMovement != null)
         {
             playerMovement.moveSpeed = baseMoveSpeed + playerSpeedBonus;
-            playerMovement.maxSpeed = baseMaxSpeed + playerSpeedBonus;
+
+            // moveSpeed is an acceleration/force value (around 5500), while
+            // maxSpeed is a world-velocity cap (around 20). Adding the same
+            // raw bonus to both made the first +1000 Player Speed upgrade turn
+            // the cap into 1020 and launch the player far too quickly.
+            float speedScale = baseMoveSpeed > Mathf.Epsilon
+                ? Mathf.Max(1f, playerMovement.moveSpeed / baseMoveSpeed)
+                : 1f;
+            playerMovement.maxSpeed = baseMaxSpeed * speedScale;
             playerMovement.dashForce = baseDashForce + dashSpeedBonus;
         }
         if (playerHealth != null)

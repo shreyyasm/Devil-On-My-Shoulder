@@ -228,11 +228,20 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 moveInput = Vector2.zero;   // x = horizontal, y = vertical
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.playerDead)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnKick(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.playerDead)
+            return;
+
         if (context.performed)
             kickPressed = true;
     }
@@ -240,6 +249,12 @@ public class PlayerMovement : MonoBehaviour
     // Jump: Button (performed = pressed)
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.playerDead)
+        {
+            jumpPressed = false;
+            return;
+        }
+
         if (context.performed)
             jumpPressed = true;
         else if (context.canceled)
@@ -248,6 +263,12 @@ public class PlayerMovement : MonoBehaviour
     // Slide: button (we use performed to trigger a slide)
     public void OnSlide(InputAction.CallbackContext context)
     {
+        if (playerHealth != null && playerHealth.playerDead)
+        {
+            slidePressed = false;
+            return;
+        }
+
         if (context.performed)
             slidePressed = true;
     }
@@ -264,6 +285,9 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void Update() {
+
+        if (playerHealth != null && playerHealth.playerDead)
+            return;
  
         MyInput();
         CameraTiltSway();
@@ -326,7 +350,7 @@ public class PlayerMovement : MonoBehaviour
     public PlayerHealth playerHealth;
     private void MyInput()
     {
-        if (finisherActive) return;
+        if (finisherActive || (playerHealth != null && playerHealth.playerDead)) return;
 
         if (mainOpen) return;
         y = moveInput.y;
@@ -357,25 +381,33 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private bool isKnocked = false;
+    private int knockbackVersion;
     public bool finisherActive = false;
     public void ApplyKnockback(Vector3 force, float duration)
     {
-        StartCoroutine(KnockbackRoutine(force, duration));
+        knockbackVersion++;
+        StartCoroutine(KnockbackRoutine(force, duration, knockbackVersion));
     }
 
-    private IEnumerator KnockbackRoutine(Vector3 force, float duration)
+    private IEnumerator KnockbackRoutine(Vector3 force, float duration, int version)
     {
         isKnocked = true;
 
         rb.velocity = Vector3.zero;
         rb.AddForce(force, ForceMode.Impulse);
 
-        yield return new WaitForSeconds(duration);
+        // Knockback is a short control lock. Use real time so hit-stop or
+        // slow-motion effects cannot leave movement disabled longer than the
+        // authored duration.
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, duration));
 
-        isKnocked = false;
+        // A newer hit owns the lock and its timer must be allowed to finish.
+        if (version == knockbackVersion)
+            isKnocked = false;
     }
     private void Movement() {
 
+        if (playerHealth != null && playerHealth.playerDead) return;
         if (isKnocked) return;
         if (finisherActive) return;
         //If holding jump && ready to jump, then jump
@@ -901,7 +933,7 @@ public class PlayerMovement : MonoBehaviour
         //playerCameraMain.transform.localRotation =
         //    Quaternion.Euler(initialCamRot);
 
-        cameraLook.SyncRotation();
+        cameraLook?.SyncRotation();
 
         cameraLocked = false;
 
@@ -911,6 +943,88 @@ public class PlayerMovement : MonoBehaviour
         speedline.SetActive(false);
 
         readyToDash = true;
+    }
+
+    /// <summary>
+    /// Clears any movement/camera interpolation before a lift takes control of
+    /// the player. This is important when the player enters the lift during a
+    /// lateral dash or slide.
+    /// </summary>
+    public void PrepareForLiftEntry()
+    {
+        // The lift transition can start during either the movement or the
+        // final settle frames of a slide/dash. Always cancel every pending
+        // movement/camera routine so it cannot overwrite the lift alignment
+        // on the following frame.
+        if (isDashing)
+            CancelSlideImmediately();
+
+        if (slideRoutine != null)
+        {
+            StopCoroutine(slideRoutine);
+            slideRoutine = null;
+        }
+
+        if (cameralerpRoutine != null)
+        {
+            StopCoroutine(cameralerpRoutine);
+            cameralerpRoutine = null;
+        }
+
+        jumpPressed = false;
+        slidePressed = false;
+        kickPressed = false;
+        moveInput = Vector2.zero;
+        x = 0f;
+        y = 0f;
+
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Restore the physical player shape even if the slide coroutine was
+        // stopped after isDashing had already been cleared.
+        if (capsule != null)
+        {
+            capsule.height = standingHeight;
+            capsule.center = new Vector3(0f, standingHeight * 0.5f, 0f);
+        }
+
+        if (rootGameObject != null)
+            rootGameObject.transform.localPosition = originalRootLocalPos;
+
+        rootVisualY = originalRootLocalPos.y;
+        rootVelocityY = 0f;
+        isDashing = false;
+        isSliding = false;
+        readyToDash = true;
+        cameraLocked = false;
+
+        if (speedline != null)
+            speedline.SetActive(false);
+
+        // Slide tilt is applied directly to the player camera, while the
+        // mouse-look rotation is stored on a separate look transform. Reset
+        // both so the lift cannot inherit the slide's roll/pitch.
+        if (playerCameraMain != null)
+        {
+            playerCameraMain.transform.localRotation = Quaternion.Euler(initialCamRot);
+            playerCameraMain.fieldOfView = normalFOV;
+        }
+
+        currentKickTilt = 0f;
+        targetKickTilt = 0f;
+
+        cameraLocked = false;
+        if (cameraLook != null)
+        {
+            // A slide can leave pitch/roll in the look rig. The lift
+            // controller owns the next view, so start it from neutral.
+            cameraLook.transform.localRotation = Quaternion.identity;
+            cameraLook.SyncRotationToCurrentView();
+        }
     }
 
     private IEnumerator Dash()

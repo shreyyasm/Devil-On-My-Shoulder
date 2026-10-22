@@ -166,6 +166,8 @@ namespace InfimaGames.LowPolyShooterPack
 
 		protected override void Awake()
 		{
+			playerHealth = GetComponent<PlayerHealth>();
+
 			#region Lock Cursor
 
 			//Always make sure that our cursor is locked when the game starts!
@@ -195,8 +197,36 @@ namespace InfimaGames.LowPolyShooterPack
 		private bool shopFiringLocked;
 		public bool IsShopFiringLocked => shopFiringLocked;
 public PlayerMovement playerMovement;
+		private PlayerHealth playerHealth;
+
+		private bool IsTotallyDead => playerHealth != null && playerHealth.playerDead;
+
+		private void StopWeaponInputForDeath()
+		{
+			holdingButtonFire = false;
+			holdingButtonAim = false;
+			holdingButtonRun = false;
+			reloading = false;
+
+			if (equippedWeapon == null)
+				return;
+
+			Animator animator = equippedWeapon.GetAnimatorHands();
+			if (animator != null && HasAnimatorBool(animator, "Shooting"))
+				animator.SetBool("Shooting", false);
+
+			equippedWeapon.ReleaseChargedShot();
+			if (equippedWeapon.IsLaserBeam())
+				equippedWeapon.StopBeam();
+		}
+
 		protected override void Update()
 		{
+			if (IsTotallyDead)
+			{
+				StopWeaponInputForDeath();
+				return;
+			}
 			
 			//Match Aim.
 			aiming = holdingButtonAim && CanAim();
@@ -338,6 +368,9 @@ public PlayerMovement playerMovement;
         
         public void PlayReloadAnimation()
 		{
+			if (IsTotallyDead)
+				return;
+
 			#region Animation
 			CrosshairManager.instance.ReloadCrosshair();
             LeanTween.delayedCall(1f, () => { equippedWeapon.GetAnimatorHands().ResetTrigger("Fire"); });
@@ -520,6 +553,9 @@ public PlayerMovement playerMovement;
 		/// </summary>
         private bool CanPlayAnimationFire()
         {
+            if (IsTotallyDead)
+                return false;
+
             if (shopFiringLocked)
                 return false;
 
@@ -540,6 +576,9 @@ public PlayerMovement playerMovement;
 		/// </summary>
 		private bool CanPlayAnimationReload()
 		{
+			if (IsTotallyDead)
+				return false;
+
 			//No reloading!
 			if (reloading)
 				return false;
@@ -676,6 +715,12 @@ public PlayerMovement playerMovement;
         }
         public void OnTryFire(InputAction.CallbackContext context)
 		{
+			if (IsTotallyDead)
+			{
+				StopWeaponInputForDeath();
+				return;
+			}
+
             if (playerMovement.finisherActive) return;
             ScoreManager scoreManager = ScoreManager.Instance;
 			if (scoreManager == null) return;
@@ -758,6 +803,9 @@ public PlayerMovement playerMovement;
 
 		public void OnTryPlayReload(InputAction.CallbackContext context)
 		{
+			if (IsTotallyDead)
+				return;
+
 			// The lift/shop transition locks weapon actions until the next level opens.
 			if (shopFiringLocked)
 				return;

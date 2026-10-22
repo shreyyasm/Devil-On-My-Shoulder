@@ -17,6 +17,7 @@ public class AudioMixerRoutingManager : MonoBehaviour
 
     private readonly HashSet<int> routedSources = new HashSet<int>();
     private float nextRescanTime;
+    private float nextVoiceSliderAttemptTime;
 
     private void Awake()
     {
@@ -64,6 +65,16 @@ public class AudioMixerRoutingManager : MonoBehaviour
 
     private void Update()
     {
+        // Settings Generator creates the menu UI after its providers initialise.
+        // In a player build that can be several frames after this component's
+        // startup coroutine, so keep looking until the fourth audio control is
+        // present. The method is idempotent and will not create duplicates.
+        if (Time.unscaledTime >= nextVoiceSliderAttemptTime)
+        {
+            nextVoiceSliderAttemptTime = Time.unscaledTime + 1f;
+            CreateVoiceVolumeSlider();
+        }
+
         if (Time.unscaledTime < nextRescanTime)
             return;
         nextRescanTime = Time.unscaledTime + rescanInterval;
@@ -120,15 +131,14 @@ public class AudioMixerRoutingManager : MonoBehaviour
                 return;
             }
 
-            if (resolver.ID == "audioEffectVolume")
+            // There can be other resolvers with this ID in loaded menu
+            // templates. Only duplicate the visible Audio tab's Effects row.
+            if (resolver.ID == "audioEffectVolume" && HasLabel(resolver.gameObject, "Effect Volume"))
                 effectSlider = resolver;
         }
 
         if (effectSlider == null)
-        {
-            Debug.LogWarning("AudioMixerRoutingManager could not find the Effects volume slider to duplicate.", this);
             return;
-        }
 
         GameObject voiceSliderObject = Instantiate(effectSlider.gameObject, effectSlider.transform.parent);
         voiceSliderObject.name = "SliderUGUI (Demon Dialogs and Voice Lines)";
@@ -147,14 +157,31 @@ public class AudioMixerRoutingManager : MonoBehaviour
         foreach (TextMeshProUGUI text in voiceSliderObject.GetComponentsInChildren<TextMeshProUGUI>(true))
         {
             if (text.text == "Effect Volume")
-                text.text = "Demon Voice Volume";
+                text.text = "Devil Voice Line SFX";
         }
 
         foreach (Text text in voiceSliderObject.GetComponentsInChildren<Text>(true))
         {
             if (text.text == "Effect Volume")
-                text.text = "Demon Voice Volume";
+                text.text = "Devil Voice Line SFX";
         }
+    }
+
+    private static bool HasLabel(GameObject sliderObject, string expectedLabel)
+    {
+        foreach (TextMeshProUGUI text in sliderObject.GetComponentsInChildren<TextMeshProUGUI>(true))
+        {
+            if (text.text == expectedLabel)
+                return true;
+        }
+
+        foreach (Text text in sliderObject.GetComponentsInChildren<Text>(true))
+        {
+            if (text.text == expectedLabel)
+                return true;
+        }
+
+        return false;
     }
 
     public static void PlayClipAtPoint(AudioClip clip, Vector3 position, float volume = 1f)

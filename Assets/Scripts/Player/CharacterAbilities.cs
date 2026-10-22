@@ -312,6 +312,16 @@ public class CharacterAbilities : MonoBehaviour
             ActivateAbility();
         }
 
+        if (abilityActive)
+        {
+            abilityTimer -= Time.deltaTime;
+            if (abilityTimer <= 0f)
+            {
+                abilityTimer = 0f;
+                EndAbility();
+            }
+        }
+
 
         HandleAbilityLogic();
         UpdateAbility1TargetUI();
@@ -428,13 +438,16 @@ public class CharacterAbilities : MonoBehaviour
 
     private void TryFinisher()
     {
-        if (currentKillValue >= finisherCost)
-        {
-           
-            CheckStates();
-            PerformFinisher();
-            
-        }
+        // A finisher is allowed during the zero-health countdown because it
+        // can restore health and cancel the pending death. Only the final
+        // `playerDead` state blocks it.
+        if (playerHealth != null && playerHealth.playerDead)
+            return;
+
+        if (currentKillValue < finisherCost || FinisherActive || isFinishing)
+            return;
+
+        PerformFinisher();
     }
 
     private void CheckStates()
@@ -522,9 +535,11 @@ public class CharacterAbilities : MonoBehaviour
         if (target != null)
         {
             EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
-            enemyManager.EndDash(enemyManager.dashToken);
-
             EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
+            if (enemyManager == null || enemyHealth == null)
+                return;
+
+            enemyManager.EndDash(enemyManager.dashToken);
 
             enemyHealthTemp = enemyHealth;
             enemyHealth.FinisherActive();
@@ -565,7 +580,11 @@ public class CharacterAbilities : MonoBehaviour
         if (playerMovement.isDashing && !playerMovement.grounded)
             return null;
 
-        Transform cam = Camera.main.transform;
+        Camera targetCamera = Camera.main != null ? Camera.main : playerCam;
+        if (targetCamera == null)
+            return null;
+
+        Transform cam = targetCamera.transform;
 
         Collider[] hits = Physics.OverlapSphere(
             transform.position,
@@ -579,7 +598,12 @@ public class CharacterAbilities : MonoBehaviour
         foreach (var hit in hits)
         {
             EnemyManager enemyManager = hit.GetComponentInParent<EnemyManager>();
+            if (enemyManager == null || enemyManager.finisherTarget == null)
+                continue;
+
             EnemyHealth enemyHealth = enemyManager.GetComponent<EnemyHealth>();
+            if (enemyHealth == null)
+                continue;
 
             // Ignore dead enemies
             if (enemyHealth != null && enemyHealth.dead)
@@ -895,11 +919,13 @@ public class CharacterAbilities : MonoBehaviour
     // ================= INPUT =================
     public void OnAbility(InputAction.CallbackContext context)
     {
-        if (context.performed && abilityReady)
+        if (context.performed &&
+            (playerHealth == null || !playerHealth.playerDead))
+        {
+            // Resolve ability versus finisher when the input is consumed in
+            // HandleAbilityLogic, not only at callback time.
             abilityPressed = true;
-
-        if (context.performed && finisherReady)
-            abilityPressed = true;
+        }
     }
 
 
@@ -930,7 +956,17 @@ public class CharacterAbilities : MonoBehaviour
     // ================= CORE =================
     private void HandleAbilityLogic()
     {
-        if (playerHealth.dead) return;
+        if (playerHealth != null && playerHealth.playerDead)
+        {
+            abilityPressed = false;
+            return;
+        }
+
+        // Input callbacks and kill-meter updates can occur in different parts
+        // of the frame. Recalculate the ready states before consuming input so
+        // a valid finisher press is not dropped because of a stale bool.
+        if (abilityPressed)
+            CheckStates();
 
        
         if (abilityPressed && abilityReady)
@@ -994,8 +1030,8 @@ public class CharacterAbilities : MonoBehaviour
     {
         abilityActive = false;
       
-        //if (Ability == AbilityType.Ability1)
-        //    StopAbility1();
+        if (Ability == AbilityType.Ability1)
+            StopAbility1();
 
         if (Ability == AbilityType.Ability2)
             StopAbility2();
@@ -1203,6 +1239,16 @@ public class CharacterAbilities : MonoBehaviour
     private IEnumerator Ability1FireLoop()
     {
         yield return new WaitForSeconds(1f);
+
+        // The ability may have ended during the startup delay (for example,
+        // after death or a room transition). Do not re-lock movement after it
+        // has already been stopped.
+        if (!abilityActive || playerHealth == null || playerHealth.playerDead)
+        {
+            ability1Routine = null;
+            yield break;
+        }
+
         playerMovement.finisherActive = true;
         playerMovement.speedline.SetActive(true);
         TargetIconCanvas.SetActive(true);
@@ -1219,6 +1265,15 @@ public class CharacterAbilities : MonoBehaviour
 
         // Select first target
         SetNextAbilityTarget();
+
+        // There may be no living enemy in the current room, even if the
+        // ability was activated while the previous target was being removed.
+        // Exit before entering the firing loop in that case.
+        if (!RoomHasLivingEnemies() || currentAbilityTarget == null)
+        {
+            StopAbility1();
+            yield break;
+        }
 
         StartCoroutine(AbilityTargetLoop());
 
@@ -1248,13 +1303,25 @@ public class CharacterAbilities : MonoBehaviour
 
     private void StopAbility1()
     {
+        // This method can be called by the target watcher, the duration timer,
+        // or a death/scene transition. Make it idempotent and clear the main
+        // ability flag as well as the ability-specific flag.
+        abilityActive = false;
+        ability1Active = false;
+
         SetTargetFOV(90f, 10f);
 
         if (ability1Routine != null)
+        {
             StopCoroutine(ability1Routine);
+            ability1Routine = null;
+        }
 
         if (moveToEnemyRoutine != null)
+        {
             StopCoroutine(moveToEnemyRoutine);
+            moveToEnemyRoutine = null;
+        }
 
         if (leftGun != null)
         {
@@ -1275,13 +1342,23 @@ public class CharacterAbilities : MonoBehaviour
             abilityAgent.enabled = false;
         }
        
-        playerMovement.speedline.SetActive(false);
-        playerMovement.finisherActive = false;
-        rb.isKinematic = false;
-        TargetIconCanvas.SetActive(false);
+        if (playerMovement != null)
+        {
+            playerMovement.speedline.SetActive(false);
+            playerMovement.finisherActive = false;
+        }
+
+        if (rb != null)
+            rb.isKinematic = false;
+
+        if (TargetIconCanvas != null)
+            TargetIconCanvas.SetActive(false);
+
         SetVignette(0.25f, 0.4f, 1f);
         GetComponent<Character>().characterAnimator.SetBool("FinisherUnholstered", false);
-        ability1Active = false;
+        currentAbilityTarget = null;
+        currentTargetIndex = 0;
+        abilityTargets.Clear();
     }
 
     private IEnumerator AbilityTargetLoop()
@@ -1301,6 +1378,17 @@ public class CharacterAbilities : MonoBehaviour
                 currentTargetIndex++;
 
                 SetNextAbilityTarget();
+
+                // The remaining enemies may exist in the room but still be
+                // unusable targets (missing AbilityTarget or no NavMesh path).
+                // Do not leave the gun loop running forever with no movement
+                // target left to process.
+                if (currentAbilityTarget == null &&
+                    currentTargetIndex >= abilityTargets.Count)
+                {
+                    StopAbility1();
+                    yield break;
+                }
             }
             else
             {
@@ -1309,8 +1397,12 @@ public class CharacterAbilities : MonoBehaviour
                         .GetComponentInParent<EnemyManager>();
 
                 // Current enemy died
+                EnemyHealth enemyHealth = currentAbilityTarget.GetComponentInParent<EnemyHealth>();
+
                 if (enemyManager == null ||
-                    !enemyManager.enabled)
+                    !enemyManager.enabled ||
+                    !currentAbilityTarget.activeInHierarchy ||
+                    (enemyHealth != null && enemyHealth.dead))
                 {
                     currentTargetIndex++;
 
@@ -1346,8 +1438,12 @@ public class CharacterAbilities : MonoBehaviour
             EnemyManager enemyManager =
                 enemy.GetComponentInParent<EnemyManager>();
 
-            if (enemyManager != null &&
-                enemyManager.enabled)
+            EnemyHealth enemyHealth = enemy.GetComponentInParent<EnemyHealth>();
+
+            if (enemy.activeInHierarchy &&
+                enemyManager != null &&
+                enemyManager.enabled &&
+                (enemyHealth == null || !enemyHealth.dead))
             {
                 return true;
             }
@@ -1506,13 +1602,19 @@ public class CharacterAbilities : MonoBehaviour
             target.GetComponentInParent<EnemyManager>();
 
         if (enemyManager == null || !enemyManager.enabled)
+        {
+            AbandonAbilityTarget(target);
             yield break;
+        }
 
         Transform finisherPoint =
             enemyManager.AbilityTarget;
 
         if (finisherPoint == null)
+        {
+            AbandonAbilityTarget(target);
             yield break;
+        }
 
         // =========================================================
         // FIND INITIAL DESTINATION
@@ -1534,6 +1636,7 @@ public class CharacterAbilities : MonoBehaviour
                 target.name
             );
 
+            AbandonAbilityTarget(target);
             yield break;
         }
 
@@ -1563,6 +1666,7 @@ public class CharacterAbilities : MonoBehaviour
                 target.name
             );
 
+            AbandonAbilityTarget(target);
             yield break;
         }
 
@@ -1725,6 +1829,8 @@ public class CharacterAbilities : MonoBehaviour
 
             yield return null;
         }
+
+        moveToEnemyRoutine = null;
 
         // =========================================================
         // FINAL FINISHER POSITION
@@ -1998,6 +2104,16 @@ public class CharacterAbilities : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private void AbandonAbilityTarget(Transform target)
+    {
+        if (currentAbilityTarget == target.gameObject)
+        {
+            currentAbilityTarget = null;
+        }
+
+        moveToEnemyRoutine = null;
     }
     private Transform FindNearestEnemy()
     {

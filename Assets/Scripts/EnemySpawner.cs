@@ -52,6 +52,10 @@ public class EnemySpawner : MonoBehaviour
     [Header("Level Settings")]
     public int maxNumber = 9;
 
+    [Tooltip("Optional offset applied to the selected procedural set. The room prefabs now contain the consecutive enemy progression, so this remains zero.")]
+    [Min(0)]
+    public int enemySetAdvance = 0;
+
     [HideInInspector]
     public int activeSet;
 
@@ -92,18 +96,19 @@ private bool activated;
 
     public int GetNumberForLevel()
     {
+        int sourceSet;
+
         if (ProceduralGenerationManager.Instance != null)
-            return Mathf.Clamp(ProceduralGenerationManager.Instance.ActiveSet, 0, maxNumber);
+            sourceSet = ProceduralGenerationManager.Instance.ActiveSet;
+        else if (ScoreManager.Instance != null)
+            sourceSet = Mathf.Max(0, ScoreManager.Instance.level);
+        else
+            sourceSet = 0;
 
-        if (ScoreManager.Instance == null)
-            return 0;
-
-        int playerLevel = ScoreManager.Instance.level;
-
-        if (playerLevel < 0)
-            return 0;
-
-        return Mathf.Clamp(playerLevel, 0, maxNumber);
+        // The room prefabs contain the complete consecutive progression.
+        // Keep this offset available for tuning, but do not skip the early
+        // sets during normal gameplay.
+        return Mathf.Clamp(sourceSet + enemySetAdvance, 0, maxNumber);
     }
 
     private void SpawnEnemies()

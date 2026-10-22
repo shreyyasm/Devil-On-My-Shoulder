@@ -10,7 +10,11 @@ public class RoomTrigger : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
-        RoomVisibilityManager.Instance.SetCurrentRoom(RoomIndex);
+        RoomVisibilityManager visibilityManager = RoomVisibilityManager.Instance;
+        if (visibilityManager == null)
+            return;
+
+        visibilityManager.SetCurrentRoom(RoomIndex, other.bounds.center);
 
         // Room visibility needs to update continuously, but a contextual
         // tutorial should receive only the first entry into this room.

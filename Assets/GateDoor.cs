@@ -39,8 +39,8 @@ public class GateDoor : MonoBehaviour
     AudioSource audioSource;
     private void Awake()
     {
-        leftClosedRotation = leftDoor.localRotation;
-        rightClosedRotation = rightDoor.localRotation;
+        leftClosedRotation = leftDoor != null ? leftDoor.localRotation : Quaternion.identity;
+        rightClosedRotation = rightDoor != null ? rightDoor.localRotation : Quaternion.identity;
         audioSource = GetComponent<AudioSource>();
     }
 
@@ -50,14 +50,21 @@ public class GateDoor : MonoBehaviour
         {
             if (other.gameObject.CompareTag("Player"))
             {
-                other.GetComponent<PlayerMovement>().TryKick();
-                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
+                PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
+                player?.TryKick();
+                if (SFXManager.Instance != null && audioSource != null)
+                    SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
                 Open();
             }    
-            else if (other.gameObject.layer == 16 && other.gameObject.GetComponent<EnemyManager>().kickOn)
+            else if (other.gameObject.layer == 16)
             {
-                SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
-                Open();
+                EnemyManager enemy = other.GetComponentInParent<EnemyManager>();
+                if (enemy != null && enemy.kickOn)
+                {
+                    if (SFXManager.Instance != null && audioSource != null)
+                        SFXManager.Instance.PlayNPC_SFX(audioSource, "Gate/Open", 0.7f);
+                    Open();
+                }
             }
 
         }
@@ -71,7 +78,7 @@ public class GateDoor : MonoBehaviour
 
         if (other.gameObject.CompareTag("Player"))
         {
-            PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
+            PlayerMovement player = other.gameObject.GetComponentInParent<PlayerMovement>();
 
             if (player != null)
                 player.TryKick();
@@ -97,8 +104,8 @@ public class GateDoor : MonoBehaviour
 
         isOpen = true;
 
-        leftDoor.DOKill();
-        rightDoor.DOKill();
+        leftDoor?.DOKill();
+        rightDoor?.DOKill();
         transform.DOKill();
         autoCloseTween?.Kill();
 
@@ -116,37 +123,44 @@ public class GateDoor : MonoBehaviour
         // LEFT DOOR
         Sequence left = DOTween.Sequence();
 
-        left.Append(
-            leftDoor.DOLocalRotateQuaternion(
-                leftClosedRotation * Quaternion.Euler(0, -(openAngle + overshoot), 0),
-                kickTime)
-            .SetEase(Ease.OutQuart));
+        if (leftDoor != null)
+        {
+            left.Append(
+                leftDoor.DOLocalRotateQuaternion(
+                    leftClosedRotation * Quaternion.Euler(0, -(openAngle + overshoot), 0),
+                    kickTime)
+                .SetEase(Ease.OutQuart));
 
-        left.Append(
-            leftDoor.DOLocalRotateQuaternion(
-                leftClosedRotation * Quaternion.Euler(0, -openAngle, 0),
-                settleTime)
-            .SetEase(Ease.OutBounce));
+            left.Append(
+                leftDoor.DOLocalRotateQuaternion(
+                    leftClosedRotation * Quaternion.Euler(0, -openAngle, 0),
+                    settleTime)
+                .SetEase(Ease.OutBounce));
+        }
 
         // RIGHT DOOR
         Sequence right = DOTween.Sequence();
 
         right.SetDelay(rightDoorDelay);
 
-        right.Append(
-            rightDoor.DOLocalRotateQuaternion(
-                rightClosedRotation * Quaternion.Euler(0, openAngle + overshoot, 0),
-                kickTime)
-            .SetEase(Ease.OutQuart));
+        if (rightDoor != null)
+        {
+            right.Append(
+                rightDoor.DOLocalRotateQuaternion(
+                    rightClosedRotation * Quaternion.Euler(0, openAngle + overshoot, 0),
+                    kickTime)
+                .SetEase(Ease.OutQuart));
 
-        right.Append(
-            rightDoor.DOLocalRotateQuaternion(
-                rightClosedRotation * Quaternion.Euler(0, openAngle, 0),
-                settleTime)
-            .SetEase(Ease.OutBounce));
+            right.Append(
+                rightDoor.DOLocalRotateQuaternion(
+                    rightClosedRotation * Quaternion.Euler(0, openAngle, 0),
+                    settleTime)
+                .SetEase(Ease.OutBounce));
+        }
 
         isOpened = true;
-        doorVFX.Play();
+        if (doorVFX != null)
+            doorVFX.Play();
         if (autoClose)
         {
             autoCloseTween = DOVirtual.DelayedCall(autoCloseDelay, Close);
@@ -163,28 +177,32 @@ public class GateDoor : MonoBehaviour
 
         autoCloseTween?.Kill();
 
-        leftDoor.DOKill();
-        rightDoor.DOKill();
+        leftDoor?.DOKill();
+        rightDoor?.DOKill();
 
-        leftDoor.DOLocalRotateQuaternion(leftClosedRotation, closeTime)
-            .SetEase(Ease.OutCubic);
+        if (leftDoor != null)
+            leftDoor.DOLocalRotateQuaternion(leftClosedRotation, closeTime)
+                .SetEase(Ease.OutCubic);
 
-        rightDoor.DOLocalRotateQuaternion(rightClosedRotation, closeTime)
-            .SetEase(Ease.OutCubic);
+        if (rightDoor != null)
+            rightDoor.DOLocalRotateQuaternion(rightClosedRotation, closeTime)
+                .SetEase(Ease.OutCubic);
     }
 
     public void Restart()
     {
         autoCloseTween?.Kill();
 
-        leftDoor.DOKill();
-        rightDoor.DOKill();
+        leftDoor?.DOKill();
+        rightDoor?.DOKill();
         transform.DOKill();
 
         isOpen = false;
 
-        leftDoor.localRotation = leftClosedRotation;
-        rightDoor.localRotation = rightClosedRotation;
+        if (leftDoor != null)
+            leftDoor.localRotation = leftClosedRotation;
+        if (rightDoor != null)
+            rightDoor.localRotation = rightClosedRotation;
     }
 
     public void RestartAndOpen()

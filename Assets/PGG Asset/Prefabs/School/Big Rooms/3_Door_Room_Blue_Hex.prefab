@@ -1491,9 +1491,12 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 50
+      weight: 25
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
+      weight: 25
+    - name: Spider
+      enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
       weight: 50
   - name: Set 2
     spawnPoints:
@@ -1512,13 +1515,16 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 25
+      weight: 20
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 25
+      weight: 20
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 50
+      weight: 20
+    - name: Janitor
+      enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
+      weight: 40
   - name: Set 3
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1536,13 +1542,19 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 25
+      weight: 17
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 25
+      weight: 17
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 50
+      weight: 17
+    - name: Janitor
+      enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
+      weight: 17
+    - name: Demonic Book
+      enemyPool: {fileID: 11400000, guid: 052952c9a66aeaa43b0086cb2b6627ba, type: 2}
+      weight: 32
   - name: Set 4
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1560,16 +1572,22 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 20
+      weight: 14
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 20
+      weight: 14
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 20
+      weight: 14
     - name: Janitor
       enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
-      weight: 40
+      weight: 14
+    - name: Demonic Book
+      enemyPool: {fileID: 11400000, guid: 052952c9a66aeaa43b0086cb2b6627ba, type: 2}
+      weight: 14
+    - name: Mess Lady
+      enemyPool: {fileID: 11400000, guid: 89bf58fbdd4246844bdf676e2d478df1, type: 2}
+      weight: 30
   - name: Set 5
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1587,16 +1605,22 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 20
+      weight: 14
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 20
+      weight: 14
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 20
+      weight: 14
     - name: Janitor
       enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
-      weight: 40
+      weight: 14
+    - name: Demonic Book
+      enemyPool: {fileID: 11400000, guid: 052952c9a66aeaa43b0086cb2b6627ba, type: 2}
+      weight: 14
+    - name: Mess Lady
+      enemyPool: {fileID: 11400000, guid: 89bf58fbdd4246844bdf676e2d478df1, type: 2}
+      weight: 30
   - name: Set 6
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1614,19 +1638,22 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 17
+      weight: 14
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 17
+      weight: 14
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 17
+      weight: 14
     - name: Janitor
       enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
-      weight: 17
+      weight: 14
     - name: Demonic Book
       enemyPool: {fileID: 11400000, guid: 052952c9a66aeaa43b0086cb2b6627ba, type: 2}
-      weight: 32
+      weight: 14
+    - name: Mess Lady
+      enemyPool: {fileID: 11400000, guid: 89bf58fbdd4246844bdf676e2d478df1, type: 2}
+      weight: 30
   - name: Set 7
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1644,19 +1671,22 @@ MonoBehaviour:
     enemyChoices:
     - name: Jocky
       enemyPool: {fileID: 11400000, guid: 2a6a9ed2b37465c46baa5c57a9890e99, type: 2}
-      weight: 17
+      weight: 14
     - name: Jocky Gun
       enemyPool: {fileID: 11400000, guid: 6e3fe4d18b3a99b429fbf5d8e5187dd5, type: 2}
-      weight: 17
+      weight: 14
     - name: Spider
       enemyPool: {fileID: 11400000, guid: 95b8fc1230f429946aeac0a20033d240, type: 2}
-      weight: 17
+      weight: 14
     - name: Janitor
       enemyPool: {fileID: 11400000, guid: a772bd8c02b73284f883713063fbe6af, type: 2}
-      weight: 17
+      weight: 14
     - name: Demonic Book
       enemyPool: {fileID: 11400000, guid: 052952c9a66aeaa43b0086cb2b6627ba, type: 2}
-      weight: 32
+      weight: 14
+    - name: Mess Lady
+      enemyPool: {fileID: 11400000, guid: 89bf58fbdd4246844bdf676e2d478df1, type: 2}
+      weight: 30
   - name: Set 8
     spawnPoints:
     - point: {fileID: 4678298432759753642}
@@ -1728,6 +1758,7 @@ MonoBehaviour:
   spawnSpreadRadius: 1.5
   navMeshSearchDistance: 2
   maxNumber: 9
+  enemySetAdvance: 0
   activeSet: 0
 --- !u!1 &2208561657342505412
 GameObject:

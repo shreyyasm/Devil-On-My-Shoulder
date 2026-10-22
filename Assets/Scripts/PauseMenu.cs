@@ -10,6 +10,7 @@ public class PauseMenu : MonoBehaviour
 {
     private const string GameplaySceneName = "Mad Dash Game";
     private const string MainMenuSceneName = "Doms Main Menu";
+    private const string RestartBlackScreenName = "Restart Loading Black Screen";
     [Header("UI")]
     [SerializeField] private GameObject pausePanel;   // Assign your Pause panel root here
 
@@ -21,8 +22,25 @@ public class PauseMenu : MonoBehaviour
     public static bool IsPaused { get; private set; }
     private static bool sceneTransitionInProgress;
 
+    private static void RemoveRestartBlackScreenAfterSceneLoad(Scene scene, LoadSceneMode mode)
+    {
+        // The pause/settings hierarchy can be inactive when a scene starts,
+        // so its Awake method is not a reliable place to remove the overlay.
+        // SceneManager always raises this event for the replacement gameplay
+        // scene, whether the action came from the score canvas or Settings.
+        SceneManager.sceneLoaded -= RemoveRestartBlackScreenAfterSceneLoad;
+        DestroyAllRestartBlackScreens();
+    }
+
     void Awake()
     {
+        // Remove the transition overlay created by the previous scene after
+        // the new scene has finished loading.
+        DestroyAllRestartBlackScreens();
+
+        // This static guard survives scene loads. Clear it when the new
+        // scene's menu is created so later restart/menu actions are accepted.
+        sceneTransitionInProgress = false;
         ConfigureSettingsButtons();
         if (pausePanel) pausePanel.SetActive(false);
         ResumeInternal(); // ensure clean state
@@ -80,6 +98,22 @@ public class PauseMenu : MonoBehaviour
         TogglePause();
     }
 
+    private void Update()
+    {
+        if (pausePanel == null)
+            return;
+
+        // Settings Generator can show/hide the container directly. Keep the
+        // pause state synchronized with the visible panel so music cannot
+        // continue when settings are opened through that path.
+        bool settingsVisible = pausePanel.activeInHierarchy;
+
+        if (settingsVisible && !IsPaused)
+            Pause();
+        else if (!settingsVisible && IsPaused)
+            Resume();
+    }
+
     //void Update()
     //{
     //    // Works with old Input Manager and New Input System (both send KeyDown events)
@@ -100,7 +134,7 @@ public class PauseMenu : MonoBehaviour
         if (IsPaused) return;
         IsPaused = true;
        
-        BackgroundMusic.Instance?.PauseForPauseMenu();
+        PauseAllBackgroundMusicForMenu();
         Time.timeScale = 0f;
         if (pauseAudio) AudioListener.pause = true;
 
@@ -130,8 +164,9 @@ public class PauseMenu : MonoBehaviour
         IsPaused = false;
 
         Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
         if (pauseAudio) AudioListener.pause = false;
-        BackgroundMusic.Instance?.ResumeFromPauseMenu();
+        ResumeAllBackgroundMusicFromMenu();
 
         if (pausePanel) pausePanel.SetActive(false);
 
@@ -141,6 +176,38 @@ public class PauseMenu : MonoBehaviour
         FindFirstObjectByType<Character>()?.SetCursorLockedForGameplay(lockCursorOnResume);
 
         GamepadCursor.Instance.DisableCursor();
+    }
+
+    private static void PauseAllBackgroundMusicForMenu()
+    {
+        BackgroundMusic[] musicControllers = FindObjectsByType<BackgroundMusic>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        if (musicControllers.Length == 0 && BackgroundMusic.Instance != null)
+            BackgroundMusic.Instance.PauseForPauseMenu();
+
+        foreach (BackgroundMusic musicController in musicControllers)
+        {
+            if (musicController != null)
+                musicController.PauseForPauseMenu();
+        }
+    }
+
+    private static void ResumeAllBackgroundMusicFromMenu()
+    {
+        BackgroundMusic[] musicControllers = FindObjectsByType<BackgroundMusic>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+
+        if (musicControllers.Length == 0 && BackgroundMusic.Instance != null)
+            BackgroundMusic.Instance.ResumeFromPauseMenu();
+
+        foreach (BackgroundMusic musicController in musicControllers)
+        {
+            if (musicController != null)
+                musicController.ResumeFromPauseMenu();
+        }
     }
 
     // --- Optional buttons you can hook from the UI ---
@@ -158,6 +225,10 @@ public class PauseMenu : MonoBehaviour
         if (sceneTransitionInProgress)
             return;
 
+        // New Game is a fresh run, not a retry. Reset the persistent
+        // procedural singleton before destroying DontDestroyOnLoad objects so
+        // the next Mad Dash scene starts on ActiveSet 0.
+        ProceduralGenerationManager.ResetForNewGame();
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
         ReloadGameplaySession();
@@ -173,6 +244,10 @@ public class PauseMenu : MonoBehaviour
         if (sceneTransitionInProgress)
             return;
 
+        // A retry is a completely fresh Mad Dash run. The generator persists
+        // across scene loads, so merely loading the scene would keep the
+        // current procedural set (and its prepared level) alive.
+        ProceduralGenerationManager.ResetForNewGame();
         ReloadGameplaySession();
     }
 
@@ -199,14 +274,71 @@ public class PauseMenu : MonoBehaviour
         sceneTransitionInProgress = true;
         PrepareForSceneTransition();
         DestroyDontDestroyOnLoadObjects();
+        CreateRestartBlackScreen();
+
+        // Register before loading so this cleanup cannot be missed when the
+        // gameplay scene loads synchronously.
+        SceneManager.sceneLoaded -= RemoveRestartBlackScreenAfterSceneLoad;
+        SceneManager.sceneLoaded += RemoveRestartBlackScreenAfterSceneLoad;
 
         SceneManager.LoadScene(GameplaySceneName);
     }
 
+    private static void CreateRestartBlackScreen()
+    {
+        DestroyAllRestartBlackScreens();
+
+        GameObject overlay = new GameObject(
+            RestartBlackScreenName,
+            typeof(Canvas),
+            typeof(CanvasScaler),
+            typeof(Image));
+
+        Canvas canvas = overlay.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 10000;
+
+        CanvasScaler scaler = overlay.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+        Image image = overlay.GetComponent<Image>();
+        image.color = Color.black;
+        image.raycastTarget = false;
+
+        RectTransform rect = image.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        DontDestroyOnLoad(overlay);
+    }
+
+    private static void DestroyAllRestartBlackScreens()
+    {
+        // Destroy() is deferred until the end of the frame. During a rapid
+        // new-game/restart transition that can briefly leave two canvases
+        // with this name alive. GameObject.Find returns only one of them,
+        // which was leaving the newer black screen over the reloaded game.
+        foreach (GameObject candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+        {
+            if (candidate == null || candidate.name != RestartBlackScreenName ||
+                !candidate.scene.IsValid())
+                continue;
+
+            candidate.SetActive(false);
+            Destroy(candidate);
+        }
+    }
+
     private static void PrepareForSceneTransition()
     {
+        PlayerHealth.Instance?.ResetDeathPresentationForRestart();
+
         IsPaused = false;
         Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
         AudioListener.pause = false;
 
         PauseMenu pauseMenu = FindFirstObjectByType<PauseMenu>();

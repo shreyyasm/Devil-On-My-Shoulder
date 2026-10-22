@@ -55,6 +55,21 @@ public class DeathBlinkTransition : MonoBehaviour
 
     public int ScoreCanvasSortingOrder => sortingOrder + 1;
 
+    public void Cancel()
+    {
+        playing = false;
+        elapsed = 0f;
+        onCovered = null;
+        StopAllCoroutines();
+        RestoreBlur();
+
+        if (overlayCanvas != null)
+        {
+            overlayCanvas.gameObject.SetActive(false);
+            SetClosure(0f);
+        }
+    }
+
     private void Awake()
     {
         Instance = this;

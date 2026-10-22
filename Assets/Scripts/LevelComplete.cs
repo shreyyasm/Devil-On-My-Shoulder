@@ -120,13 +120,15 @@ private bool shopOpenForPlayer;
         if (!IsPlayerInsideLift(other.transform.position))
             return;
 
+        PlayerMovement playerMovement = other.GetComponentInParent<PlayerMovement>();
+        playerMovement?.PrepareForLiftEntry();
+
         // The current floor ends as soon as the player commits to the lift.
         // Hide and clear the entire kill meter before the shop transition.
         ComboManager.Instance?.ResetForLiftTravel();
         HidePlayerGameplayUi(other.transform);
         playerHealth.CancelDeathCountdownForLift();
         playerHealth.PauseHealthDrain();
-        DisableCurrentLevelEnemies();
         StartCoroutine(TravelToShop());
     }
 
@@ -152,6 +154,20 @@ private bool shopOpenForPlayer;
         // Build the shop behind the still-open front doors so its Shopkeeper
         // provides a real facing target during the entry alignment.
         SpawnShopRoom();
+        if (spawnedShop == null)
+        {
+            // Never close the lift around the player if the shop could not be
+            // created. Leave the entry open and return control to gameplay.
+            transitionStarted = false;
+            shopSelectionMade = false;
+            shopOpenForPlayer = false;
+            RestorePlayerGameplayUi(GameObject.FindGameObjectWithTag("Player")?.transform);
+            PlayerHealth.Instance?.ResumeHealthDrain();
+            TriggerLift("OpenLift");
+            yield break;
+        }
+
+        DisableCurrentLevelEnemies();
         ProceduralGenerationManager.Instance?.PrepareNextLevel();
         KeepCurrentLiftActive();
         ProceduralGenerationManager.Instance?.LockPlayerForLiftTravel(

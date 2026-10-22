@@ -55,6 +55,7 @@ private CameraLook lockedCameraLook;
     private bool restorePlayerMovement;
     private bool restoreCameraLook;
     private bool liftControlSessionActive;
+    private readonly HashSet<Lift> waitingArrivalLiftExits = new();
     private Coroutine cameraCenterRoutine;
 
     // ================= UNITY =================
@@ -89,6 +90,43 @@ private CameraLook lockedCameraLook;
     {
         if (!previewGenerator)
             SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// Clears the persistent procedural-run state before loading a completely
+    /// fresh match. Both New Game and Restart begin from procedural set zero.
+    /// </summary>
+    public static void ResetForNewGame()
+    {
+        if (Instance == null)
+            return;
+
+        Instance.ActiveSet = 0;
+        Instance.currentSetIndex = 0;
+        Instance.preparedGenerator = null;
+        Instance.waitingArrivalLiftExits.Clear();
+
+        if (Instance.cameraCenterRoutine != null)
+        {
+            Instance.StopCoroutine(Instance.cameraCenterRoutine);
+            Instance.cameraCenterRoutine = null;
+        }
+
+        // Prevent this old DontDestroyOnLoad manager from receiving the scene
+        // loaded event during the transition. The newly loaded Mad Dash scene
+        // then owns the only generator and starts at ActiveSet 0.
+        Instance.StopAllCoroutines();
+
+        // Destroy() is deferred until the end of this frame, but the gameplay
+        // scene loads immediately. Hide the entire old generator now so its
+        // generated rooms, colliders, and prepared preview cannot coexist
+        // with the fresh set-zero generator for even one frame.
+        Instance.gameObject.SetActive(false);
+
+        // The manager is DontDestroyOnLoad. Clear the singleton before the
+        // old persistent object is destroyed so the newly loaded scene can
+        // create and own a fresh generator immediately.
+        Instance = null;
     }
 
     // Replaces Start() as the trigger for generation.
@@ -294,20 +332,25 @@ private CameraLook lockedCameraLook;
 
         placedNodes[graph.StartNode] = startRoom;
 
-        if (currentSetIndex > 0 && !previewGenerator)
-            StartRegularGameplay();
+        if (!previewGenerator)
+            PrepareHealthDrainForSpawnRoomExit();
 
         return PlaceChildren(graph.StartNode);
     }
 
-    private void StartRegularGameplay()
+    private void PrepareHealthDrainForSpawnRoomExit()
     {
         PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
 
         if (playerHealth != null)
-            playerHealth.isTick = true;
+        {
+            // Set 0 resumes only after its dedicated StartTheGameplay trigger
+            // at the far end of the spawn corridor. Sets 1+ resume as soon as
+            // the player has left their arrival lift.
+            playerHealth.PauseHealthDrain();
+        }
         else
-            Debug.LogWarning("[ProcGen] Regular spawn room could not find PlayerHealth to start health drain.");
+            Debug.LogWarning("[ProcGen] Could not find PlayerHealth to prepare spawn-room health drain.");
 
     }
 
@@ -435,14 +478,6 @@ private CameraLook lockedCameraLook;
         // ------------------------------
 
         RoomInstance instance = new RoomInstance(obj);
-        instance.RoomIndex = roomIndexCounter++;
-
-        RoomTrigger trigger = obj.GetComponentInChildren<RoomTrigger>();
-
-        if (trigger != null)
-        {
-            trigger.RoomIndex = instance.RoomIndex;
-        }
 
         //Debug.Log($"Spawned room index: {instance.RoomIndex}");
 
@@ -451,6 +486,16 @@ private CameraLook lockedCameraLook;
             Destroy(obj);
             return false;
         }
+
+        // Room visibility uses RoomIndex as the generated-path distance.
+        // Do not consume an index until this attachment has passed overlap
+        // validation: a three-door room can reject several candidate exits,
+        // and those failed attempts previously left index gaps that caused its
+        // actually connected next room to be hidden as if it were far away.
+        instance.RoomIndex = roomIndexCounter++;
+        RoomTrigger trigger = obj.GetComponentInChildren<RoomTrigger>();
+        if (trigger != null)
+            trigger.RoomIndex = instance.RoomIndex;
 
         exitDoor.Open();
         entryDoor.Open();
@@ -707,7 +752,9 @@ lockedCameraLook = FindFirstObjectByType<CameraLook>();
             if (cameraCenterRoutine != null)
                 StopCoroutine(cameraCenterRoutine);
 
-            Quaternion playerTargetRotation = lockedPlayerMovement.transform.rotation;
+            Quaternion playerTargetRotation = lockedPlayerMovement != null
+                ? lockedPlayerMovement.transform.rotation
+                : transform.root.rotation;
             if (!float.IsNaN(forcedPlayerYaw))
             {
                 // The player rig's neutral forward direction is -90° yaw.
@@ -786,6 +833,42 @@ lockedCameraLook = null;
         liftControlSessionActive = false;
     }
 
+    /// <summary>
+    /// Starts the survival health drain only after the player has actually
+    /// crossed out of the arriving procedural lift.
+    /// </summary>
+    public void NotifyPlayerExitedArrivalLift(Lift exitedLift)
+    {
+        if (exitedLift == null)
+            return;
+
+        // During a prepared-level handoff, only the aligned arrival lift is
+        // allowed to resume the drain.
+        if (waitingArrivalLiftExits.Count > 0)
+        {
+            if (!waitingArrivalLiftExits.Remove(exitedLift))
+                return;
+
+            waitingArrivalLiftExits.Clear();
+            FindFirstObjectByType<PlayerHealth>()?.ResumeHealthDrain();
+            return;
+        }
+
+        // Set 0 has a StartTheGameplay trigger at the end of its spawn
+        // corridor. Do not resume here or health starts draining as soon as
+        // the player leaves the lift. The regular spawn-room prefab used by
+        // sets 1–10 has no such corridor trigger, so those sets resume at
+        // the initial lift exit instead.
+        if (ActiveSet == 0)
+            return;
+
+        if (placedRooms.Count > 0 &&
+            exitedLift.transform.IsChildOf(placedRooms[0].Instance.transform))
+        {
+            FindFirstObjectByType<PlayerHealth>()?.ResumeHealthDrain();
+        }
+    }
+
     private System.Collections.IEnumerator SmoothlyCenterLiftCamera(
         Transform playerTransform,
         Quaternion targetPlayerRotation,
@@ -851,6 +934,9 @@ lockedCameraLook = null;
             yield break;
 
         Lift[] arrivalLifts = activeLevelRoot.GetComponentsInChildren<Lift>(true);
+        waitingArrivalLiftExits.Clear();
+        foreach (Lift lift in arrivalLifts)
+            waitingArrivalLiftExits.Add(lift);
         foreach (Lift lift in arrivalLifts)
             lift.CloseDoorsForTransition();
 
@@ -872,11 +958,6 @@ lockedCameraLook = null;
 
         yield return new WaitForSeconds(.65f);
         UnlockPlayerAfterLiftTravel();
-
-        // Give the player one full second after the doors start opening
-        // before the level's health drain resumes.
-        yield return new WaitForSeconds(.35f);
-        FindFirstObjectByType<PlayerHealth>()?.ResumeHealthDrain();
     }
 
     private void RebuildActiveLevelNavMesh()

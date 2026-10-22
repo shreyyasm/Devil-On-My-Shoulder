@@ -384,8 +384,7 @@ public class PlayerTutorialManager : MonoBehaviour
         showingInterruptStep = false;
         ResumeTimeIfPaused();
         SetStepObjectsActive(completedStep, false);
-        if (tutorialPanel != null)
-            tutorialPanel.SetActive(false);
+        HideTutorialPanel();
 
         if (completedIndex >= 0)
         {
@@ -406,7 +405,7 @@ public class PlayerTutorialManager : MonoBehaviour
 
         float delay = steps[currentStepIndex].delayAfterComplete;
 
-        if (tutorialPanel != null) tutorialPanel.SetActive(false);
+        HideTutorialPanel();
         // Realtime wait so the hide-delay still elapses even if time is scaled/paused.
         yield return new WaitForSecondsRealtime(delay);
 
@@ -433,7 +432,7 @@ public class PlayerTutorialManager : MonoBehaviour
         {
             waitingForRoomTransition = true;
             waitingToShowCurrentStep = false;
-            if (tutorialPanel != null) tutorialPanel.SetActive(false);
+            HideTutorialPanel();
             return;
         }
 
@@ -442,7 +441,7 @@ public class PlayerTutorialManager : MonoBehaviour
         if (step.waitToShowForExternalTrigger && !externalTriggerFlag)
         {
             waitingToShowCurrentStep = true;
-            if (tutorialPanel != null) tutorialPanel.SetActive(false);
+            HideTutorialPanel();
             return;
         }
 
@@ -474,6 +473,7 @@ public class PlayerTutorialManager : MonoBehaviour
         if (iconImage == null)
             return;
 
+        StopPromptImageAnimation();
         iconImage.sprite = step != null ? step.iconSprite : null;
         iconImage.enabled = iconImage.sprite != null;
 
@@ -484,16 +484,46 @@ public class PlayerTutorialManager : MonoBehaviour
     private void PlayPromptImageAnimation()
     {
         RectTransform promptTransform = iconImage.rectTransform;
-        promptTransform.DOKill();
         promptTransform.localScale = Vector3.zero;
         promptTransform.localRotation = Quaternion.identity;
 
-        // SetUpdate(true) makes the banner animation independent of Time.timeScale.
+        // SetUpdate(true) keeps the prompt responsive while a tutorial step
+        // slows gameplay. After its entrance, continuously scale it up and
+        // down until this step is hidden or replaced.
         DOTween.Sequence()
             .SetUpdate(true)
+            .SetTarget(promptTransform)
             .Append(promptTransform.DOScale(Vector3.one, promptEnterDuration).SetEase(Ease.OutBack))
             .Join(promptTransform.DOLocalRotate(new Vector3(0f, 0f, -360f), promptEnterDuration, RotateMode.FastBeyond360).SetEase(Ease.OutCubic))
-            .Append(promptTransform.DOPunchScale(Vector3.one * promptPopStrength, promptPopDuration, 8, 0.7f));
+            .OnComplete(() =>
+            {
+                if (iconImage == null || !iconImage.enabled || tutorialPanel == null || !tutorialPanel.activeInHierarchy)
+                    return;
+
+                promptTransform
+                    .DOScale(Vector3.one * (1f + promptPopStrength), promptPopDuration)
+                    .SetEase(Ease.InOutSine)
+                    .SetLoops(-1, LoopType.Yoyo)
+                    .SetUpdate(true)
+                    .SetTarget(promptTransform);
+            });
+    }
+
+    private void StopPromptImageAnimation()
+    {
+        if (iconImage == null)
+            return;
+
+        iconImage.rectTransform.DOKill();
+        iconImage.rectTransform.localScale = Vector3.one;
+        iconImage.rectTransform.localRotation = Quaternion.identity;
+    }
+
+    private void HideTutorialPanel()
+    {
+        StopPromptImageAnimation();
+        if (tutorialPanel != null)
+            tutorialPanel.SetActive(false);
     }
 
     private void PauseTime()
@@ -522,8 +552,7 @@ public class PlayerTutorialManager : MonoBehaviour
         }
         if (interruptStep != null)
             SetStepObjectsActive(interruptStep, false);
-        if (iconImage != null)
-            iconImage.rectTransform.DOKill();
+        StopPromptImageAnimation();
     }
 
     private void OnDestroy()
@@ -557,8 +586,8 @@ public class PlayerTutorialManager : MonoBehaviour
             requiredRoomVisitForCurrentStep = firstIncomplete > 0 ? roomVisitSerial + 1 : roomVisitSerial;
             ShowStep(firstIncomplete);
         }
-        else if (tutorialPanel != null)
-            tutorialPanel.SetActive(false);
+        else
+            HideTutorialPanel();
     }
 
     public void ConfigureSteps(List<TutorialStep> configuredSteps)

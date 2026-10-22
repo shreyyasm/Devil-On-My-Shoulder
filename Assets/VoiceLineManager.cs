@@ -14,9 +14,9 @@ public class VoiceLineManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI subtitleText;
 
     [Header("Voice Playback")]
-    [Tooltip("Extra gain for demon dialogue. The Demon Voice Volume slider controls the final voice volume.")]
-    [Range(0f, 2f)]
-    [SerializeField] private float voiceVolumeMultiplier = 4f;
+    [Tooltip("Extra gain for demon dialogue. The Devil Voice Line SFX slider controls the final voice volume.")]
+    [Range(0f, 6f)]
+    [SerializeField] private float voiceVolumeMultiplier = 5.0625f;
 
     [Header("Music Ducking")]
     [SerializeField] private AudioSource musicAudioSource;
@@ -171,7 +171,7 @@ public class VoiceLineManager : MonoBehaviour
         {
             audioSource.PlayOneShot(
                 line.audioClip,
-                Mathf.Clamp(line.volume * voiceVolumeMultiplier, 0f, 4f)
+                Mathf.Clamp(line.volume * voiceVolumeMultiplier, 0f, 6f)
             );
 
             DuckMusic();

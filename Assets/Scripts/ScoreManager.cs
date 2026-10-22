@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using static Unity.VisualScripting.Member;
 
 public class ScoreManager : MonoBehaviour
@@ -79,11 +80,14 @@ public class ScoreManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        ResolveScoreCanvas(scene);
+        ConfigureScoreCanvasButtons();
+
         // This will automatically find the new PlayerMovement in the new scene
         PlayerMovement = FindObjectOfType<PlayerMovement>();
         FunticoSDKExample = FindFirstObjectByType<FunticoSDKExample>();
-        character = PlayerMovement.GetComponent<Character>();
-        powerUpSelect.DeSelectPower();
+        character = PlayerMovement != null ? PlayerMovement.GetComponent<Character>() : null;
+        powerUpSelect?.DeSelectPower();
     }
     void Start()
     {
@@ -456,6 +460,107 @@ public class ScoreManager : MonoBehaviour
     private const string HighScoreKey = "HighScore";
 
     public GameObject scoreCanvas;
+
+    private void ResolveScoreCanvas(Scene scene)
+    {
+        if (scoreCanvas != null && scoreCanvas.scene.IsValid() &&
+            (scoreCanvas.scene == scene || scoreCanvas.scene.name == "DontDestroyOnLoad"))
+            return;
+
+        scoreCanvas = null;
+        Canvas[] canvases = Resources.FindObjectsOfTypeAll<Canvas>();
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas == null || !canvas.gameObject.scene.IsValid())
+                continue;
+
+            if (canvas.gameObject.name == "Score Canvas" &&
+                (canvas.gameObject.scene == scene || canvas.gameObject.scene.name == "DontDestroyOnLoad"))
+            {
+                scoreCanvas = canvas.gameObject;
+                return;
+            }
+        }
+    }
+
+    private void ConfigureScoreCanvasButtons()
+    {
+        if (scoreCanvas == null)
+            return;
+
+        Button[] buttons = scoreCanvas.GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            string buttonName = button.name.ToLowerInvariant();
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            string buttonText = label != null ? label.text.ToLowerInvariant() : string.Empty;
+            string identity = buttonName + " " + buttonText;
+
+            if (identity.Contains("restart") || identity.Contains("try again"))
+            {
+                button.onClick.RemoveListener(RestartGame);
+                button.onClick.AddListener(RestartGame);
+            }
+            else if (identity.Contains("new game"))
+            {
+                button.onClick.RemoveListener(NewGame);
+                button.onClick.AddListener(NewGame);
+            }
+            else if (identity.Contains("main menu") || identity.Contains("menu"))
+            {
+                button.onClick.RemoveListener(MainMenu);
+                button.onClick.AddListener(MainMenu);
+            }
+        }
+    }
+
+    public void PrepareDeathScreen()
+    {
+        ResolveScoreCanvas(SceneManager.GetActiveScene());
+        ConfigureScoreCanvasButtons();
+
+        // Death can happen after a scene restart, when gameplay has already
+        // locked the cursor and the EventSystem may still have a gameplay
+        // object selected. Restore menu input every time the score screen is
+        // prepared so the second and later deaths behave like the first.
+        Time.timeScale = 1f;
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
+
+        if (scoreCanvas != null)
+        {
+            Canvas canvas = scoreCanvas.GetComponent<Canvas>();
+            if (canvas != null)
+                canvas.enabled = true;
+
+            GraphicRaycaster raycaster = scoreCanvas.GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+                raycaster.enabled = true;
+        }
+
+        GamepadCursor.Instance?.OnControlsChanged();
+    }
+
+    public void ResetDeathScreenForRestart()
+    {
+        if (scoreCanvas == null)
+            return;
+
+        scoreCanvas.SetActive(false);
+
+        Canvas canvas = scoreCanvas.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.overrideSorting = false;
+            // Restore the score canvas baseline after a restart. The death presentation
+            // temporarily raises this canvas above the gameplay UI, but it must not leave
+            // the next game with a sorting order of zero.
+            canvas.sortingOrder = 4;
+        }
+    }
     
     public void CheckHighScore()
     {

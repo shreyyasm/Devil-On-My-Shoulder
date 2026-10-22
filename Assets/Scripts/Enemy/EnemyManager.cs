@@ -777,8 +777,14 @@ public class EnemyManager : MonoBehaviour
     {
 
         if (hasHitPlayer) return;
-        //Debug.Log("kaam nhi kr rha ha!");
-        if (!collision.gameObject.CompareTag("Player")) return;
+        // Player hit colliders can be children without the Player tag.
+        // Resolve the root health/movement components so melee damage is not
+        // dropped depending on which collider received the collision.
+        PlayerHealth playerHealth = collision.collider.GetComponentInParent<PlayerHealth>();
+        PlayerMovement pm = playerHealth != null
+            ? playerHealth.GetComponent<PlayerMovement>()
+            : null;
+        if (playerHealth == null || pm == null) return;
 
         if (enemyType != EnemyStats.EnemyType.Melee && enemyType != EnemyStats.EnemyType.Spider) return;
         //if (!isBusy) return;
@@ -787,11 +793,9 @@ public class EnemyManager : MonoBehaviour
         //if (Time.time < nextAttackTime) return;
 
         //Debug.Log("Player");
-        if (!collision.gameObject.GetComponent<PlayerMovement>().canKick) return;
+        if (!pm.canKick) return;
 
         SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackHitKey, 1f);
-        PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
-
         if (pm != null)
         {
             Vector3 dir = (collision.transform.position - transform.position).normalized;
@@ -807,7 +811,6 @@ public class EnemyManager : MonoBehaviour
         HurtPlayer();
 
 
-        PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
         playerHealth.ManageHealth(-damage);
         playerHealth.hit = true;
 
@@ -1303,7 +1306,7 @@ public class EnemyManager : MonoBehaviour
             if (grabDamageTimer <= 0f)
             {
                 Debug.Log("Grab Damage: " + damage);
-                // player.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+                player.GetComponent<PlayerHealth>()?.ManageHealth(-damage);
 
                 grabDamageTimer = grabDamageInterval;
             }
@@ -1560,26 +1563,75 @@ public class EnemyManager : MonoBehaviour
     public AlertManager AlertIndicator;
     bool HasLineOfSight()
     {
+        // Enemies can be enabled before the player reference is available
+        // after a generated room is revealed. Recover it instead of silently
+        // failing every later sight check.
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (player == null)
+            return false;
+
         Vector3 origin = transform.position + Vector3.up * visionHeight;
-        Vector3 target = player.position + Vector3.up * 1.5f;
+        Collider targetCollider = player.GetComponent<Collider>();
+        Vector3 target = targetCollider != null
+            ? targetCollider.bounds.center
+            : player.position + Vector3.up * 1.5f;
 
-        Vector3 direction = (target - origin).normalized;
+        Vector3 toTarget = target - origin;
+        if (toTarget.sqrMagnitude < 0.0001f)
+            return false;
 
-        float distance = Vector3.Distance(origin, target);
+        Vector3 direction = toTarget.normalized;
 
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, distance))
+        float distance = toTarget.magnitude;
+
+        // The player's root is tagged, but their gameplay colliders are often
+        // on untagged children. Ignore this enemy's own colliders and accept
+        // any first visible collider that belongs to the player hierarchy.
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            direction,
+            distance,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        RaycastHit closestHit = default;
+        bool foundBlockingHit = false;
+        foreach (RaycastHit hit in hits)
         {
-            if (hit.transform.CompareTag("Player"))
+            if (hit.collider == null)
+                continue;
+
+            // Pooled enemies share an ObjectPooler root. Comparing roots here
+            // can therefore treat unrelated pooled objects as this enemy, and
+            // does not reliably describe nested shield hierarchies. Identify
+            // ownership by the EnemyManager instead, so the Janitor's shield
+            // never blocks its own sight or burst shots.
+            EnemyManager hitEnemy = hit.collider.GetComponentInParent<EnemyManager>();
+            if (hitEnemy == this)
+                continue;
+
+            if (!foundBlockingHit || hit.distance < closestHit.distance)
             {
-                if (!sawPlayer)
-                {
-                    AlertIndicator.RevealAlert();
-                }
-                sawPlayer = true;               
-                return true;
+                closestHit = hit;
+                foundBlockingHit = true;
             }
-                
-          
+        }
+
+        if (!foundBlockingHit)
+            return false;
+
+        bool hitPlayer = closestHit.transform.root == player.root ||
+            closestHit.collider.GetComponentInParent<PlayerHealth>() != null;
+
+        if (hitPlayer)
+        {
+            if (!sawPlayer)
+                AlertIndicator?.RevealAlert();
+
+            sawPlayer = true;
+            return true;
         }
 
         return false;
@@ -1601,19 +1653,29 @@ public class EnemyManager : MonoBehaviour
     IEnumerator BurstShoot()
     {
         isBursting = true;
-        if (!enemyHealth.shieldBreak)
-            StartCoroutine(shieldManager());
-        for (int i = 0; i < burstCount; i++)
+        try
         {
-            Shoot();
+            if (enemyHealth != null && !enemyHealth.shieldBreak)
+                StartCoroutine(shieldManager());
 
-            if (i < burstCount - 1)
-                yield return new WaitForSeconds(burstInterval);
+            int shotsToFire = Mathf.Max(1, burstCount);
+            for (int i = 0; i < shotsToFire; i++)
+            {
+                Shoot();
 
-            SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
+                if (i < shotsToFire - 1)
+                    yield return new WaitForSeconds(burstInterval);
+
+                if (SFXManager.Instance != null && attack3dAudioSource != null)
+                    SFXManager.Instance.PlayNPC_SFX(attack3dAudioSource, enemyName + "/" + attackTryKey, 1f);
+            }
         }
-
-        isBursting = false;
+        finally
+        {
+            // An interrupted coroutine must not leave this enemy permanently
+            // flagged as bursting, which would block every later attack.
+            isBursting = false;
+        }
     }
     void Shoot()
     {
@@ -1638,7 +1700,8 @@ public class EnemyManager : MonoBehaviour
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
 
-        GameObject proj = projectilePrefab.GetObject(firePoint.position, Quaternion.LookRotation(direction));
+        Vector3 spawnPosition = GetProjectileSpawnPosition(direction);
+        GameObject proj = projectilePrefab.GetObject(spawnPosition, Quaternion.LookRotation(direction));
 
         //Rigidbody rb = proj.GetComponent<Rigidbody>();
 
@@ -1655,7 +1718,7 @@ public class EnemyManager : MonoBehaviour
         //}
         //animator.SetTrigger("Attack");
         
-        Debug.DrawRay(firePoint.position, direction * 5f, Color.red, 2f);
+        Debug.DrawRay(spawnPosition, direction * 5f, Color.red, 2f);
     }
     IEnumerator shieldManager()
     {
@@ -2225,8 +2288,10 @@ public class EnemyManager : MonoBehaviour
 
         Vector3 direction = (targetPosition - firePoint.position).normalized;
 
+        Vector3 spawnPosition = GetProjectileSpawnPosition(direction);
+
         GameObject proj =
-            GuardProjectile.GetObject(firePoint.position,
+            GuardProjectile.GetObject(spawnPosition,
             Quaternion.LookRotation(direction));
 
 
@@ -2243,7 +2308,57 @@ public class EnemyManager : MonoBehaviour
             rb.velocity = direction * enemyStats.GuardShootSpeed;
         }
 
-        Debug.DrawRay(firePoint.position, direction * 5f, Color.cyan, 2f);
+        Debug.DrawRay(spawnPosition, direction * 5f, Color.cyan, 2f);
+    }
+
+    private Vector3 GetProjectileSpawnPosition(Vector3 direction)
+    {
+        if (firePoint == null || enemyHealth == null ||
+            enemyHealth.ShieldCollider == null ||
+            !enemyHealth.ShieldCollider.activeInHierarchy)
+            return firePoint != null ? firePoint.position : transform.position;
+
+        // The shielded generator's authored fire point sits behind its own
+        // shield. Find the shield's front-most hit along the shot direction
+        // and spawn just beyond it, so its bullets cannot instantly collide
+        // with and disable themselves on the shield.
+        Vector3 firePointPosition = firePoint.position;
+        Ray ray = new Ray(firePointPosition - direction * 5f, direction);
+        float farthestForwardDistance = 0f;
+        bool exitsShieldInFront = false;
+
+        Collider[] shieldColliders = enemyHealth.ShieldCollider.GetComponentsInChildren<Collider>(true);
+        foreach (Collider shieldCollider in shieldColliders)
+        {
+            if (shieldCollider == null || !shieldCollider.enabled)
+                continue;
+
+            RaycastHit[] shieldHits = Physics.RaycastAll(
+                ray,
+                10f,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            foreach (RaycastHit shieldHit in shieldHits)
+            {
+                if (shieldHit.collider != shieldCollider)
+                    continue;
+
+                float forwardDistance = Vector3.Dot(
+                    shieldHit.point - firePointPosition,
+                    direction);
+                if (forwardDistance >= 0f &&
+                    (!exitsShieldInFront || forwardDistance > farthestForwardDistance))
+                {
+                    farthestForwardDistance = forwardDistance;
+                    exitsShieldInFront = true;
+                }
+            }
+        }
+
+        return exitsShieldInFront
+            ? firePointPosition + direction * (farthestForwardDistance + .12f)
+            : firePointPosition;
     }
     public void RemoveAllGuardEffects()
     {

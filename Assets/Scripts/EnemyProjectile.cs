@@ -112,7 +112,8 @@ public class EnemyProjectile : MonoBehaviour
 
             // The bullet originates inside its shooter and player contact is
             // handled by OnTriggerEnter, so neither should count as a wall.
-            if (hitCollider.CompareTag("Player") || hitCollider.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+            if (hitCollider.GetComponentInParent<PlayerHealth>() != null ||
+                hitCollider.gameObject.layer == LayerMask.NameToLayer("Enemy"))
                 continue;
 
             return true;
@@ -142,13 +143,18 @@ public class EnemyProjectile : MonoBehaviour
     public string enemyName;
     private void OnTriggerEnter(Collider collision)
     {
-        if (collision.CompareTag("Player"))
+        PlayerHealth playerHealth = collision.GetComponentInParent<PlayerHealth>();
+        if (playerHealth != null)
         {
-            if (!collision.GetComponent<PlayerMovement>().canKick || collision.GetComponent<PlayerMovement>().isDashing)
+            PlayerMovement playerMovement = playerHealth.GetComponent<PlayerMovement>();
+            if (playerMovement == null)
+                return;
+
+            if (!playerMovement.canKick || playerMovement.isDashing)
             {
                 if(parryable)
                 {
-                    collision.GetComponent<PlayerMovement>().ParryProjectiles(this);
+                    playerMovement.ParryProjectiles(this);
                 }
                
             }
@@ -157,7 +163,7 @@ public class EnemyProjectile : MonoBehaviour
                 Rigidbody playerRigidbody = collision.GetComponent<Rigidbody>();
                 if (playerRigidbody != null)
                 {
-                    PlayerMovement pm = collision.gameObject.GetComponent<PlayerMovement>();
+                    PlayerMovement pm = playerMovement;
 
                     if (pm != null)
                     {
@@ -175,8 +181,8 @@ public class EnemyProjectile : MonoBehaviour
                    
                     HurtPlayer();
 
-                    collision.gameObject.GetComponent<PlayerHealth>().ManageHealth(-playerDamage);
-                    collision.gameObject.GetComponent<PlayerHealth>().hit = true;
+                    playerHealth.ManageHealth(-playerDamage);
+                    playerHealth.hit = true;
                     Debug.Log("playerHit");
                     if (!SpawnedProjectile)
                         bullet.Release(gameObject);

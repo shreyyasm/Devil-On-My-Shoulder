@@ -102,10 +102,13 @@ public bool isTick;
         if (PlayerMovement.finisherActive)
             return;
 
-        if (currentHealth >= 0)
+        if (currentHealth > 0)
         {
-            currentHealth -= healthDecreaseRate * Time.deltaTime;
+            currentHealth = Mathf.Max(0f, currentHealth - healthDecreaseRate * Time.deltaTime);
         }
+
+        if (currentHealth <= 0f && !playerDead && !timerRunning)
+            StartCountdown();
        
 
         //if (powerUpSelect.batteryDrain)
@@ -125,6 +128,21 @@ public bool isTick;
    
     public void ManageHealth(float amount)
     {
+        // Ignore callbacks after final death. During the zero-health
+        // countdown, allow healing to cancel the pending death but ignore
+        // additional damage.
+        if (playerDead)
+            return;
+
+        if (timerRunning && amount < 0f)
+            return;
+
+        if (timerRunning && amount > 0f)
+        {
+            StopCountdown();
+            isTick = true;
+        }
+
         float oldHealth = currentHealth;
 
         // Apply health change and clamp between 0 and maxHealth
@@ -188,7 +206,6 @@ public void PauseHealthDrain()
     {
         StopCountdown();
 
-        dead = false;
         playerDead = false;
         currentHealth = Mathf.Max(currentHealth, 1f);
         displayedHealth = currentHealth;
@@ -198,6 +215,61 @@ public void PauseHealthDrain()
     {
         if (!playerDead)
             isTick = true;
+    }
+
+    /// <summary>
+    /// Clears every death presentation element before a scene transition.
+    /// Restart/menu buttons can be pressed from the death score screen, so
+    /// this must happen before the old scene and its persistent UI are torn
+    /// down.
+    /// </summary>
+    public void ResetDeathPresentationForRestart()
+    {
+        isCancelled = true;
+
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+            countdownCoroutine = null;
+        }
+
+        if (liftHealRoutine != null)
+        {
+            StopCoroutine(liftHealRoutine);
+            liftHealRoutine = null;
+        }
+
+        timerRunning = false;
+        dead = false;
+        playerDead = false;
+        isTick = false;
+
+        if (countdownDisplay != null)
+        {
+            countdownDisplay.gameObject.SetActive(false);
+            countdownDisplay.text = string.Empty;
+        }
+
+        if (countdownImage != null)
+            countdownImage.gameObject.SetActive(false);
+
+        if (deathLogoImage != null)
+            deathLogoImage.gameObject.SetActive(false);
+
+        if (countdownAudioSource != null)
+            countdownAudioSource.Stop();
+
+        if (countdownDisplay != null)
+            LeanTween.cancel(countdownDisplay.gameObject);
+        if (countdownImage != null)
+            LeanTween.cancel(countdownImage.gameObject);
+        if (deathLogoImage != null)
+            LeanTween.cancel(deathLogoImage.gameObject);
+
+        if (ScoreManager.Instance != null)
+            ScoreManager.Instance.ResetDeathScreenForRestart();
+
+        DeathBlinkTransition.Instance?.Cancel();
     }
 
     public void RestoreHealthDuringLiftTravel()
@@ -258,9 +330,14 @@ public void PauseHealthDrain()
 
     public void StartCountdown()
     {
-        //// If a countdown is already running, cancel it first
-        //if (countdownCoroutine != null)
-        //    StopCountdown();
+        if (timerRunning || playerDead)
+            return;
+
+        // The countdown is a pending death, not the final game-over state.
+        // Keep `dead` false until the countdown has completed.
+        currentHealth = 0f;
+        dead = false;
+        isTick = false;
 
         timerRunning = true;
         isCancelled = false;
@@ -275,9 +352,11 @@ public void PauseHealthDrain()
 
     public void StopCountdown()
     {
+        timerRunning = false;
+        dead = false;
+
         if (countdownCoroutine != null)
         {
-            timerRunning = false;
             countdownDisplay.gameObject.SetActive(false);
             if (countdownImage != null)
                 countdownImage.gameObject.SetActive(false);
@@ -307,6 +386,9 @@ public void PauseHealthDrain()
             timeLeft--;
         }
 
+        // `dead` represents the final game-over state. Keep it false while
+        // the countdown is visible so gameplay systems can distinguish a
+        // pending death from a completed death.
         dead = true;
         RoguelikeManager.Instance?.ResetRunStats();
         ComboManager.Instance?.ResetScoreForDeath();
@@ -330,6 +412,8 @@ public void PauseHealthDrain()
         ScoreManager.Instance.CalculateOverallScore();
         SFXManager.Instance.PlaySFX("Dead/GameOver", 1f);
         ScoreManager.Instance.ManageBGAudio(0.3f);
+        // This is an immediate/final death path, unlike the damage countdown.
+        dead = true;
         playerDead = true;
         StartCoroutine(FinishDeathAfterFall());
     }
@@ -368,26 +452,20 @@ public void PauseHealthDrain()
         if (countdownImage != null)
             countdownImage.gameObject.SetActive(false);
 
-        if (deathLogoImage != null && deathLogoSprite != null)
+        // The death countdown is the complete death announcement. Do not show
+        // the old "You're Dead!" image or fallback text after 1; continue
+        // directly into the existing death fall and score/end-game flow.
+        if (deathLogoImage != null)
         {
-            countdownDisplay.gameObject.SetActive(false);
-            deathLogoImage.sprite = deathLogoSprite;
-            deathLogoImage.preserveAspect = true;
-            deathLogoImage.gameObject.SetActive(true);
-            RectTransform logoTransform = deathLogoImage.rectTransform;
             LeanTween.cancel(deathLogoImage.gameObject);
-            logoTransform.localScale = Vector3.one * countdownPopStartScale;
-            LeanTween.scale(deathLogoImage.gameObject, Vector3.one * countdownPopOvershootScale, countdownPopDuration)
-                .setEaseOutBack()
-                .setIgnoreTimeScale(true)
-                .setOnComplete(() => LeanTween.scale(deathLogoImage.gameObject, Vector3.one, countdownPopDuration * .55f)
-                    .setEaseInOutQuad()
-                    .setIgnoreTimeScale(true));
-            return;
+            deathLogoImage.gameObject.SetActive(false);
         }
 
-        countdownDisplay.gameObject.SetActive(true);
-        countdownDisplay.text = "You're Dead!";
+        if (countdownDisplay != null)
+        {
+            countdownDisplay.gameObject.SetActive(false);
+            countdownDisplay.text = string.Empty;
+        }
     }
 
     [Header("Death Presentation")]
@@ -412,14 +490,23 @@ public void PauseHealthDrain()
             blinkTransition.Play(blinkDuration, ShowScoreCanvas);
 
         yield return new WaitForSecondsRealtime(blinkDuration);
-        gameObject.GetComponent<PlayerMovement>().ExplodeItself();
 
-        if (blinkTransition == null)
-            ShowScoreCanvas();
+        // Open the score screen before disabling the player. The blink
+        // transition still invokes this callback as well, but its delayed
+        // callback can be interrupted when the death presentation disables
+        // the player object. This guarantees the score screen appears after
+        // the eye animation on every death.
+        ShowScoreCanvas();
+
+        PlayerMovement movement = GetComponent<PlayerMovement>();
+        if (movement != null)
+            movement.ExplodeItself();
     }
 
     private void ShowScoreCanvas()
     {
+        ScoreManager.Instance?.PrepareDeathScreen();
+
         if (ScoreManager.Instance != null && ScoreManager.Instance.scoreCanvas != null)
         {
             Canvas scoreCanvas = ScoreManager.Instance.scoreCanvas.GetComponent<Canvas>();

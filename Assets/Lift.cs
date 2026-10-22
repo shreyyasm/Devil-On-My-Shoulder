@@ -6,6 +6,7 @@ public class Lift : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField, Min(0f)] private float initialOpenDelay = 1f;
     [SerializeField, Min(0f)] private float closeDelay = 2f;
+    [SerializeField, Min(0.1f)] private float spawnLiftDoorProximityDepth = 3.5f;
 
     private AudioSource audioSource;
     private Coroutine closeRoutine;
@@ -36,13 +37,13 @@ public class Lift : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.GetComponentInParent<PlayerHealth>() != null)
             NotifyPlayerEnteredDoorway();
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.GetComponentInParent<PlayerHealth>() != null)
             NotifyPlayerExitedDoorway();
     }
 
@@ -57,10 +58,17 @@ public class Lift : MonoBehaviour
     public void NotifyPlayerExitedDoorway()
     {
         playersInDoorway = Mathf.Max(0, playersInDoorway - 1);
+        ProceduralGenerationManager.Instance?.NotifyPlayerExitedArrivalLift(this);
         LevelComplete.RestorePlayerGameplayUi(GameObject.FindGameObjectWithTag("Player")?.transform);
         PlayIPodCueAfterPlayerLeavesLift();
         if (playersInDoorway == 0)
             ScheduleClose();
+    }
+
+    /// <summary>Called continuously while the player is near a spawn-lift door.</summary>
+    public void NotifyPlayerNearDoorway()
+    {
+        OpenDoorsForEntry();
     }
 
     private void PlayIPodCueAfterPlayerLeavesLift()
@@ -93,13 +101,20 @@ public class Lift : MonoBehaviour
 
         BoxCollider entryCollider = doorway.AddComponent<BoxCollider>();
         entryCollider.isTrigger = true;
-        entryCollider.size = authoredTrigger.size;
+        // The old trigger was a thin strip exactly on the threshold. A player
+        // could turn around before receiving another enter event and become
+        // blocked by a closed door. This persistent zone reaches both inside
+        // and outside the lift, making the doors behave like automatic doors.
+        entryCollider.size = new Vector3(
+            Mathf.Max(authoredTrigger.size.x, spawnLiftDoorProximityDepth),
+            authoredTrigger.size.y,
+            authoredTrigger.size.z);
         doorway.AddComponent<SpawnLiftEntryTrigger>().Initialize(this);
 
         // The child owns the interaction; disabling the authored collider
         // prevents a single player from being counted twice.
         authoredTrigger.enabled = false;
-        closeDelay = 1f;
+        closeDelay = 0.5f;
     }
 
     private void OpenDoorsForEntry()
@@ -209,13 +224,19 @@ public sealed class SpawnLiftEntryTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.GetComponentInParent<PlayerHealth>() != null)
             lift?.NotifyPlayerEnteredDoorway();
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.GetComponentInParent<PlayerHealth>() != null)
             lift?.NotifyPlayerExitedDoorway();
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.GetComponentInParent<PlayerHealth>() != null)
+            lift?.NotifyPlayerNearDoorway();
     }
 }

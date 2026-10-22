@@ -4,12 +4,13 @@ public class StartTheGameplay : MonoBehaviour
 {
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player"))
-            return;
-
-        if (other.TryGetComponent(out PlayerHealth playerHealth))
+        // The player controller can enter through an untagged child collider.
+        // Resolve the health component from its root so this gameplay-start
+        // trigger always resumes the survival drain after the spawn lift.
+        PlayerHealth playerHealth = other.GetComponentInParent<PlayerHealth>();
+        if (playerHealth != null)
         {
-            playerHealth.isTick = true;
+            playerHealth.ResumeHealthDrain();
             BackgroundMusic.Instance?.StartGameplayMusic();
             MadDashTutorialDirector.Instance?.NotifyPlayerExitedSpawnRoom();
             enabled = false;

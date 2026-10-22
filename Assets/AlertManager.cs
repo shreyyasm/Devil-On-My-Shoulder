@@ -183,6 +183,13 @@ public class AlertManager : MonoBehaviour
 
     public void RevealAlert()
     {
+        // Pooled enemies can be re-enabled while their alert child remains
+        // inactive from a previous death/reset. A coroutine cannot run on an
+        // inactive GameObject, so make the visual available before starting
+        // its reveal sequence.
+        if (!gameObject.activeInHierarchy)
+            gameObject.SetActive(true);
+
         if (alertCoroutine != null)
         {
             StopCoroutine(alertCoroutine);

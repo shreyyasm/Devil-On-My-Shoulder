@@ -399,7 +399,11 @@ public class BackgroundMusic : MonoBehaviour
 
     private bool IsMusicTemporarilySuspended()
     {
-        return !applicationHasFocus || applicationIsPaused || AudioListener.pause;
+        // A pause-menu suspension is intentionally independent of
+        // AudioListener.pause. Some scenes keep pauseAudio disabled, so the
+        // music source must still remain paused instead of being restarted by
+        // Update() on the next frame.
+        return pausedByPauseMenu || !applicationHasFocus || applicationIsPaused || AudioListener.pause;
     }
 
     private void RememberSuspendedGameplayTrack()
