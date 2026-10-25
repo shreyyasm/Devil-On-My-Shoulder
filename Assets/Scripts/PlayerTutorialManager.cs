@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using TMPro; // Requires TextMeshPro (Window > TextMeshPro > Import TMP Essential Resources)
 using DG.Tweening;
 
@@ -73,6 +75,9 @@ public class TutorialStep
              "Slide), since Rigidbody/FixedUpdate motion won't run while paused.")]
     public bool pauseTimeUntilInput = false;
 
+    [Tooltip("Skips the slow-motion hold for this step. Time freezes as soon as the prompt appears while the black-and-white effect still fades in smoothly.")]
+    public bool freezeTimeImmediatelyOnShow = false;
+
     [Header("Objects")]
     [Tooltip("GameObjects that get SetActive(true) the moment this step is shown, and " +
              "SetActive(false) the moment the step completes (or the tutorial resets). " +
@@ -113,6 +118,15 @@ public class PlayerTutorialManager : MonoBehaviour
     [Header("Tutorial Slow Motion")]
     [Tooltip("Time scale used by steps with Pause Time Until Input enabled. Set 1 for no slow motion; values near 0 are slower.")]
     [SerializeField, Range(0.01f, 1f)] private float tutorialSlowMotionScale = 0.15f;
+    [Tooltip("For steps with Pause Time Until Input enabled, the real-time delay before slow motion becomes a full freeze. Set to 0 to freeze immediately.")]
+    [SerializeField, Min(0f)] private float slowMotionBeforeFullPause = 3f;
+    [Header("Full Freeze Visual")]
+    [Tooltip("The gameplay post-processing volume used to make the screen black and white during a fully frozen tutorial prompt. If left empty, the active global volume is found automatically.")]
+    [SerializeField] private Volume tutorialPostProcessingVolume;
+    [Tooltip("Saturation applied only while the tutorial has fully frozen time. -100 is black and white.")]
+    [SerializeField, Range(-100f, 0f)] private float fullPauseSaturation = -100f;
+    [Tooltip("Real-time duration used to smoothly transition from tutorial slow motion to a full freeze and black-and-white screen.")]
+    [SerializeField, Min(0f)] private float fullPauseTransitionDuration = 1f;
     [Tooltip("If true, movement state must be pushed in via SetExternalMovingState() " +
              "from your own player controller instead of being read from raw WASD axes.")]
     [SerializeField] private bool useExternalMovementState = false;
@@ -141,6 +155,13 @@ public class PlayerTutorialManager : MonoBehaviour
     private Action interruptCompleted;
     private bool showingInterruptStep;
     private int interruptStepIndex = -1;
+    // Runtime-only state: this never changes the shared volume profile asset.
+    private ColorAdjustments fullPauseColorAdjustments;
+    private float cachedSaturation;
+    private bool cachedSaturationOverrideState;
+    private bool isFullPauseVisualActive;
+    private bool isFullyPaused;
+    private Coroutine fullPauseTransition;
 
     public int CurrentStepIndex => currentStepIndex;
     public int StepCount => steps.Count;
@@ -194,6 +215,7 @@ public class PlayerTutorialManager : MonoBehaviour
 
         TutorialStep step = steps[currentStepIndex];
         step.timeShown += Time.unscaledDeltaTime;
+        FreezeTimeAfterSlowMotionIfNeeded(step);
 
         // Optional per-step timeout: move on automatically even if the player
         // never performs the input (0 = disabled, wait indefinitely).
@@ -221,6 +243,7 @@ public class PlayerTutorialManager : MonoBehaviour
             return;
 
         interruptStep.timeShown += Time.unscaledDeltaTime;
+        FreezeTimeAfterSlowMotionIfNeeded(interruptStep);
         if (interruptStep.autoAdvanceTimeout > 0f && interruptStep.timeShown >= interruptStep.autoAdvanceTimeout)
         {
             CompleteInterruptStep();
@@ -328,8 +351,7 @@ public class PlayerTutorialManager : MonoBehaviour
             tutorialPanel.SetActive(true);
         SetPromptSprite(interruptStep);
 
-        if (interruptStep.pauseTimeUntilInput)
-            PauseTime();
+        ApplyStepTimeBehavior(interruptStep);
         SetStepObjectsActive(interruptStep, true);
         return true;
     }
@@ -355,14 +377,33 @@ public class PlayerTutorialManager : MonoBehaviour
             tutorialPanel.SetActive(true);
         SetPromptSprite(interruptStep);
 
-        if (interruptStep.pauseTimeUntilInput)
-            PauseTime();
+        ApplyStepTimeBehavior(interruptStep);
         SetStepObjectsActive(interruptStep, true);
+        return true;
+    }
+
+    /// <summary>
+    /// Completes the currently visible authored step when gameplay confirms the
+    /// required action happened. This avoids missing an input that the player
+    /// controller consumes in the same frame.
+    /// </summary>
+    public bool TryCompleteCurrentStepFromGameplay(int index)
+    {
+        if (showingInterruptStep || isTransitioning || currentStepIndex != index ||
+            currentStepIndex < 0 || currentStepIndex >= steps.Count ||
+            steps[currentStepIndex].isComplete)
+            return false;
+
+        CompleteCurrentStep();
         return true;
     }
 
     private void CompleteCurrentStep()
     {
+        if (isTransitioning || currentStepIndex < 0 || currentStepIndex >= steps.Count ||
+            steps[currentStepIndex].isComplete)
+            return;
+
         steps[currentStepIndex].isComplete = true;
         SaveStepCompletion(currentStepIndex);
         // Context flags belong to one step only. Clearing here prevents a previous encounter from revealing the next contextual prompt.
@@ -371,7 +412,9 @@ public class PlayerTutorialManager : MonoBehaviour
         SetStepObjectsActive(steps[currentStepIndex], false);
         onStepCompleted?.Invoke(currentStepIndex);
         StepCompleted?.Invoke(currentStepIndex);
+        // Keep one sequential tutorial instruction per room.
         requiredRoomVisitForCurrentStep = roomVisitSerial + 1;
+        isTransitioning = true;
         StartCoroutine(TransitionToNextStep());
     }
 
@@ -401,8 +444,6 @@ public class PlayerTutorialManager : MonoBehaviour
 
     private IEnumerator TransitionToNextStep()
     {
-        isTransitioning = true;
-
         float delay = steps[currentStepIndex].delayAfterComplete;
 
         HideTutorialPanel();
@@ -451,10 +492,7 @@ public class PlayerTutorialManager : MonoBehaviour
         if (tutorialPanel != null) tutorialPanel.SetActive(true);
         SetPromptSprite(step);
 
-        if (step.pauseTimeUntilInput)
-        {
-            PauseTime();
-        }
+        ApplyStepTimeBehavior(step);
 
         SetStepObjectsActive(step, true);
     }
@@ -534,9 +572,131 @@ public class PlayerTutorialManager : MonoBehaviour
         isTimePausedByTutorial = true;
     }
 
+    private void ApplyStepTimeBehavior(TutorialStep step)
+    {
+        if (!step.pauseTimeUntilInput)
+            return;
+
+        PauseTime();
+
+        if (step.freezeTimeImmediatelyOnShow)
+            BeginFullPauseTransition(true);
+    }
+
+    private void FreezeTimeAfterSlowMotionIfNeeded(TutorialStep step)
+    {
+        if (!step.pauseTimeUntilInput || !isTimePausedByTutorial)
+            return;
+
+        if (step.timeShown >= slowMotionBeforeFullPause)
+            BeginFullPauseTransition(false);
+    }
+
+    private void BeginFullPauseTransition(bool freezeTimeImmediately)
+    {
+        if (!isTimePausedByTutorial || isFullyPaused || fullPauseTransition != null)
+            return;
+
+        fullPauseTransition = StartCoroutine(TransitionToFullPause(freezeTimeImmediately));
+    }
+
+    private IEnumerator TransitionToFullPause(bool freezeTimeImmediately)
+    {
+        float startingTimeScale = Time.timeScale;
+        bool hasVisual = PrepareFullPauseVisual();
+        float startingSaturation = hasVisual ? fullPauseColorAdjustments.saturation.value : 0f;
+        float elapsed = 0f;
+
+        if (freezeTimeImmediately)
+        {
+            Time.timeScale = 0f;
+            isFullyPaused = true;
+        }
+
+        while (elapsed < fullPauseTransitionDuration)
+        {
+            float progress = fullPauseTransitionDuration <= 0f ? 1f : elapsed / fullPauseTransitionDuration;
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+            if (!freezeTimeImmediately)
+                Time.timeScale = Mathf.Lerp(startingTimeScale, 0f, easedProgress);
+
+            if (hasVisual)
+                fullPauseColorAdjustments.saturation.value = Mathf.Lerp(startingSaturation, fullPauseSaturation, easedProgress);
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        Time.timeScale = 0f;
+        if (hasVisual)
+            fullPauseColorAdjustments.saturation.value = fullPauseSaturation;
+
+        isFullyPaused = true;
+        fullPauseTransition = null;
+    }
+
+    private bool PrepareFullPauseVisual()
+    {
+        if (isFullPauseVisualActive)
+            return fullPauseColorAdjustments != null;
+
+        if (tutorialPostProcessingVolume == null)
+            tutorialPostProcessingVolume = FindGameplayPostProcessingVolume();
+
+        if (tutorialPostProcessingVolume == null)
+            return false;
+
+        // Volume.profile creates a runtime instance when the volume is using a
+        // shared profile, so the tutorial never permanently alters its asset.
+        VolumeProfile profile = tutorialPostProcessingVolume.profile;
+        if (!profile.TryGet(out fullPauseColorAdjustments))
+            fullPauseColorAdjustments = profile.Add<ColorAdjustments>(true);
+
+        cachedSaturation = fullPauseColorAdjustments.saturation.value;
+        cachedSaturationOverrideState = fullPauseColorAdjustments.saturation.overrideState;
+        fullPauseColorAdjustments.saturation.overrideState = true;
+        isFullPauseVisualActive = true;
+        return true;
+    }
+
+    private void DisableFullPauseVisual()
+    {
+        if (!isFullPauseVisualActive || fullPauseColorAdjustments == null)
+            return;
+
+        fullPauseColorAdjustments.saturation.value = cachedSaturation;
+        fullPauseColorAdjustments.saturation.overrideState = cachedSaturationOverrideState;
+        isFullPauseVisualActive = false;
+    }
+
+    private static Volume FindGameplayPostProcessingVolume()
+    {
+        Volume selectedVolume = null;
+
+        foreach (Volume candidate in FindObjectsOfType<Volume>(true))
+        {
+            if (!candidate.isGlobal || !candidate.gameObject.activeInHierarchy || candidate.sharedProfile == null)
+                continue;
+
+            if (selectedVolume == null || candidate.priority < selectedVolume.priority)
+                selectedVolume = candidate;
+        }
+
+        return selectedVolume;
+    }
+
     private void ResumeTimeIfPaused()
     {
         if (!isTimePausedByTutorial) return;
+
+        if (fullPauseTransition != null)
+        {
+            StopCoroutine(fullPauseTransition);
+            fullPauseTransition = null;
+        }
+
+        isFullyPaused = false;
+        DisableFullPauseVisual();
         Time.timeScale = cachedTimeScale;
         isTimePausedByTutorial = false;
     }
@@ -607,6 +767,15 @@ public class PlayerTutorialManager : MonoBehaviour
         steps[index].waitToShowForExternalTrigger = waitForContext;
         if (autoAdvanceTimeout >= 0f)
             steps[index].autoAdvanceTimeout = autoAdvanceTimeout;
+    }
+
+    /// <summary>Configures a step to freeze time as soon as its prompt appears.</summary>
+    public void ConfigureExistingStepImmediateFreeze(int index, bool enabled)
+    {
+        if (index < 0 || index >= steps.Count)
+            return;
+
+        steps[index].freezeTimeImmediatelyOnShow = enabled;
     }
 
     public bool IsStepCompleted(int index)

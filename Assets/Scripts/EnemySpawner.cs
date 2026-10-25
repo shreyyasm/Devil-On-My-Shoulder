@@ -48,6 +48,8 @@ public class EnemySpawner : MonoBehaviour
     public float spawnRange = 100f;
     public float spawnSpreadRadius = 1.5f;
     public float navMeshSearchDistance = 2f;
+    [Tooltip("Keeps the spawn point's authored height while snapping its horizontal position to the NavMesh. Use this for rooms whose visible floor sits above the baked NavMesh surface.")]
+    public bool preserveSpawnPointHeight = false;
 
     [Header("Level Settings")]
     public int maxNumber = 9;
@@ -161,11 +163,11 @@ private bool activated;
 
                     if (NavMesh.SamplePosition(desiredPosition, out hit, navMeshSearchDistance, NavMesh.AllAreas))
                     {
-                        enemy.transform.position = hit.position;
+                        enemy.transform.position = GetSpawnPosition(hit.position, desiredPosition.y);
                     }
                     else if (NavMesh.SamplePosition(spawnPoint.point.position, out hit, navMeshSearchDistance, NavMesh.AllAreas))
                     {
-                        enemy.transform.position = hit.position;
+                        enemy.transform.position = GetSpawnPosition(hit.position, spawnPoint.point.position.y);
                     }
                     else
                     {
@@ -195,6 +197,14 @@ private bool activated;
                 }
             }
         }
+    }
+
+    private Vector3 GetSpawnPosition(Vector3 navMeshPosition, float authoredHeight)
+    {
+        if (preserveSpawnPointHeight)
+            navMeshPosition.y = authoredHeight;
+
+        return navMeshPosition;
     }
 
     /// <summary>

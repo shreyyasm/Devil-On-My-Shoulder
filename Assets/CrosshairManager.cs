@@ -80,6 +80,24 @@ namespace InfimaGames.LowPolyShooterPack
         private Tween popTween;
         private Tween reloadTween;
 
+        /// <summary>Whether the crosshair image is currently drawn.</summary>
+        public bool IsCrosshairVisible => crosshairImage != null && crosshairImage.enabled;
+
+        /// <summary>Shows or hides only the crosshair image, leaving its manager active.</summary>
+        public void SetCrosshairVisible(bool visible)
+        {
+            if (crosshairImage == null)
+                return;
+
+            if (!visible)
+            {
+                popTween?.Kill();
+                reloadTween?.Kill();
+            }
+
+            crosshairImage.enabled = visible;
+        }
+
 
         // ============================================================
         // UNITY

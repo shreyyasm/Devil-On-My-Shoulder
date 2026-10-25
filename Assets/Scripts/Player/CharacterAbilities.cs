@@ -67,6 +67,8 @@ public class CharacterAbilities : MonoBehaviour
     public Character character;
     public bool reloadIncomplete;
     private bool isFinishing = false;
+    private bool finisherCrosshairVisibilityCaptured;
+    private bool crosshairWasVisibleBeforeFinisher;
     public GameObject finisherCanvas;
 
     // Finisher cost (you can tweak per enemy later)
@@ -438,9 +440,9 @@ public class CharacterAbilities : MonoBehaviour
 
     private void TryFinisher()
     {
-        // A finisher is allowed during the zero-health countdown because it
-        // can restore health and cancel the pending death. Only the final
-        // `playerDead` state blocks it.
+        // A finisher remains available during the zero-health countdown: it
+        // can restore health and cancel the pending death. Only final death
+        // blocks this input.
         if (playerHealth != null && playerHealth.playerDead)
             return;
 
@@ -518,9 +520,8 @@ public class CharacterAbilities : MonoBehaviour
 
     private void PerformFinisher()
     {
-
-      
-        if (isFinishing) return;
+        if (isFinishing || (playerHealth != null && playerHealth.playerDead))
+            return;
        
         Transform target = FindFinisherTarget();
 
@@ -536,7 +537,7 @@ public class CharacterAbilities : MonoBehaviour
         {
             EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
             EnemyHealth enemyHealth = target.GetComponentInParent<EnemyHealth>();
-            if (enemyManager == null || enemyHealth == null)
+            if (enemyManager == null || enemyHealth == null || !enemyHealth.CanStartFinisher)
                 return;
 
             enemyManager.EndDash(enemyManager.dashToken);
@@ -555,6 +556,7 @@ public class CharacterAbilities : MonoBehaviour
                 reloadIncomplete = true;
             }
             GetComponent<PlayerHealth>().ManageHealth(50);
+            HideCrosshairForFinisher();
             StartCoroutine(FinisherRoutine(target));
             // TODO: enable finisher camera here
             finisherCamera.SetActive(true);
@@ -575,8 +577,21 @@ public class CharacterAbilities : MonoBehaviour
     }
     private EnemyHealth enemyHealthTemp;
     public Transform enemyTargetTemp;
+
+    /// <summary>
+    /// Returns true only when the same target selection used by the finisher
+    /// system currently has a living, valid enemy in range and in view.
+    /// </summary>
+    public bool HasValidFinisherTarget()
+    {
+        return FindFinisherTarget() != null;
+    }
+
     Transform FindFinisherTarget()
     {
+        if (playerHealth != null && playerHealth.playerDead)
+            return null;
+
         if (playerMovement.isDashing && !playerMovement.grounded)
             return null;
 
@@ -605,8 +620,10 @@ public class CharacterAbilities : MonoBehaviour
             if (enemyHealth == null)
                 continue;
 
-            // Ignore dead enemies
-            if (enemyHealth != null && enemyHealth.dead)
+            // A death animation can leave the collider active briefly. Health,
+            // death, and current finisher state must all be valid before this
+            // enemy is shown or accepted as a target.
+            if (!enemyHealth.CanStartFinisher)
                 continue;
 
             // Aim at enemy chest instead of feet
@@ -672,8 +689,20 @@ public class CharacterAbilities : MonoBehaviour
         EnemyManager enemyManager =
             target.GetComponentInParent<EnemyManager>();
 
+        if (enemyManager == null || enemyHealthTemp == null || !enemyHealthTemp.CanContinueFinisher)
+        {
+            RestoreFinisherState();
+            yield break;
+        }
+
         Transform finisherPoint =
             enemyManager.finisherTarget;
+
+        if (finisherPoint == null)
+        {
+            RestoreFinisherState();
+            yield break;
+        }
 
         float duration = 0.2f;
         float timer = 0f;
@@ -691,6 +720,12 @@ public class CharacterAbilities : MonoBehaviour
         // Move player to finisher position
         while (timer < duration)
         {
+            if (!enemyHealthTemp.CanContinueFinisher)
+            {
+                RestoreFinisherState();
+                yield break;
+            }
+
             timer += Time.deltaTime;
 
             float t = Mathf.SmoothStep(
@@ -764,6 +799,12 @@ public class CharacterAbilities : MonoBehaviour
 
         while (finisherTimer < finisherDuration)
         {
+            if (!enemyHealthTemp.CanContinueFinisher)
+            {
+                RestoreFinisherState();
+                yield break;
+            }
+
             destination =
                 finisherPoint.position +
                 finisherPoint.right * destinationOffset.x +
@@ -802,31 +843,69 @@ public class CharacterAbilities : MonoBehaviour
             yield return null;
         }
 
-        rootCamera.GetComponent<CameraLook>().enabled = true;
-        finisherCamera.SetActive(false);
-        renderFinisherCanvas.SetActive(false);
-        mainCameraTexture.SetActive(true);
+        RestoreFinisherState();
+        Debug.Log("Finisher End");
+    }
 
-        playerMovement.finisherActive = false;
+    private void RestoreFinisherState()
+    {
+        RestoreCrosshairAfterFinisher();
+
+        if (rootCamera != null)
+        {
+            CameraLook cameraLook = rootCamera.GetComponent<CameraLook>();
+            if (cameraLook != null)
+                cameraLook.enabled = true;
+        }
+
+        if (finisherCamera != null)
+            finisherCamera.SetActive(false);
+        if (renderFinisherCanvas != null)
+            renderFinisherCanvas.SetActive(false);
+        if (mainCameraTexture != null)
+            mainCameraTexture.SetActive(true);
+
+        if (playerMovement != null)
+            playerMovement.finisherActive = false;
         isFinishing = false;
 
-        GetComponent<Character>()
-            .characterAnimator
-            .SetBool("FinisherUnholstered", false);
+        if (character != null && character.characterAnimator != null)
+            character.characterAnimator.SetBool("FinisherUnholstered", false);
 
-        playerLeftHand.SetActive(true);
-        playerRightHand.SetActive(true);
+        if (playerLeftHand != null)
+            playerLeftHand.SetActive(true);
+        if (playerRightHand != null)
+            playerRightHand.SetActive(true);
 
-        rb.isKinematic = false;
+        if (rb != null)
+            rb.isKinematic = false;
         FinisherActive = false;
-        if(reloadIncomplete)
-        {
-            character.PlayReloadAnimation();
-            reloadIncomplete = false;
 
+        if (reloadIncomplete)
+        {
+            character?.PlayReloadAnimation();
+            reloadIncomplete = false;
         }
-        
-        Debug.Log("Finisher End");
+    }
+
+    private void HideCrosshairForFinisher()
+    {
+        CrosshairManager crosshairManager = CrosshairManager.instance;
+        if (crosshairManager == null)
+            return;
+
+        crosshairWasVisibleBeforeFinisher = crosshairManager.IsCrosshairVisible;
+        finisherCrosshairVisibilityCaptured = true;
+        crosshairManager.SetCrosshairVisible(false);
+    }
+
+    private void RestoreCrosshairAfterFinisher()
+    {
+        if (!finisherCrosshairVisibilityCaptured)
+            return;
+
+        CrosshairManager.instance?.SetCrosshairVisible(crosshairWasVisibleBeforeFinisher);
+        finisherCrosshairVisibilityCaptured = false;
     }
     private void OnDrawGizmos()
     {
@@ -1106,134 +1185,63 @@ public class CharacterAbilities : MonoBehaviour
             return;
         }
 
-        RoomInstance currentRoom =
-            RoomVisibilityManager.Instance.CurrentRoom;
-
+        RoomInstance currentRoom = RoomVisibilityManager.Instance.CurrentRoom;
         if (currentRoom == null)
         {
             Debug.LogWarning("No current room found.");
             return;
         }
 
-        EnemySpawner enemySpawner =
-            currentRoom.Instance.GetComponentInChildren<EnemySpawner>();
-
+        EnemySpawner enemySpawner = currentRoom.Instance.GetComponentInChildren<EnemySpawner>();
         if (enemySpawner == null)
         {
-            Debug.LogWarning(
-                "No EnemySpawner found in current room."
-            );
-
+            Debug.LogWarning("No EnemySpawner found in current room.");
             return;
         }
 
-        // Get enemies from current room
         foreach (GameObject enemy in enemySpawner.spawnedEnemies)
         {
             if (enemy == null)
                 continue;
 
-            EnemyManager enemyManager =
-                enemy.GetComponentInParent<EnemyManager>();
-
-            if (enemyManager == null)
-                continue;
-
-            // EnemyManager disabled = dead
-            if (!enemyManager.enabled)
+            EnemyManager enemyManager = enemy.GetComponentInParent<EnemyManager>();
+            if (enemyManager == null || !enemyManager.enabled)
                 continue;
 
             abilityTargets.Add(enemy);
         }
 
-        // Sort nearest → farthest
         abilityTargets.Sort((a, b) =>
-        {
-            float distanceA =
-                (a.transform.position -
-                 transform.position).sqrMagnitude;
-
-            float distanceB =
-                (b.transform.position -
-                 transform.position).sqrMagnitude;
-
-            return distanceA.CompareTo(distanceB);
-        });
-
-        Debug.Log(
-            "Ability found " +
-            abilityTargets.Count +
-            " enemies."
-        );
-
-        // Debug order
-        for (int i = 0; i < abilityTargets.Count; i++)
-        {
-            float distance =
-                Vector3.Distance(
-                    transform.position,
-                    abilityTargets[i].transform.position
-                );
-
-            Debug.Log(
-                $"Target {i}: " +
-                abilityTargets[i].name +
-                " | Distance: " +
-                distance.ToString("F2")
-            );
-        }
+            (a.transform.position - transform.position).sqrMagnitude
+                .CompareTo((b.transform.position - transform.position).sqrMagnitude));
     }
     private void SetNextAbilityTarget()
     {
         while (currentTargetIndex < abilityTargets.Count)
         {
-            GameObject target =
-                abilityTargets[currentTargetIndex];
-
-            // Invalid object
+            GameObject target = abilityTargets[currentTargetIndex];
             if (target == null)
             {
                 currentTargetIndex++;
                 continue;
             }
 
-            EnemyManager enemyManager =
-                target.GetComponentInParent<EnemyManager>();
-
-            // Enemy is dead / disabled
-            if (enemyManager == null ||
-                !enemyManager.enabled)
+            EnemyManager enemyManager = target.GetComponentInParent<EnemyManager>();
+            if (enemyManager == null || !enemyManager.enabled)
             {
                 currentTargetIndex++;
                 continue;
             }
 
-            // Valid target
             currentAbilityTarget = target;
 
-            Debug.Log(
-                "NEW ABILITY TARGET: " +
-                target.name
-            );
-
-            // Stop previous movement
             if (moveToEnemyRoutine != null)
-            {
                 StopCoroutine(moveToEnemyRoutine);
-            }
 
-            // Start moving immediately
-            moveToEnemyRoutine =
-                StartCoroutine(
-                    MoveToEnemy(
-                        target.transform
-                    )
-                );
-
+            moveToEnemyRoutine = StartCoroutine(MoveToEnemy(target.transform));
             return;
         }
 
-        // No targets remaining
         currentAbilityTarget = null;
     }
     private IEnumerator Ability1FireLoop()
@@ -1258,17 +1266,11 @@ public class CharacterAbilities : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
-        // Get all enemies in current room
+        // Collect the living enemies in the current room only.
         BuildAbilityTargetList();
-
         currentTargetIndex = 0;
-
-        // Select first target
         SetNextAbilityTarget();
 
-        // There may be no living enemy in the current room, even if the
-        // ability was activated while the previous target was being removed.
-        // Exit before entering the firing loop in that case.
         if (!RoomHasLivingEnemies() || currentAbilityTarget == null)
         {
             StopAbility1();
@@ -1365,24 +1367,17 @@ public class CharacterAbilities : MonoBehaviour
     {
         while (ability1Active)
         {
-            // If absolutely no living enemies remain
             if (!RoomHasLivingEnemies())
             {
                 StopAbility1();
                 yield break;
             }
 
-            // Current target doesn't exist
             if (currentAbilityTarget == null)
             {
                 currentTargetIndex++;
-
                 SetNextAbilityTarget();
 
-                // The remaining enemies may exist in the room but still be
-                // unusable targets (missing AbilityTarget or no NavMesh path).
-                // Do not leave the gun loop running forever with no movement
-                // target left to process.
                 if (currentAbilityTarget == null &&
                     currentTargetIndex >= abilityTargets.Count)
                 {
@@ -1405,7 +1400,6 @@ public class CharacterAbilities : MonoBehaviour
                     (enemyHealth != null && enemyHealth.dead))
                 {
                     currentTargetIndex++;
-
                     SetNextAbilityTarget();
                 }
             }
@@ -1661,11 +1655,7 @@ public class CharacterAbilities : MonoBehaviour
         if (!pathFound ||
             path.status != NavMeshPathStatus.PathComplete)
         {
-            Debug.LogWarning(
-                "No complete NavMesh path to: " +
-                target.name
-            );
-
+            Debug.LogWarning("No complete NavMesh path to: " + target.name);
             AbandonAbilityTarget(target);
             yield break;
         }
@@ -1678,8 +1668,7 @@ public class CharacterAbilities : MonoBehaviour
             abilityAgent.enabled = false;
         }
 
-        Vector3[] corners =
-            path.corners;
+        Vector3[] corners = path.corners;
 
         int cornerIndex = 1;
 
@@ -1693,9 +1682,7 @@ public class CharacterAbilities : MonoBehaviour
         while (cornerIndex < corners.Length)
         {
             // Target died
-            if (target == null ||
-                enemyManager == null ||
-                !enemyManager.enabled)
+            if (target == null || enemyManager == null || !enemyManager.enabled)
             {
                 yield break;
             }
@@ -1836,9 +1823,7 @@ public class CharacterAbilities : MonoBehaviour
         // FINAL FINISHER POSITION
         // =========================================================
 
-        if (target == null ||
-            enemyManager == null ||
-            !enemyManager.enabled)
+        if (target == null || enemyManager == null || !enemyManager.enabled)
         {
             yield break;
         }
@@ -1871,9 +1856,7 @@ public class CharacterAbilities : MonoBehaviour
 
         while (finalTimer < finalDuration)
         {
-            if (target == null ||
-                enemyManager == null ||
-                !enemyManager.enabled)
+            if (target == null || enemyManager == null || !enemyManager.enabled)
             {
                 yield break;
             }
@@ -1998,9 +1981,7 @@ public class CharacterAbilities : MonoBehaviour
 
         while (finisherTimer < finisherDuration)
         {
-            if (target == null ||
-                enemyManager == null ||
-                !enemyManager.enabled)
+            if (target == null || enemyManager == null || !enemyManager.enabled)
             {
                 yield break;
             }
@@ -2104,6 +2085,7 @@ public class CharacterAbilities : MonoBehaviour
 
             yield return null;
         }
+
     }
 
     private void AbandonAbilityTarget(Transform target)
@@ -2115,6 +2097,7 @@ public class CharacterAbilities : MonoBehaviour
 
         moveToEnemyRoutine = null;
     }
+
     private Transform FindNearestEnemy()
     {
         if (playerCamera == null)

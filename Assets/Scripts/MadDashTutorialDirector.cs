@@ -30,6 +30,7 @@ public class MadDashTutorialDirector : MonoBehaviour
     private Transform player;
     private CharacterAbilities characterAbilities;
     private PlayerHealth playerHealth;
+    private PlayerMovement playerMovement;
     private bool tutorialStarted;
     private bool hasLeftSpawnRoom;
     private bool firePromptReleased;
@@ -39,6 +40,7 @@ public class MadDashTutorialDirector : MonoBehaviour
     private bool slideRoomPromptQueued;
     private bool parryPromptQueued;
     private bool jumpRoomPromptQueued;
+    private int observedKickHitSequence = -1;
 
     private void Awake()
     {
@@ -62,19 +64,26 @@ public class MadDashTutorialDirector : MonoBehaviour
             tutorialManager.ConfigureExistingStepGate(DashSlideStep, true);
             tutorialManager.ConfigureExistingStepGate(FinisherStep, true);
             tutorialManager.ConfigureExistingStepGate(DemonStep, true);
+            tutorialManager.ConfigureExistingStepImmediateFreeze(FinisherStep, true);
+            tutorialManager.ConfigureExistingStepImmediateFreeze(DemonStep, true);
             tutorialManager.StepCompleted += OnStepCompleted;
         }
     }
 
     private void Start()
     {
-        if (tutorialManager == null || tutorialStarted || !CanRunTutorialForCurrentSet())
+        if (tutorialManager == null || tutorialStarted)
             return;
 
-        if (tutorialManager.HasCompletedAllSteps)
-            return;
-
+        // Context tutorials must remain available in every generated set. The
+        // normal opening tutorial, however, is still exclusive to Set 0.
+        // This lets a Skill Slide/Jump room introduce itself the first time
+        // either of its prefab variants is encountered later in a run.
         tutorialStarted = true;
+        bool regularTutorialEnabled = CanRunTutorialForCurrentSet() && !tutorialManager.HasCompletedAllSteps;
+        if (!regularTutorialEnabled)
+            return;
+
         // Keep the drain gentle only until the player has seen and completed
         // the health instruction. Its completion is persisted by PlayerTutorialManager.
         if (!tutorialManager.IsStepCompleted(HeartStep))
@@ -99,6 +108,7 @@ public class MadDashTutorialDirector : MonoBehaviour
             FindPlayerReferences();
 
         ReleaseCurrentStepWhenReady();
+        AdvanceKickTutorialFromConfirmedHit();
         QueueMessLadyParryPrompt();
         ReleaseQueuedContextPrompts();
     }
@@ -128,9 +138,12 @@ public class MadDashTutorialDirector : MonoBehaviour
         currentRoomIndex = roomIndex;
         tutorialManager?.NotifyRoomEntered(roomIndex);
 
-        if (IsSkillRoom(roomIdentity, "Slide"))
+        // Both variants of a skill type feed the same context step. The
+        // PlayerTutorialManager persists that step, so after the first
+        // successful prompt neither variant can show it again.
+        if (IsSkillSlideRoom(roomIdentity))
             slideRoomPromptQueued = true;
-        if (IsSkillRoom(roomIdentity, "Jump"))
+        if (IsSkillJumpRoom(roomIdentity))
             jumpRoomPromptQueued = true;
 
         ReleaseQueuedContextPrompts();
@@ -158,16 +171,28 @@ public class MadDashTutorialDirector : MonoBehaviour
 
             // The authored kick prompt deliberately does not pause time.
             case KickStep:
-                tutorialManager.SetExternalTriggerFlag(HasNearbyEnemy());
+                tutorialManager.SetExternalTriggerFlag(HasKickableEnemy());
+                break;
+
+            // Release the slide/dash prompt for the next room after the
+            // kick step. PlayerTutorialManager still enforces the normal
+            // one-instruction-per-room sequence.
+            case DashSlideStep:
+                tutorialManager.SetExternalTriggerFlag(true);
                 break;
 
             case FinisherStep:
-                bool finisherAvailable = characterAbilities != null && characterAbilities.finisherReady && !characterAbilities.abilityReady && HasNearbyEnemy();
+                bool finisherAvailable = characterAbilities != null &&
+                                         characterAbilities.finisherReady &&
+                                         !characterAbilities.abilityReady &&
+                                         characterAbilities.HasValidFinisherTarget();
                 tutorialManager.SetExternalTriggerFlag(finisherAvailable);
                 break;
 
             case DemonStep:
-                tutorialManager.SetExternalTriggerFlag(characterAbilities != null && characterAbilities.abilityReady && HasNearbyEnemy());
+                tutorialManager.SetExternalTriggerFlag(characterAbilities != null &&
+                                                       characterAbilities.abilityReady &&
+                                                       characterAbilities.HasValidFinisherTarget());
                 break;
         }
     }
@@ -220,11 +245,24 @@ public class MadDashTutorialDirector : MonoBehaviour
             jumpRoomPromptQueued = false;
     }
 
-    private static bool IsSkillRoom(string roomIdentity, string skillName)
+    private static bool IsSkillSlideRoom(string roomIdentity)
     {
         return !string.IsNullOrEmpty(roomIdentity) &&
                roomIdentity.IndexOf("Skill", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
-               roomIdentity.IndexOf(skillName, System.StringComparison.OrdinalIgnoreCase) >= 0;
+               roomIdentity.IndexOf("Slide", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool IsSkillJumpRoom(string roomIdentity)
+    {
+        if (string.IsNullOrEmpty(roomIdentity))
+            return false;
+
+        // The two authored jump-room roots are named Jump_Level Green and
+        // Purple_Jump_Level, unlike the slide rooms which include "Skill".
+        // Match their common Jump + Level naming rather than relying on a
+        // folder name that does not exist on the instantiated hierarchy.
+        return roomIdentity.IndexOf("Jump", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
+               roomIdentity.IndexOf("Level", System.StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static bool IsMessLady(Transform enemyTransform)
@@ -253,6 +291,10 @@ public class MadDashTutorialDirector : MonoBehaviour
         player = playerObject.transform;
         characterAbilities = playerObject.GetComponent<CharacterAbilities>();
         playerHealth = playerObject.GetComponent<PlayerHealth>();
+        playerMovement = playerObject.GetComponent<PlayerMovement>();
+
+        if (playerMovement != null && observedKickHitSequence < 0)
+            observedKickHitSequence = playerMovement.KickHitSequence;
     }
 
     private void SetTutorialHealthDrain()
@@ -289,6 +331,29 @@ public class MadDashTutorialDirector : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool HasKickableEnemy()
+    {
+        return playerMovement != null && playerMovement.HasKickableEnemyInRange();
+    }
+
+    private void AdvanceKickTutorialFromConfirmedHit()
+    {
+        if (playerMovement == null)
+            return;
+
+        if (observedKickHitSequence < 0)
+        {
+            observedKickHitSequence = playerMovement.KickHitSequence;
+            return;
+        }
+
+        if (playerMovement.KickHitSequence == observedKickHitSequence)
+            return;
+
+        observedKickHitSequence = playerMovement.KickHitSequence;
+        tutorialManager.TryCompleteCurrentStepFromGameplay(KickStep);
     }
 
 }

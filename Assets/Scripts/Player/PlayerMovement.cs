@@ -99,11 +99,47 @@ public class PlayerMovement : MonoBehaviour
     public List<Transform> legKickPoint; // empty object near foot
     public float kickRadius = 0.6f;
     public LayerMask enemyLayer;
+    [Tooltip("How long a slide-triggered kick keeps sampling the existing foot hit sphere after contact. This prevents fast slides from missing an enemy between physics frames.")]
+    [SerializeField, Min(0f)] private float slideKickHitWindow = 0.18f;
 
     public bool canKick = true;
     private bool kickPressed;
     public List<Animator> kickAnimator;
     public List<Animator> jumpBackAnimator;
+
+    /// <summary>
+    /// Returns true only when a living enemy is inside the same hit sphere used
+    /// by the kick impact. Tutorial prompts use this so they appear when the
+    /// player can actually connect a kick, rather than when entering a room.
+    /// </summary>
+    public bool HasKickableEnemyInRange()
+    {
+        if (!canKick || legKickPoint == null || characterindex <= 0 ||
+            characterindex > legKickPoint.Count)
+            return false;
+
+        Transform kickPoint = legKickPoint[characterindex - 1];
+        if (kickPoint == null)
+            return false;
+
+        Collider[] hits = Physics.OverlapSphere(
+            kickPoint.position,
+            kickRadius,
+            enemyLayer
+        );
+
+        foreach (Collider hit in hits)
+        {
+            EnemyManager enemy = hit.GetComponent<EnemyManager>();
+            EnemyHealth enemyHealth = hit.GetComponent<EnemyHealth>();
+
+            if (enemy != null && enemy.enabled && enemyHealth != null &&
+                !enemyHealth.dead && enemyHealth.health > 0f)
+                return true;
+        }
+
+        return false;
+    }
 
     [Header("Kick NavMesh Knockback")]
     [SerializeField] private float kickGravity = 30f;
@@ -1218,6 +1254,9 @@ public class PlayerMovement : MonoBehaviour
 
 
     public bool playerKickedSomething;
+    /// <summary>Increments only when a kick finds a living enemy in its hit sphere.</summary>
+    public int KickHitSequence { get; private set; }
+
     IEnumerator KickDelay()
     {
         
@@ -1226,17 +1265,6 @@ public class PlayerMovement : MonoBehaviour
         canKick = false;
         SFXManager.Instance.PlaySFX("Player/Kick", 1f);
         StartCoroutine(KickCooldownRoutine());
-
-        // Detect enemies using leg collider sphere
-        Collider[] hits = Physics.OverlapSphere(
-            legKickPoint[characterindex - 1].position,
-            kickRadius,
-            enemyLayer
-        );
-
-        if (hits.Length == 0)
-            yield return null;
-      
 
         float finalKickForce = baseKickForce;
 
@@ -1251,73 +1279,100 @@ public class PlayerMovement : MonoBehaviour
         // 🔥 Air kick bonus
         if (!grounded)
             finalKickForce *= airKickMultiplier;
-        
-        foreach (Collider hit in hits)
+
+        // A normal kick still samples once. A slide collision gets a short
+        // follow-up window so a fast Rigidbody cannot pass an enemy between
+        // the collision callback and the first sphere query.
+        float hitWindowEnd = Time.time + (isSliding ? slideKickHitWindow : 0f);
+        bool connectedWithEnemy = false;
+
+        do
         {
+            // Keep the existing layer mask and direct EnemyManager lookup.
+            // This intentionally does not change which colliders are valid.
+            Collider[] hits = Physics.OverlapSphere(
+                legKickPoint[characterindex - 1].position,
+                kickRadius,
+                enemyLayer
+            );
 
-            if (hit.gameObject.layer == 16 && hit.GetComponent<EnemyManager>())
+            foreach (Collider hit in hits)
             {
-                hit.GetComponent<EnemyManager>().kickOn = true;
-                hit.GetComponent<EnemyManager>().animator.SetTrigger("Kicked");
-                if(hit.GetComponent<EnemyHealth>().shieldType == EnemyStats.ShieldType.Yes && !hit.GetComponent<EnemyHealth>().shieldBreak)
-                {
-                    hit.GetComponent<EnemyHealth>().ShieldBreak();
-                }
-                if (hit.GetComponent<EnemyManager>() != null)
-                {
-                    if (hit.GetComponent<EnemyManager>().isGrabbing)
-                        hit.GetComponent<EnemyManager>().EndGrab();
 
-                    if (hit.GetComponent<EnemyManager>().canDash)
-                        hit.GetComponent<EnemyManager>().StopDashImmediate();
+                if (hit.gameObject.layer == 16 && hit.GetComponent<EnemyManager>())
+                {
+                    EnemyHealth hitEnemyHealth = hit.GetComponent<EnemyHealth>();
+                    if (hitEnemyHealth == null || hitEnemyHealth.dead || hitEnemyHealth.health <= 0f)
+                        continue;
 
-                }
+                    connectedWithEnemy = true;
+                    KickHitSequence++;
+                    hit.GetComponent<EnemyManager>().kickOn = true;
+                    hit.GetComponent<EnemyManager>().animator.SetTrigger("Kicked");
+                    if(hit.GetComponent<EnemyHealth>().shieldType == EnemyStats.ShieldType.Yes && !hit.GetComponent<EnemyHealth>().shieldBreak)
+                    {
+                        hit.GetComponent<EnemyHealth>().ShieldBreak();
+                    }
+                    if (hit.GetComponent<EnemyManager>() != null)
+                    {
+                        if (hit.GetComponent<EnemyManager>().isGrabbing)
+                            hit.GetComponent<EnemyManager>().EndGrab();
+
+                        if (hit.GetComponent<EnemyManager>().canDash)
+                            hit.GetComponent<EnemyManager>().StopDashImmediate();
+
+                    }
 
                
-                Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
+                    Vector3 kickDir = (hit.transform.position - transform.position + orientation.forward * 0.4f).normalized;
 
-                DoTimeSlow();
+                    DoTimeSlow();
 
                
                 // 🔥 APPLY NAVMESH KNOCKBACK
-                DoKickKnockback(hit.transform, kickDir, finalKickForce);
+                    DoKickKnockback(hit.transform, kickDir, finalKickForce);
 
 
-                hands.GetComponent<HitstopShake>().DoShake();
-                kickAnimator[characterindex - 1].GetComponent<HitstopShake>().DoShake();
+                    hands.GetComponent<HitstopShake>().DoShake();
+                    kickAnimator[characterindex - 1].GetComponent<HitstopShake>().DoShake();
 
-                ImpactFrameEffect.Instance.GoBlack();
-                LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
+                    ImpactFrameEffect.Instance.GoBlack();
+                    LeanTween.delayedCall(0.05f, () => { ImpactFrameEffect.Instance.GoColor(); });
                 // Optional: damage call if present
 
-                EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-                StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
+                    EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+                    StartCoroutine(ImpactColorCoroutine(enemy.GetComponentInChildren<SpriteRenderer>(), Color.red, 0.4f));
                 
                 //Impact VFX
-                Vector3 hitPoint = enemy.transform.position + new Vector3(0, 0.55f, 0);
+                    Vector3 hitPoint = enemy.transform.position + new Vector3(0, 0.55f, 0);
 
                 // Normal = direction from surface to attacker
-                Vector3 normal = (transform.position - hitPoint).normalized;
+                    Vector3 normal = (transform.position - hitPoint).normalized;
 
-                Quaternion rot = Quaternion.LookRotation(normal);
+                    Quaternion rot = Quaternion.LookRotation(normal);
 
-                Instantiate(KickVFX, hitPoint, rot);
+                    Instantiate(KickVFX, hitPoint, rot);
                 //kickAnimator[characterindex - 1].gameObject.SetActive(false);
-                if (enemy != null)
-                {
+                    if (enemy != null)
+                    {
 
-                    SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
-                    enemy.EnemyHit(15f, true); // tweakable
-                    HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
-                    hitstop.DoShake();
+                        SFXManager.Instance.PlaySFX("Player/KickImpact", 1f);
+                        enemy.EnemyHit(15f, true); // tweakable
+                        HitstopShake hitstop = enemy.GetComponentInChildren<HitstopShake>();
+                        hitstop.DoShake();
                     //hit.GetComponent<EnemyManager>().kickOn = false;
                    // LeanTween.delayedCall(0.1f, () => { hit.GetComponent<EnemyManager>().animator.SetBool("Kicked", false); });
 
+                    }
                 }
-        
             }
-            
+
+            if (connectedWithEnemy || !isSliding || Time.time >= hitWindowEnd)
+                break;
+
+            yield return new WaitForFixedUpdate();
         }
+        while (true);
     }
 
     public void ParryProjectiles(EnemyProjectile hit)

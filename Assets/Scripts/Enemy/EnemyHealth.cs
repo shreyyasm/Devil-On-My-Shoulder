@@ -54,6 +54,10 @@ public class EnemyHealth : MonoBehaviour
 
     public bool dead;
     public bool finisherActive;
+    /// <summary>True only while this enemy can still be selected for a new finisher.</summary>
+    public bool CanStartFinisher => isActiveAndEnabled && gameObject.activeInHierarchy && !dead && !finisherActive && health > 0f;
+    /// <summary>True while an already-started finisher may safely continue.</summary>
+    public bool CanContinueFinisher => isActiveAndEnabled && gameObject.activeInHierarchy && !dead && health > 0f;
     public System.Action OnDeath;
     private AudioSource audioSource;
 
@@ -91,6 +95,9 @@ public class EnemyHealth : MonoBehaviour
    
     public void TakeDamage(float amount, DamageInfo info)
     {
+        if (dead || health <= 0f)
+            return;
+
         // Shield check
         //if (shieldType == EnemyStats.ShieldType.Yes && shieldHealth > 0)
         //{
@@ -233,6 +240,9 @@ public class EnemyHealth : MonoBehaviour
     }
     public void Die(bool isEnvironmental, bool isFinisher, bool isAirKill, bool isHeadshot)
     {
+        if (dead)
+            return;
+
         dead = true;
         enemyManager.AlertIndicator.gameObject.SetActive(false);
         Transform bloodPoint = transform;
@@ -390,6 +400,9 @@ public class EnemyHealth : MonoBehaviour
     }
     public void FinisherActive()
     {
+        if (!CanStartFinisher)
+            return;
+
         finisherActive = true;
         agent.isStopped = true;
         agent.ResetPath();                 // 🔥 removes path completely

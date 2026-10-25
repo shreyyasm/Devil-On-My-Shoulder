@@ -59412,6 +59412,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59426,6 +59427,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59440,10 +59442,11 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
-  - instructionText: Also use "SHIFT" to KICK Enemies, Doors and Parry Projectiles!
+  - instructionText: Use "SHIFT" to KICK Enemies!
     iconSprite: {fileID: 21300000, guid: 25c1c76e5770a6b4ebb4eac77e44b5db, type: 3}
     contextOnly: 0
     keys: 30010000
@@ -59454,6 +59457,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59468,6 +59472,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59483,6 +59488,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 1
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59497,6 +59503,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 1
+    freezeTimeImmediatelyOnShow: 1
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59511,6 +59518,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59525,6 +59533,7 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
@@ -59539,12 +59548,17 @@ MonoBehaviour:
     delayAfterComplete: 0.4
     autoAdvanceTimeout: 0
     pauseTimeUntilInput: 0
+    freezeTimeImmediatelyOnShow: 0
     objectsToEnable: []
     isComplete: 0
     timeShown: 0
   defaultDelayBetweenSteps: 0.4
   movementDeadzone: 0.1
   tutorialSlowMotionScale: 0.15
+  slowMotionBeforeFullPause: 3
+  tutorialPostProcessingVolume: {fileID: 62432048}
+  fullPauseSaturation: -100
+  fullPauseTransitionDuration: 1
   useExternalMovementState: 0
   startAutomatically: 0
   saveCompletedSteps: 1
@@ -60442,6 +60456,8 @@ MonoBehaviour:
   ActiveSet: 0
   RoomsToEnd: 8
   DistanceOffset: -0.7
+  doorwayNavMeshInset: 0.75
+  doorwayNavMeshWidth: 2
   RoomsPerSetIncrease: 3
   RandomizeSeed: 1
   Seed: 415654581
@@ -71536,7 +71552,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2110653560
 Transform:
   m_ObjectHideFlags: 0
@@ -101155,7 +101171,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 3
-  m_Radius: 0.2
+  m_Radius: 0.3
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!212 &380137032558779334
 SpriteRenderer:
@@ -107874,6 +107890,8 @@ MonoBehaviour:
   FinisherActive: 0
   playerCam: {fileID: 330270708209365780}
   fovSmoothSpeed: 10
+  demonAbilityDuration: 5
+  demonAbilitySearchRadius: 500
   leftGun: {fileID: 3038407621489018072}
   rightGun: {fileID: 4734422870121414890}
   flashLeft: {fileID: 3625851068160633017}
@@ -107945,6 +107963,9 @@ MonoBehaviour:
   abilityMoveSpeed: 50
   abilityTurnSpeed: 500
   navMeshSampleDistance: 3
+  abilityStuckRepathTime: 0.75
+  abilityTargetRetryDelay: 0.35
+  abilityGateOpenRange: 2
   abilityMovementSmoothing: 10
   abilityRotationSmoothing: 15
   destinationOffsetNew: {x: 0, y: 0, z: 2}
@@ -195475,7 +195496,7 @@ PrefabInstance:
     - target: {fileID: 8400122694768496265, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 502
+      value: 505
       objectReference: {fileID: 0}
     - target: {fileID: 8458831389379451440, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
@@ -195485,7 +195506,7 @@ PrefabInstance:
     - target: {fileID: 8458831389379451440, guid: 1bd15a2a1403bab42acba28545b55059,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 699
+      value: 702
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -294574,7 +294595,7 @@ PrefabInstance:
     - target: {fileID: 4610042651314817592, guid: f04ae8b6f3e1e8c46a4c51dcded9d7e8,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 502
+      value: 505
       objectReference: {fileID: 0}
     - target: {fileID: 6182243104275156977, guid: f04ae8b6f3e1e8c46a4c51dcded9d7e8,
         type: 3}
@@ -347945,7 +347966,7 @@ PrefabInstance:
     - target: {fileID: 2673218831727367593, guid: 973194568b779244c8f3862099d9434c,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 101
+      value: 104
       objectReference: {fileID: 0}
     - target: {fileID: 8947821515561013093, guid: 973194568b779244c8f3862099d9434c,
         type: 3}
@@ -406831,6 +406852,7 @@ MonoBehaviour:
   spawnRange: 50
   spawnSpreadRadius: 1.5
   navMeshSearchDistance: 2
+  preserveSpawnPointHeight: 0
   maxNumber: 10
   enemySetAdvance: 3
   activeSet: 0
@@ -455518,6 +455540,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 98304
+  slideKickHitWindow: 0.18
   canKick: 1
   kickAnimator:
   - {fileID: 3186984542154673507}
@@ -486771,7 +486794,7 @@ PrefabInstance:
     - target: {fileID: 1554384991912646331, guid: 85cd86c65587e604eb771d12b87673e7,
         type: 3}
       propertyPath: m_VersionIndex
-      value: 115
+      value: 121
       objectReference: {fileID: 0}
     - target: {fileID: 2265602991548060522, guid: 85cd86c65587e604eb771d12b87673e7,
         type: 3}
